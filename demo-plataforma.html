@@ -1,6 +1,7 @@
 <title>El Viajero Inquieto</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 /* ---------- tokens ---------- */
 :root{
@@ -547,6 +548,64 @@ td.wrap{white-space:normal;}
 .carousel-arrow{width:40px;height:40px;border-radius:50%;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .carousel-arrow:hover{background:var(--accent-soft);border-color:var(--accent);}
 .carousel-arrow svg{width:16px;height:16px;}
+
+/* ---------- admin calendar ---------- */
+.cal-wrap{display:grid;grid-template-columns:1.6fr 1fr;gap:22px;align-items:start;}
+@media (max-width:980px){ .cal-wrap{grid-template-columns:1fr;} }
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap;}
+.cal-head h3{font-family:var(--font-body);font-size:17px;font-weight:700;text-transform:capitalize;}
+.cal-nav{display:flex;align-items:center;gap:8px;}
+.cal-nav button{width:32px;height:32px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.cal-nav button:hover{background:var(--accent-soft);border-color:var(--accent);}
+.cal-nav svg{width:14px;height:14px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.cal-daylabel{text-align:center;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;padding-bottom:6px;}
+.cal-day{min-height:76px;border:1px solid var(--border);border-radius:10px;padding:6px;cursor:pointer;background:var(--surface);display:flex;flex-direction:column;gap:3px;}
+.cal-day:hover{border-color:var(--accent);}
+.cal-day.other-month{opacity:.35;}
+.cal-day.today{border-color:var(--accent);border-width:2px;}
+.cal-day.selected{background:var(--accent-soft);border-color:var(--accent);}
+.cal-day-num{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;}
+.cal-chip{font-size:10px;font-weight:700;background:var(--sand);color:var(--ink);padding:2px 6px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+:root[data-theme="dark"] .cal-chip{background:var(--accent-soft);color:var(--accent);}
+.cal-side{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:20px;}
+.cal-side h4{font-family:var(--font-body);font-size:15px;font-weight:700;margin-bottom:12px;}
+.cal-booking-item{padding:11px 0;border-bottom:1px solid var(--border);}
+.cal-booking-item:last-child{border-bottom:none;}
+.cal-booking-item b{display:block;font-size:14px;}
+.cal-booking-item span{font-size:12.5px;color:var(--text-muted);display:block;margin-top:2px;}
+.cal-empty{font-size:13px;color:var(--text-muted);}
+
+/* ---------- documents ---------- */
+.doc-type-tabs{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
+.doc-type-tab{border:1px solid var(--border-strong);background:var(--surface);border-radius:100px;padding:9px 18px;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--text);}
+.doc-type-tab.active{background:var(--ink);border-color:var(--ink);color:var(--ivory);}
+.doc-layout{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start;}
+@media (max-width:980px){ .doc-layout{grid-template-columns:1fr;} }
+.doc-items-row{display:grid;grid-template-columns:1fr 70px 120px 32px;gap:8px;margin-bottom:8px;align-items:center;}
+@media (max-width:520px){ .doc-items-row{grid-template-columns:1fr 1fr;grid-template-areas:"desc desc" "qty price" "rm rm";} .doc-items-row :nth-child(1){grid-area:desc;} .doc-items-row :nth-child(2){grid-area:qty;} .doc-items-row :nth-child(3){grid-area:price;} .doc-items-row :nth-child(4){grid-area:rm;justify-self:end;} }
+.doc-items-row input{width:100%;}
+.doc-item-remove{width:30px;height:30px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.doc-item-remove svg{width:13px;height:13px;}
+
+.doc-preview{position:sticky;top:96px;background:#FFFFFF;color:#1F2926;border:1px solid var(--border);border-radius:var(--radius-m);padding:34px 30px;box-shadow:var(--shadow-md);position:relative;overflow:hidden;min-height:420px;}
+.doc-preview::before{content:"";position:absolute;inset:0;background-image:url('photos/logo-mark-ink.png');background-repeat:no-repeat;background-position:center;background-size:62%;opacity:.06;pointer-events:none;}
+.doc-preview-inner{position:relative;z-index:1;}
+.doc-preview-head{display:flex;align-items:center;gap:12px;border-bottom:2px solid #1F2926;padding-bottom:14px;margin-bottom:18px;}
+.doc-preview-head img{width:40px;height:40px;object-fit:contain;flex:none;}
+.doc-preview-head b{font-family:var(--font-display);font-size:19px;display:block;color:#1F2926;}
+.doc-preview-head span{font-size:11px;color:#5B685F;}
+.doc-preview-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;flex-wrap:wrap;gap:8px;}
+.doc-preview-title h2{font-family:var(--font-display);font-size:22px;color:#3E6A6F;}
+.doc-preview-title span{font-size:12.5px;color:#5B685F;}
+.doc-preview-row{display:flex;justify-content:space-between;gap:14px;font-size:13px;padding:7px 0;border-bottom:1px solid #EDEBE3;}
+.doc-preview-row b{color:#5B685F;font-weight:600;}
+.doc-preview table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12.5px;}
+.doc-preview th{text-align:left;background:#1F2926;color:#F7F5EF;padding:7px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+.doc-preview td{padding:7px 8px;border-bottom:1px solid #EDEBE3;}
+.doc-preview-total{display:flex;justify-content:flex-end;gap:14px;margin-top:14px;font-size:16px;font-weight:700;color:#1F2926;}
+.doc-preview-words{margin-top:16px;font-size:12px;font-style:italic;color:#5B685F;}
+.doc-preview-foot{margin-top:30px;padding-top:14px;border-top:1px solid #EDEBE3;font-size:11px;color:#8A958E;text-align:center;}
 </style>
 
 <div id="app"></div>
@@ -589,6 +648,9 @@ const ICONS = {
   trash: svgWrap('<path d="M12 18h40"/><path d="M18 18V12h20v6"/><path d="M16 18l3 36h22l3-36"/>'),
   plus: svgWrap('<line x1="32" y1="12" x2="32" y2="52"/><line x1="12" y1="32" x2="52" y2="32"/>'),
   eye: svgWrap('<path d="M4 32s10-18 28-18 28 18 28 18-10 18-28 18S4 32 4 32Z"/><circle cx="32" cy="32" r="7"/>'),
+  calendar: svgWrap('<rect x="8" y="12" width="48" height="44" rx="4"/><line x1="8" y1="24" x2="56" y2="24"/><line x1="20" y1="6" x2="20" y2="18"/><line x1="44" y1="6" x2="44" y2="18"/><circle cx="20" cy="34" r="2.6" fill="currentColor"/><circle cx="32" cy="34" r="2.6" fill="currentColor"/><circle cx="44" cy="34" r="2.6" fill="currentColor"/><circle cx="20" cy="44" r="2.6" fill="currentColor"/><circle cx="32" cy="44" r="2.6" fill="currentColor"/>'),
+  docFile: svgWrap('<path d="M16 6h22l10 10v42H16z"/><path d="M38 6v10h10"/><line x1="23" y1="30" x2="41" y2="30"/><line x1="23" y1="38" x2="41" y2="38"/><line x1="23" y1="46" x2="35" y2="46"/>'),
+  download: svgWrap('<path d="M32 8v34"/><path d="M18 28l14 14 14-14"/><line x1="12" y1="52" x2="52" y2="52"/>'),
   close: svgWrap('<line x1="14" y1="14" x2="50" y2="50"/><line x1="50" y1="14" x2="14" y2="50"/>'),
   send: svgWrap('<line x1="8" y1="32" x2="54" y2="32"/><path d="M38 18l16 14-16 14"/>'),
   heart: svgWrap('<path d="M32 54S8 40 8 22a14 14 0 0 1 24-9 14 14 0 0 1 24 9c0 18-24 32-24 32Z"/>'),
@@ -672,6 +734,29 @@ let BOOKINGS = [
 ];
 
 const WEEKLY = [["Sem 1",5],["Sem 2",8],["Sem 3",11],["Sem 4",9],["Sem 5",13],["Sem 6",16]];
+
+let FINCA_BOOKINGS = [
+  {id:1, fincaId:"finca-serrana", guest:"Familia Gómez", phone:"300 000 0000", checkin:"2026-09-14", checkout:"2026-09-16", time:"15:00", guests:6},
+  {id:2, fincaId:"refugio-cocora", guest:"James Whitfield", phone:"+44 7000 000000", checkin:"2026-09-20", checkout:"2026-09-22", time:"14:00", guests:2},
+  {id:3, fincaId:"termales-otun", guest:"Camila Restrepo", phone:"300 111 2222", checkin:"2026-09-25", checkout:"2026-09-27", time:"16:00", guests:5},
+  {id:4, fincaId:"hacienda-buenavista", guest:"Familia Meyer", phone:"300 333 4444", checkin:"2026-09-30", checkout:"2026-10-03", time:"13:00", guests:10},
+  {id:5, fincaId:"mirador-quindio", guest:"Andrés Molina", phone:"300 555 6666", checkin:"2026-10-09", checkout:"2026-10-11", time:"15:30", guests:4},
+  {id:6, fincaId:"cafe-bosque", guest:"Marta Londoño", phone:"300 777 8888", checkin:"2026-10-16", checkout:"2026-10-18", time:"12:00", guests:3},
+];
+
+const EMISOR = {
+  nombre: "El Viajero Inquieto",
+  titular: "Robin Julián Murillo Ramírez",
+  identificacion: "C.C. 75.100.397 de Manizales",
+  direccion: "Carrera 42A # 11-42, Barrio Estambul, Manizales, Caldas",
+  telefono: "314 873 4314",
+  correo: "elviajeroinquieto11@gmail.com",
+};
+const DEMO_TODAY = "2026-09-21";
+const MONTHS_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const WEEKDAYS_ES = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+const LOGO_IMG = new Image();
+LOGO_IMG.src = "photos/logo-mark-ink.png";
 
 /* ================= CHAT ENGINE (reglas locales, sin IA ni backend) ================= */
 /* Todo lo que responde el chat sale de LISTINGS/REVIEWS/CONTENT ya cargados en la página. */
@@ -795,6 +880,32 @@ function answerChat(raw){
 
 /* ================= HELPERS ================= */
 function cop(n){ return "$"+Math.round(n).toLocaleString("es-CO"); }
+function numberToWords(n){
+  n = Math.round(n);
+  if(n===0) return "CERO";
+  const UNI = ["","UN","DOS","TRES","CUATRO","CINCO","SEIS","SIETE","OCHO","NUEVE","DIEZ","ONCE","DOCE","TRECE","CATORCE","QUINCE","DIECISÉIS","DIECISIETE","DIECIOCHO","DIECINUEVE","VEINTE"];
+  const DEC = ["","","VEINTI","TREINTA","CUARENTA","CINCUENTA","SESENTA","SETENTA","OCHENTA","NOVENTA"];
+  const CEN = ["","CIENTO","DOSCIENTOS","TRESCIENTOS","CUATROCIENTOS","QUINIENTOS","SEISCIENTOS","SETECIENTOS","OCHOCIENTOS","NOVECIENTOS"];
+  function tri2(x){
+    if(x===0) return "";
+    const c=Math.floor(x/100), r=x%100;
+    let s = c>0 ? (x===100?"CIEN":CEN[c])+" " : "";
+    if(r===0) return s.trim();
+    if(r<=20) s += UNI[r];
+    else if(r<30) s += "VEINTI"+UNI[r-20];
+    else { const d=Math.floor(r/10), u=r%10; s += DEC[d] + (u>0?" Y "+UNI[u]:""); }
+    return s.trim();
+  }
+  const millones = Math.floor(n/1000000);
+  const miles = Math.floor((n%1000000)/1000);
+  const cientos = n%1000;
+  let parts = [];
+  if(millones>0) parts.push(millones===1?"UN MILLÓN":tri2(millones)+" MILLONES");
+  if(miles>0) parts.push(miles===1?"MIL":tri2(miles)+" MIL");
+  if(cientos>0) parts.push(tri2(cientos));
+  return parts.join(" ").trim();
+}
+function copWords(n){ return numberToWords(n) + " PESOS M/CTE"; }
 function stars(n){ const full=Math.round(n); return "★★★★★☆☆☆☆☆".slice(5-full,10-full); }
 function byId(id){ return LISTINGS.find(function(l){return l.id===id;}); }
 function catLabel(cat){ return cat==="alojamientos"?"Fincas y Cabañas":cat==="parques"?"Parques Temáticos":"Tours"; }
@@ -812,6 +923,8 @@ const S = {
   catalog:{cat:"alojamientos", sort:"recomendado", town:"todos"},
   booking:{listingId:null, step:1, checkin:"", checkout:"", date:"", guests:2, name:"", email:"", phone:"", payMethod:"card"},
   admin:{authed:false, tab:"resumen", editing:null},
+  calendar:{year:2026, month:8, selectedDate:null, formOpen:false},
+  docs:{type:"cotizacion", counters:{cobro:1, pago:1, cotizacion:1}, items:[{desc:"", qty:1, price:0}]},
   chat:{open:false, messages:[], booted:false},
   detail:{forId:null, photoIndex:0, lightbox:false},
   favorites:(function(){ try{ return JSON.parse(localStorage.getItem("vi_favorites")||"[]"); }catch(e){ return []; } })(),
@@ -1230,11 +1343,13 @@ function renderAdmin(){
       adminNavItem("resumen","dash","Resumen") +
       adminNavItem("reservas","bookings","Reservas") +
       adminNavItem("inventario","inventory","Inventario") +
+      adminNavItem("calendario","calendar","Calendario") +
+      adminNavItem("documentos","docFile","Documentos") +
       adminNavItem("contenido","content","Contenido del sitio") +
       '<div class="admin-exit" data-go="home">'+icon('logout')+' Salir al sitio</div>' +
     '</aside>' +
     '<main id="adminMain">' +
-      (tab==="resumen"?adminResumen():tab==="reservas"?adminReservas():tab==="inventario"?adminInventario():adminContenido()) +
+      (tab==="resumen"?adminResumen():tab==="reservas"?adminReservas():tab==="inventario"?adminInventario():tab==="calendario"?adminCalendario():tab==="documentos"?adminDocumentos():adminContenido()) +
     '</main>' +
   '</div>';
 }
@@ -1308,6 +1423,282 @@ function inventoryRow(l){
     '<td><div class="switch'+(l.active===false?'':' on')+'" data-toggle="'+l.id+'"></div></td>' +
     '<td><div class="row-actions"><button class="icon-btn" data-viewlisting="'+l.id+'">'+icon('eye')+'</button><button class="icon-btn" data-removelisting="'+l.id+'">'+icon('trash')+'</button></div></td></tr>';
 }
+/* ================= CALENDARIO DE RESERVAS (fincas) ================= */
+function fincaListings(){ return LISTINGS.filter(function(l){ return l.cat==="alojamientos"; }); }
+function fincaById(id){ return LISTINGS.find(function(l){ return l.id===id; }); }
+function isoDate(y,m,d){ return y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0"); }
+function bookingsOnDate(iso){ return FINCA_BOOKINGS.filter(function(b){ return iso>=b.checkin && iso<b.checkout; }); }
+function formatDateEs(iso){
+  if(!iso) return "—";
+  const d = new Date(iso+"T00:00:00");
+  return d.toLocaleDateString("es-CO",{day:"numeric",month:"short",year:"numeric"});
+}
+function dayCell(dnum, otherMonth, iso){
+  if(otherMonth){ return '<div class="cal-day other-month"><div class="cal-day-num">'+dnum+'</div></div>'; }
+  const c=S.calendar;
+  const bookings = bookingsOnDate(iso);
+  const cls = "cal-day"+(iso===DEMO_TODAY?" today":"")+(iso===c.selectedDate?" selected":"");
+  const shown = bookings.slice(0,2).map(function(b){
+    const f=fincaById(b.fincaId);
+    const short = f ? f.name.replace(/^(Finca|Cabañas|Hacienda|Refugio)\s+/,"") : b.fincaId;
+    return '<span class="cal-chip">'+esc(short)+'</span>';
+  }).join('');
+  const more = bookings.length>2 ? '<span class="cal-chip">+'+(bookings.length-2)+'</span>' : '';
+  return '<div class="'+cls+'" data-caldate="'+iso+'"><div class="cal-day-num">'+dnum+'</div>'+shown+more+'</div>';
+}
+function calGrid(){
+  const c=S.calendar, y=c.year, m=c.month;
+  const startWeekday = (new Date(y,m,1).getDay()+6)%7;
+  const daysThis = new Date(y,m+1,0).getDate();
+  const daysPrev = new Date(y,m,0).getDate();
+  let cells = WEEKDAYS_ES.map(function(w){ return '<div class="cal-daylabel">'+w+'</div>'; }).join('');
+  for(let i=startWeekday-1;i>=0;i--){ cells += dayCell(daysPrev-i, true, null); }
+  for(let d=1; d<=daysThis; d++){ cells += dayCell(d, false, isoDate(y,m,d)); }
+  const filled = startWeekday+daysThis;
+  const trailing = (7-(filled%7))%7;
+  for(let d=1; d<=trailing; d++){ cells += dayCell(d, true, null); }
+  return '<div class="cal-grid">'+cells+'</div>';
+}
+function calSidePanel(){
+  const c=S.calendar;
+  if(!c.selectedDate){
+    return '<div class="cal-side"><h4>Selecciona un día</h4><p class="cal-empty">Haz clic en una fecha del calendario para ver sus reservas, o crea una nueva con el botón "Nueva reserva".</p></div>';
+  }
+  const bookings = bookingsOnDate(c.selectedDate);
+  return '<div class="cal-side"><h4>'+formatDateEs(c.selectedDate)+'</h4>' +
+    (bookings.length ? bookings.map(function(b){
+      const f=fincaById(b.fincaId);
+      return '<div class="cal-booking-item"><b>'+(f?f.name:b.fincaId)+'</b>' +
+        '<span>'+esc(b.guest)+' · '+b.guests+' huésped(es) · '+(b.phone||"")+'</span>' +
+        '<span>Llegada '+formatDateEs(b.checkin)+' · '+b.time+'h  →  Salida '+formatDateEs(b.checkout)+'</span></div>';
+    }).join('') : '<p class="cal-empty">Sin reservas para este día.</p>') +
+  '</div>';
+}
+function calBookingForm(){
+  const c=S.calendar;
+  const fincas = fincaListings();
+  return '<div class="panel"><div class="panel-head"><h3>Nueva reserva</h3><button class="icon-btn" id="calFormClose" aria-label="Cerrar">'+icon('close')+'</button></div>' +
+    '<div class="form-grid">' +
+      '<div class="field full"><label>Finca</label><select id="calFinca">' + fincas.map(function(f){ return '<option value="'+f.id+'">'+f.name+'</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label>Huésped</label><input id="calGuest" placeholder="Nombre del huésped"></div>' +
+      '<div class="field"><label>Teléfono</label><input id="calPhone" placeholder="300 000 0000"></div>' +
+      '<div class="field"><label>Llegada</label><input id="calCheckin" type="date" value="'+(c.selectedDate||'')+'"></div>' +
+      '<div class="field"><label>Salida</label><input id="calCheckout" type="date"></div>' +
+      '<div class="field"><label>Hora de llegada</label><input id="calTime" type="time" value="15:00"></div>' +
+      '<div class="field"><label>Huéspedes</label><input id="calGuests" type="number" min="1" value="2"></div>' +
+    '</div>' +
+    '<button class="btn btn-accent" style="margin-top:16px;" id="calSaveBtn">Guardar reserva</button>' +
+  '</div>';
+}
+function upcomingBookingsTable(){
+  const rows = FINCA_BOOKINGS.slice().sort(function(a,b){ return a.checkin<b.checkin?-1:a.checkin>b.checkin?1:0; });
+  return '<div class="table-wrap"><table><thead><tr><th>Finca</th><th>Huésped</th><th>Llegada</th><th>Salida</th><th>Hora</th><th>Huéspedes</th></tr></thead><tbody>' +
+    rows.map(function(b){
+      const f=fincaById(b.fincaId);
+      return '<tr><td class="wrap">'+(f?f.name:b.fincaId)+'</td><td class="wrap">'+esc(b.guest)+'</td><td>'+formatDateEs(b.checkin)+'</td><td>'+formatDateEs(b.checkout)+'</td><td>'+b.time+'</td><td class="tabular">'+b.guests+'</td></tr>';
+    }).join('') +
+  '</tbody></table></div>';
+}
+function adminCalendario(){
+  const c=S.calendar;
+  return '<div class="fade-in"><div class="admin-head"><div><h1>Calendario de reservas</h1><p>Disponibilidad de las fincas y cabañas ya cargadas en el catálogo.</p></div>' +
+    '<button class="btn btn-primary btn-sm" id="calNewBtn">'+icon('plus')+' Nueva reserva</button></div>' +
+    (c.formOpen ? calBookingForm() : '') +
+    '<div class="cal-wrap"><div class="panel"><div class="cal-head"><h3>'+MONTHS_ES[c.month]+' '+c.year+'</h3>' +
+      '<div class="cal-nav"><button id="calPrev" aria-label="Mes anterior">'+icon('chevLeft')+'</button><button id="calNext" aria-label="Mes siguiente">'+icon('chevRight')+'</button></div></div>' +
+      calGrid() +
+    '</div>' + calSidePanel() + '</div>' +
+    '<div class="panel" style="margin-top:24px;"><div class="panel-head"><h3>Próximas reservas</h3></div>' + upcomingBookingsTable() + '</div>' +
+  '</div>';
+}
+
+/* ================= DOCUMENTOS (cuentas de cobro / pago / cotizaciones) ================= */
+function docTypeTab(key,label){
+  return '<button type="button" class="doc-type-tab'+(S.docs.type===key?' active':'')+'" data-doctype="'+key+'">'+label+'</button>';
+}
+function docForm(){
+  const d=S.docs, type=d.type;
+  const counter=String(d.counters[type]).padStart(4,"0");
+  const typeLabel = type==="cotizacion"?"Cotización":type==="cobro"?"Cuenta de cobro":"Cuenta de pago";
+  const clienteLabel = type==="pago"?"Beneficiario (a quién se paga)":type==="cobro"?"Cobrar a":"Cliente";
+  let html = '<div class="panel"><div class="panel-head"><h3>'+typeLabel+' No. '+counter+'</h3></div>' +
+    '<div class="form-grid">' +
+    '<div class="field"><label>Fecha</label><input id="docFecha" type="date" value="'+(d.fecha||DEMO_TODAY)+'"></div>' +
+    '<div class="field"><label>'+clienteLabel+'</label><input id="docCliente" placeholder="Nombre o empresa" value="'+esc(d.cliente||"")+'"></div>';
+  if(type!=="cotizacion"){
+    html += '<div class="field full"><label>Identificación (C.C. / NIT, opcional)</label><input id="docClienteId" placeholder="C.C. o NIT" value="'+esc(d.clienteId||"")+'"></div>';
+    html += '<div class="field"><label>Forma de pago</label><select id="docFormaPago">' +
+      ["Transferencia","Efectivo","Nequi"].map(function(o){ return '<option'+(d.formaPago===o?' selected':'')+'>'+o+'</option>'; }).join('') + '</select></div>';
+  } else {
+    html += '<div class="field"><label>Válida hasta</label><input id="docValidez" type="date" value="'+(d.validoHasta||"")+'"></div>';
+  }
+  html += '</div>';
+
+  if(type==="cotizacion"){
+    html += '<div style="margin-top:18px;"><label style="display:block;font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Ítems de la cotización</label>';
+    html += d.items.map(function(it,i){
+      return '<div class="doc-items-row">' +
+        '<input placeholder="Descripción" data-itemfield="desc" data-itemidx="'+i+'" value="'+esc(it.desc)+'">' +
+        '<input type="number" min="1" placeholder="Cant." data-itemfield="qty" data-itemidx="'+i+'" value="'+it.qty+'">' +
+        '<input type="number" min="0" step="1000" placeholder="Valor unit." data-itemfield="price" data-itemidx="'+i+'" value="'+it.price+'">' +
+        '<button type="button" class="doc-item-remove" data-itemremove="'+i+'" aria-label="Quitar ítem">'+icon('close')+'</button>' +
+      '</div>';
+    }).join('');
+    html += '<button type="button" class="btn btn-ghost btn-sm" id="docAddItem" style="margin-top:6px;">'+icon('plus')+' Agregar ítem</button></div>';
+  } else {
+    html += '<div class="field full" style="margin-top:14px;"><label>Concepto</label><textarea id="docConcepto" rows="3" style="width:100%;border:1px solid var(--border-strong);background:var(--surface-sunken);color:var(--text);border-radius:var(--radius-s);padding:10px 12px;font-family:var(--font-body);font-size:14px;">'+esc(d.concepto||"")+'</textarea></div>';
+    html += '<div class="field full" style="margin-top:14px;"><label>Valor total (COP)</label><input id="docValor" type="number" min="0" step="1000" value="'+(d.valor||0)+'"></div>';
+  }
+  html += '<button class="btn btn-accent btn-block" style="margin-top:22px;" id="docDownloadBtn">'+icon('download')+' Descargar PDF</button></div>';
+  return html;
+}
+function docPreviewPanel(){
+  const d=S.docs, type=d.type;
+  const counter=String(d.counters[type]).padStart(4,"0");
+  const typeLabel = type==="cotizacion"?"COTIZACIÓN":type==="cobro"?"CUENTA DE COBRO":"CUENTA DE PAGO";
+  const fecha = formatDateEs(d.fecha||DEMO_TODAY);
+  let body="";
+  if(type==="cotizacion"){
+    const rows = d.items.map(function(it){
+      const sub=(it.qty||0)*(it.price||0);
+      return '<tr><td>'+(esc(it.desc)||"—")+'</td><td class="tabular" style="text-align:center;">'+(it.qty||0)+'</td><td class="tabular" style="text-align:right;">'+cop(it.price||0)+'</td><td class="tabular" style="text-align:right;">'+cop(sub)+'</td></tr>';
+    }).join('');
+    const total = d.items.reduce(function(a,it){ return a+(it.qty||0)*(it.price||0); },0);
+    body = '<div class="doc-preview-row"><b>Cliente</b><span>'+esc(d.cliente||"—")+'</span></div>' +
+      '<table><thead><tr><th>Descripción</th><th style="text-align:center;">Cant.</th><th style="text-align:right;">Valor unit.</th><th style="text-align:right;">Subtotal</th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="4" style="color:#8A958E;">Agrega ítems a la cotización…</td></tr>') + '</tbody></table>' +
+      '<div class="doc-preview-total"><span>Total</span><span>'+cop(total)+'</span></div>' +
+      (d.validoHasta ? '<p class="doc-preview-words">Cotización válida hasta el '+formatDateEs(d.validoHasta)+'.</p>' : '');
+  } else {
+    body = '<div class="doc-preview-row"><b>'+(type==="pago"?"Beneficiario":"Cobrar a")+'</b><span>'+esc(d.cliente||"—")+(d.clienteId?(' · '+esc(d.clienteId)):'')+'</span></div>' +
+      '<div class="doc-preview-row"><b>Concepto</b><span>'+esc(d.concepto||"—")+'</span></div>' +
+      '<div class="doc-preview-row"><b>Forma de pago</b><span>'+(d.formaPago||"Transferencia")+'</span></div>' +
+      '<div class="doc-preview-total"><span>Valor</span><span>'+cop(d.valor||0)+'</span></div>' +
+      '<p class="doc-preview-words">Son: '+copWords(d.valor||0)+'.</p>';
+  }
+  return '<div class="doc-preview"><div class="doc-preview-inner">' +
+    '<div class="doc-preview-head"><img src="photos/logo-mark-ink.png" alt=""><div><b>El Viajero Inquieto</b><span>Agencia de viajes · Eje cafetero, Colombia</span></div></div>' +
+    '<div class="doc-preview-title"><h2>'+typeLabel+' No. '+counter+'</h2><span>Fecha: '+fecha+'</span></div>' +
+    body +
+    '<div class="doc-preview-foot">'+EMISOR.direccion+' · '+EMISOR.telefono+' · '+EMISOR.correo+'</div>' +
+  '</div></div>';
+}
+function adminDocumentos(){
+  return '<div class="fade-in"><div class="admin-head"><div><h1>Documentos</h1><p>Genera cuentas de cobro, cuentas de pago y cotizaciones con el membrete de El Viajero Inquieto.</p></div></div>' +
+    '<div class="doc-type-tabs">' + docTypeTab("cotizacion","Cotización") + docTypeTab("cobro","Cuenta de cobro") + docTypeTab("pago","Cuenta de pago") + '</div>' +
+    '<div class="doc-layout">' + docForm() + docPreviewPanel() + '</div>' +
+  '</div>';
+}
+function generateDocPDF(){
+  const d=S.docs, type=d.type;
+  const counter=String(d.counters[type]).padStart(4,"0");
+  const typeLabel = type==="cotizacion"?"COTIZACIÓN":type==="cobro"?"CUENTA DE COBRO":"CUENTA DE PAGO";
+  const jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+  if(!jsPDFCtor){ toast("No se pudo cargar el generador de PDF. Revisa tu conexión."); return; }
+  const doc = new jsPDFCtor({ unit:"mm", format:"letter" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const marginX = 20;
+  const logoReady = LOGO_IMG && LOGO_IMG.complete && LOGO_IMG.naturalWidth > 0;
+
+  if(logoReady){
+    try{
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({ opacity: 0.07 }));
+      const wm=120;
+      doc.addImage(LOGO_IMG, "PNG", (pageW-wm)/2, (pageH-wm)/2, wm, wm);
+      doc.restoreGraphicsState();
+    }catch(e){}
+    try{ doc.addImage(LOGO_IMG, "PNG", marginX, 15, 14, 14); }catch(e){}
+  }
+  doc.setTextColor(31,41,38);
+  doc.setFont("times","bold"); doc.setFontSize(15);
+  doc.text("EL VIAJERO INQUIETO", marginX+18, 21);
+  doc.setFont("helvetica","normal"); doc.setFontSize(9);
+  doc.setTextColor(91,104,95);
+  doc.text("Agencia de viajes · Eje cafetero, Colombia", marginX+18, 26);
+  doc.setDrawColor(31,41,38); doc.setLineWidth(0.6);
+  doc.line(marginX, 33, pageW-marginX, 33);
+
+  let y=47;
+  doc.setTextColor(62,106,111);
+  doc.setFont("times","bold"); doc.setFontSize(18);
+  doc.text(typeLabel+" No. "+counter, marginX, y);
+  doc.setTextColor(91,104,95); doc.setFont("helvetica","normal"); doc.setFontSize(10);
+  doc.text("Fecha: "+formatDateEs(d.fecha||DEMO_TODAY), pageW-marginX, y, { align:"right" });
+  y+=12;
+
+  function row(label, value){
+    doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(91,104,95);
+    doc.text(label, marginX, y);
+    doc.setFont("helvetica","normal"); doc.setTextColor(31,41,38);
+    const lines = doc.splitTextToSize(String(value||"—"), pageW-marginX*2-55);
+    doc.text(lines, marginX+55, y);
+    y += 6.2*Math.max(1,lines.length);
+    doc.setDrawColor(237,235,227); doc.line(marginX,y-2.5,pageW-marginX,y-2.5);
+    y+=4;
+  }
+
+  if(type==="cotizacion"){
+    row("Cliente:", d.cliente);
+    y+=3;
+    doc.setFillColor(31,41,38); doc.rect(marginX,y,pageW-marginX*2,8,"F");
+    doc.setTextColor(247,245,239); doc.setFont("helvetica","bold"); doc.setFontSize(9);
+    doc.text("Descripción", marginX+3, y+5.5);
+    doc.text("Cant.", pageW-marginX-58, y+5.5);
+    doc.text("Valor unit.", pageW-marginX-40, y+5.5);
+    doc.text("Subtotal", pageW-marginX-3, y+5.5, { align:"right" });
+    y+=8;
+    doc.setTextColor(31,41,38); doc.setFont("helvetica","normal"); doc.setFontSize(9.5);
+    let total=0;
+    (d.items||[]).forEach(function(it){
+      const sub=(it.qty||0)*(it.price||0); total+=sub;
+      const descLines=doc.splitTextToSize(it.desc||"—", pageW-marginX*2-90);
+      doc.text(descLines, marginX+3, y+5);
+      doc.text(String(it.qty||0), pageW-marginX-58, y+5);
+      doc.text(cop(it.price||0), pageW-marginX-40, y+5);
+      doc.text(cop(sub), pageW-marginX-3, y+5, { align:"right" });
+      y += 6.2*Math.max(1,descLines.length);
+      doc.setDrawColor(237,235,227); doc.line(marginX,y-1,pageW-marginX,y-1);
+      y+=3;
+    });
+    y+=5;
+    doc.setFont("times","bold"); doc.setFontSize(13); doc.setTextColor(31,41,38);
+    doc.text("Total: "+cop(total), pageW-marginX, y, { align:"right" });
+    y+=10;
+    if(d.validoHasta){
+      doc.setFont("helvetica","italic"); doc.setFontSize(9.5); doc.setTextColor(91,104,95);
+      doc.text("Cotización válida hasta el "+formatDateEs(d.validoHasta)+".", marginX, y);
+      y+=8;
+    }
+  } else {
+    row(type==="pago"?"Beneficiario:":"Cobrar a:", d.cliente);
+    if(d.clienteId) row("Identificación:", d.clienteId);
+    row("Concepto:", d.concepto);
+    row("Forma de pago:", d.formaPago||"Transferencia");
+    y+=5;
+    doc.setFont("times","bold"); doc.setFontSize(16); doc.setTextColor(31,41,38);
+    doc.text("Valor: "+cop(d.valor||0), marginX, y);
+    y+=8;
+    doc.setFont("helvetica","italic"); doc.setFontSize(9.5); doc.setTextColor(91,104,95);
+    const wordsLines = doc.splitTextToSize("Son: "+copWords(d.valor||0)+".", pageW-marginX*2);
+    doc.text(wordsLines, marginX, y);
+    y += 6*wordsLines.length+6;
+  }
+
+  doc.setDrawColor(230,230,230); doc.line(marginX, pageH-22, pageW-marginX, pageH-22);
+  doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(138,149,142);
+  doc.text(EMISOR.direccion+"  ·  "+EMISOR.telefono+"  ·  "+EMISOR.correo, pageW/2, pageH-16, { align:"center" });
+
+  const safeClient = (d.cliente||"cliente").replace(/[^a-z0-9]+/gi,"_").replace(/^_+|_+$/g,"").slice(0,30) || "cliente";
+  const prefix = type==="cotizacion"?"Cotizacion_":type==="cobro"?"CuentaDeCobro_":"CuentaDePago_";
+  doc.save(prefix+counter+"_"+safeClient+".pdf");
+
+  d.counters[type] = d.counters[type]+1;
+  toast(typeLabel+" descargada — próximo consecutivo No. "+String(d.counters[type]).padStart(4,"0"));
+  render();
+}
+
 function adminContenido(){
   return '<div class="fade-in"><div class="admin-head"><div><h1>Contenido del sitio</h1><p>Edita el mensaje principal de la página de inicio y ve el resultado al instante.</p></div></div>' +
     '<div class="cms-grid">' +
@@ -1575,6 +1966,77 @@ function bindAdmin(){
       if(prev) prev.textContent=el.value;
     }); }
   });
+
+  /* ---- Calendario de reservas ---- */
+  const calPrev=document.getElementById("calPrev"), calNext=document.getElementById("calNext");
+  if(calPrev){ calPrev.addEventListener("click", function(){ S.calendar.month--; if(S.calendar.month<0){ S.calendar.month=11; S.calendar.year--; } render(); }); }
+  if(calNext){ calNext.addEventListener("click", function(){ S.calendar.month++; if(S.calendar.month>11){ S.calendar.month=0; S.calendar.year++; } render(); }); }
+  document.querySelectorAll("[data-caldate]").forEach(function(el){
+    el.addEventListener("click", function(){ S.calendar.selectedDate=el.getAttribute("data-caldate"); render(); });
+  });
+  const calNewBtn=document.getElementById("calNewBtn");
+  if(calNewBtn){ calNewBtn.addEventListener("click", function(){ S.calendar.formOpen=true; render(); }); }
+  const calFormClose=document.getElementById("calFormClose");
+  if(calFormClose){ calFormClose.addEventListener("click", function(){ S.calendar.formOpen=false; render(); }); }
+  const calSaveBtn=document.getElementById("calSaveBtn");
+  if(calSaveBtn){ calSaveBtn.addEventListener("click", function(){
+    const fincaId=document.getElementById("calFinca").value;
+    const guest=document.getElementById("calGuest").value.trim();
+    const phone=document.getElementById("calPhone").value.trim();
+    const guests=parseInt(document.getElementById("calGuests").value,10)||1;
+    const checkin=document.getElementById("calCheckin").value;
+    const checkout=document.getElementById("calCheckout").value;
+    const time=document.getElementById("calTime").value||"15:00";
+    if(!guest){ toast("Escribe el nombre del huésped"); return; }
+    if(!checkin || !checkout || checkout<=checkin){ toast("Revisa las fechas de llegada y salida"); return; }
+    const id = FINCA_BOOKINGS.length ? Math.max.apply(null, FINCA_BOOKINGS.map(function(b){return b.id;}))+1 : 1;
+    FINCA_BOOKINGS.push({ id:id, fincaId:fincaId, guest:guest, phone:phone, checkin:checkin, checkout:checkout, time:time, guests:guests });
+    const dt=new Date(checkin+"T00:00:00");
+    S.calendar.year=dt.getFullYear(); S.calendar.month=dt.getMonth(); S.calendar.selectedDate=checkin; S.calendar.formOpen=false;
+    const f=fincaById(fincaId);
+    toast("Reserva creada para "+(f?f.name:fincaId));
+    render();
+  }); }
+
+  /* ---- Documentos ---- */
+  document.querySelectorAll("[data-doctype]").forEach(function(el){
+    el.addEventListener("click", function(){ S.docs.type=el.getAttribute("data-doctype"); render(); });
+  });
+  const docFecha=document.getElementById("docFecha");
+  if(docFecha){ docFecha.addEventListener("change", function(){ S.docs.fecha=docFecha.value; render(); }); }
+  const docCliente=document.getElementById("docCliente");
+  if(docCliente){ docCliente.addEventListener("change", function(){ S.docs.cliente=docCliente.value; render(); }); }
+  const docClienteId=document.getElementById("docClienteId");
+  if(docClienteId){ docClienteId.addEventListener("change", function(){ S.docs.clienteId=docClienteId.value; render(); }); }
+  const docConcepto=document.getElementById("docConcepto");
+  if(docConcepto){ docConcepto.addEventListener("change", function(){ S.docs.concepto=docConcepto.value; render(); }); }
+  const docValor=document.getElementById("docValor");
+  if(docValor){ docValor.addEventListener("change", function(){ S.docs.valor=parseFloat(docValor.value)||0; render(); }); }
+  const docFormaPago=document.getElementById("docFormaPago");
+  if(docFormaPago){ docFormaPago.addEventListener("change", function(){ S.docs.formaPago=docFormaPago.value; render(); }); }
+  const docValidez=document.getElementById("docValidez");
+  if(docValidez){ docValidez.addEventListener("change", function(){ S.docs.validoHasta=docValidez.value; render(); }); }
+  document.querySelectorAll("[data-itemfield]").forEach(function(el){
+    el.addEventListener("change", function(){
+      const idx=parseInt(el.getAttribute("data-itemidx"),10);
+      const field=el.getAttribute("data-itemfield");
+      if(field==="desc") S.docs.items[idx].desc=el.value;
+      else S.docs.items[idx][field]=parseFloat(el.value)||0;
+      render();
+    });
+  });
+  document.querySelectorAll("[data-itemremove]").forEach(function(el){
+    el.addEventListener("click", function(){
+      const idx=parseInt(el.getAttribute("data-itemremove"),10);
+      S.docs.items.splice(idx,1);
+      if(!S.docs.items.length) S.docs.items.push({desc:"",qty:1,price:0});
+      render();
+    });
+  });
+  const docAddItem=document.getElementById("docAddItem");
+  if(docAddItem){ docAddItem.addEventListener("click", function(){ S.docs.items.push({desc:"",qty:1,price:0}); render(); }); }
+  const docDownloadBtn=document.getElementById("docDownloadBtn");
+  if(docDownloadBtn){ docDownloadBtn.addEventListener("click", function(){ generateDocPDF(); }); }
 }
 
 /* ================= CHAT WIDGET (UI) ================= */
