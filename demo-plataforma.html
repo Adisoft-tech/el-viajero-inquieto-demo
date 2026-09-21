@@ -1608,8 +1608,9 @@ function calSidePanel(){
   return '<div class="cal-side"><h4>'+formatDateEs(c.selectedDate)+'</h4>' +
     (bookings.length ? bookings.map(function(b){
       const f=fincaById(b.fincaId);
+      const guestsLabel = (b.adults!=null) ? (b.adults+' adulto(s)'+(b.children?' · '+b.children+' niño(s)':'')) : (b.guests+' huésped(es)');
       return '<div class="cal-booking-item"><b>'+(f?f.name:b.fincaId)+'</b>' +
-        '<span>'+esc(b.guest)+' · '+b.guests+' huésped(es) · '+(b.phone||"")+'</span>' +
+        '<span>'+esc(b.guest)+' · '+guestsLabel+' · '+(b.phone||"")+'</span>' +
         '<span>Llegada '+formatDateEs(b.checkin)+' · '+b.time+'h  →  Salida '+formatDateEs(b.checkout)+'</span>' +
         '<span>C.C./Pasaporte '+esc(b.cedula||'—')+' · '+esc(b.email||'—')+'</span>' +
         '<span>'+(b.payMethod||'—')+' · Total '+cop(b.total||0)+' · Abono '+cop(b.advance||0)+' · Saldo '+cop(b.balance||0)+'</span></div>';
@@ -1629,7 +1630,8 @@ function calBookingForm(){
       '<div class="field"><label>Llegada</label><input id="calCheckin" type="date" value="'+(c.selectedDate||'')+'"></div>' +
       '<div class="field"><label>Salida</label><input id="calCheckout" type="date" min="'+(c.selectedDate||'')+'"></div>' +
       '<div class="field"><label>Hora de llegada</label><input id="calTime" type="time" value="15:00"></div>' +
-      '<div class="field"><label>Huéspedes</label><input id="calGuests" type="number" min="1" value="2"></div>' +
+      '<div class="field"><label>Adultos</label><input id="calAdults" type="number" min="1" value="2"></div>' +
+      '<div class="field"><label>Niños</label><input id="calChildren" type="number" min="0" value="0"></div>' +
       '<div class="cal-form-subhead">Información de pago</div>' +
       '<div class="field"><label>Forma de pago</label><select id="calPayMethod">' +
         '<option value="Transferencia">Transferencia</option><option value="Efectivo">Efectivo</option>' +
@@ -2340,7 +2342,9 @@ function bindGestion(){
     const cedula=document.getElementById("calCedula").value.trim();
     const phone=document.getElementById("calPhone").value.trim();
     const email=document.getElementById("calEmail").value.trim();
-    const guests=parseInt(document.getElementById("calGuests").value,10)||1;
+    const adults=parseInt(document.getElementById("calAdults").value,10)||1;
+    const children=parseInt(document.getElementById("calChildren").value,10)||0;
+    const guests=adults+children;
     const checkin=document.getElementById("calCheckin").value;
     const checkout=document.getElementById("calCheckout").value;
     const time=document.getElementById("calTime").value||"15:00";
@@ -2351,7 +2355,7 @@ function bindGestion(){
     if(!guest){ toast("Escribe el nombre del huésped"); return; }
     if(!checkin || !checkout || checkout<=checkin){ toast("Revisa las fechas de llegada y salida"); return; }
     const id = FINCA_BOOKINGS.length ? Math.max.apply(null, FINCA_BOOKINGS.map(function(b){return b.id;}))+1 : 1;
-    FINCA_BOOKINGS.push({ id:id, fincaId:fincaId, guest:guest, cedula:cedula, phone:phone, email:email, checkin:checkin, checkout:checkout, time:time, guests:guests, payMethod:payMethod, total:total, advance:advance, balance:balance });
+    FINCA_BOOKINGS.push({ id:id, fincaId:fincaId, guest:guest, cedula:cedula, phone:phone, email:email, checkin:checkin, checkout:checkout, time:time, guests:guests, adults:adults, children:children, payMethod:payMethod, total:total, advance:advance, balance:balance });
     const dt=new Date(checkin+"T00:00:00");
     S.calendar.year=dt.getFullYear(); S.calendar.month=dt.getMonth(); S.calendar.selectedDate=checkin; S.calendar.formOpen=false;
     const f=fincaById(fincaId);
