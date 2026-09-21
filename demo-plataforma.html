@@ -582,6 +582,15 @@ td.wrap{white-space:normal;}
 .cal-filters{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:16px 18px;margin-bottom:22px;display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:12px;align-items:end;}
 @media (max-width:760px){ .cal-filters{grid-template-columns:1fr 1fr;} }
 .cal-filters .btn{white-space:nowrap;}
+.cal-daterange{grid-column:span 2;display:flex;align-items:stretch;border:1px solid var(--border-strong);border-radius:var(--radius-s);background:var(--surface-sunken);overflow:hidden;}
+@media (max-width:760px){ .cal-daterange{grid-column:span 2;} }
+.cal-daterange:focus-within{border-color:var(--accent);}
+.cal-daterange-part{flex:1;min-width:0;padding:7px 12px;display:flex;flex-direction:column;gap:2px;}
+.cal-daterange-part label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);}
+.cal-daterange-part input{border:none;background:transparent;padding:0;font-size:14.5px;color:var(--text);font-family:var(--font-body);width:100%;}
+.cal-daterange-part input:focus{outline:none;}
+.cal-daterange-sep{display:flex;align-items:center;padding:0 2px;color:var(--text-muted);border-left:1px solid var(--border);border-right:1px solid var(--border);flex:none;}
+.cal-daterange-sep svg{width:12px;height:12px;}
 .cal-avail-list{display:flex;flex-direction:column;gap:10px;}
 .cal-avail-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;background:var(--surface-sunken);border:1px solid var(--border);border-radius:10px;}
 .cal-avail-item span:first-child{font-size:13.5px;font-weight:600;}
@@ -1514,8 +1523,11 @@ function calFilterBar(){
       '<option value="todas"'+(c.filterFinca==="todas"?' selected':'')+'>Todas las fincas</option>' +
       fincas.map(function(f){ return '<option value="'+f.id+'"'+(c.filterFinca===f.id?' selected':'')+'>'+esc(f.name)+'</option>'; }).join('') +
     '</select></div>' +
-    '<div class="field"><label>Desde</label><input id="calFilterFrom" type="date" value="'+(c.filterFrom||'')+'"></div>' +
-    '<div class="field"><label>Hasta</label><input id="calFilterTo" type="date" value="'+(c.filterTo||'')+'"></div>' +
+    '<div class="cal-daterange">' +
+      '<div class="cal-daterange-part"><label>Desde</label><input id="calFilterFrom" type="date" value="'+(c.filterFrom||'')+'"></div>' +
+      '<span class="cal-daterange-sep">'+icon('chevRight')+'</span>' +
+      '<div class="cal-daterange-part"><label>Hasta</label><input id="calFilterTo" type="date" value="'+(c.filterTo||'')+'"></div>' +
+    '</div>' +
     '<button class="btn btn-ghost btn-sm" id="calFilterClear" type="button">Limpiar filtros</button>' +
   '</div>';
 }
