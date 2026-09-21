@@ -1526,7 +1526,7 @@ function calFilterBar(){
     '<div class="cal-daterange">' +
       '<div class="cal-daterange-part"><label>Desde</label><input id="calFilterFrom" type="date" value="'+(c.filterFrom||'')+'"></div>' +
       '<span class="cal-daterange-sep">'+icon('chevRight')+'</span>' +
-      '<div class="cal-daterange-part"><label>Hasta</label><input id="calFilterTo" type="date" value="'+(c.filterTo||'')+'"></div>' +
+      '<div class="cal-daterange-part"><label>Hasta</label><input id="calFilterTo" type="date" min="'+(c.filterFrom||'')+'" value="'+(c.filterTo||'')+'"></div>' +
     '</div>' +
     '<button class="btn btn-ghost btn-sm" id="calFilterClear" type="button">Limpiar filtros</button>' +
   '</div>';
@@ -1572,7 +1572,7 @@ function calBookingForm(){
       '<div class="field"><label>Celular</label><input id="calPhone" placeholder="300 000 0000"></div>' +
       '<div class="field"><label>Correo</label><input id="calEmail" type="email" placeholder="correo@ejemplo.com"></div>' +
       '<div class="field"><label>Llegada</label><input id="calCheckin" type="date" value="'+(c.selectedDate||'')+'"></div>' +
-      '<div class="field"><label>Salida</label><input id="calCheckout" type="date"></div>' +
+      '<div class="field"><label>Salida</label><input id="calCheckout" type="date" min="'+(c.selectedDate||'')+'"></div>' +
       '<div class="field"><label>Hora de llegada</label><input id="calTime" type="time" value="15:00"></div>' +
       '<div class="field"><label>Huéspedes</label><input id="calGuests" type="number" min="1" value="2"></div>' +
       '<div class="cal-form-subhead">Información de pago</div>' +
@@ -2191,11 +2191,23 @@ function bindAdmin(){
   const calFilterFinca=document.getElementById("calFilterFinca");
   if(calFilterFinca){ calFilterFinca.addEventListener("change", function(){ S.calendar.filterFinca=calFilterFinca.value; render(); }); }
   const calFilterFrom=document.getElementById("calFilterFrom");
-  if(calFilterFrom){ calFilterFrom.addEventListener("change", function(){ S.calendar.filterFrom=calFilterFrom.value; render(); }); }
+  if(calFilterFrom){ calFilterFrom.addEventListener("change", function(){
+    S.calendar.filterFrom=calFilterFrom.value;
+    if(S.calendar.filterTo && S.calendar.filterTo<S.calendar.filterFrom){ S.calendar.filterTo=""; }
+    render();
+  }); }
   const calFilterTo=document.getElementById("calFilterTo");
   if(calFilterTo){ calFilterTo.addEventListener("change", function(){ S.calendar.filterTo=calFilterTo.value; render(); }); }
   const calFilterClear=document.getElementById("calFilterClear");
   if(calFilterClear){ calFilterClear.addEventListener("click", function(){ S.calendar.filterFinca="todas"; S.calendar.filterFrom=""; S.calendar.filterTo=""; render(); }); }
+
+  const calCheckinInput=document.getElementById("calCheckin"), calCheckoutInput=document.getElementById("calCheckout");
+  if(calCheckinInput && calCheckoutInput){
+    calCheckinInput.addEventListener("input", function(){
+      calCheckoutInput.min = calCheckinInput.value;
+      if(calCheckoutInput.value && calCheckoutInput.value<calCheckinInput.value){ calCheckoutInput.value=""; }
+    });
+  }
 
   const calTotalInput=document.getElementById("calTotal"), calAdvanceInput=document.getElementById("calAdvance"), calBalanceInput=document.getElementById("calBalance");
   if(calTotalInput && calAdvanceInput && calBalanceInput){
