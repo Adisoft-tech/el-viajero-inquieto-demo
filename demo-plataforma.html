@@ -1743,11 +1743,11 @@ function docPreviewPanel(){
 
   const obs = d.observaciones ? '<div class="doc-preview-obs"><b>Observaciones</b>'+esc(d.observaciones)+'</div>' : '';
   const sign = type==="cotizacion" ? '' : '<div class="doc-preview-sign"><div class="doc-preview-sign-line"></div><b>'+esc(EMISOR.titular)+'</b><span>'+esc(EMISOR.identificacion)+'</span></div>';
-  const tagline = type==="cotizacion" ? '<p class="doc-preview-tagline">✈️ Tu viaje te espera — este es el plan que armamos para ti.</p>' : '';
-  const footInfo = type==="cotizacion" ? (EMISOR.ciudad+' · '+EMISOR.telefono+' · '+EMISOR.correo) : (EMISOR.direccion+' · '+EMISOR.telefono+' · '+EMISOR.correo);
+  const tagline = type==="cotizacion" ? '<p class="doc-preview-tagline">Tu viaje te espera — este es el plan que armamos para ti.</p>' : '';
+  const footInfo = type==="cotizacion" ? EMISOR.nombre : (EMISOR.direccion+' · '+EMISOR.telefono+' · '+EMISOR.correo);
 
   return '<div class="doc-preview"><div class="doc-preview-inner">' +
-    '<div class="doc-preview-head"><img src="photos/logo-mark-ink.png" alt=""><div><b>El Viajero Inquieto</b><span>Agencia de viajes · Eje cafetero, Colombia</span></div></div>' +
+    '<div class="doc-preview-head"><img src="photos/logo-mark-ink.png" alt=""><div><b>El Viajero Inquieto</b></div></div>' +
     '<div class="doc-preview-title"><h2>'+typeLabel+' No. '+counter+'</h2><span>Fecha: '+fecha+'</span></div>' +
     tagline +
     parties +
@@ -1787,10 +1787,7 @@ function generateDocPDF(){
   }
   doc.setTextColor(31,41,38);
   doc.setFont("times","bold"); doc.setFontSize(15);
-  doc.text("EL VIAJERO INQUIETO", marginX+18, 21);
-  doc.setFont("helvetica","normal"); doc.setFontSize(9);
-  doc.setTextColor(91,104,95);
-  doc.text("Agencia de viajes · Eje cafetero, Colombia", marginX+18, 26);
+  doc.text("EL VIAJERO INQUIETO", marginX+18, 23);
   doc.setDrawColor(31,41,38); doc.setLineWidth(0.6);
   doc.line(marginX, 33, pageW-marginX, 33);
 
@@ -1949,7 +1946,7 @@ function generateDocPDF(){
     doc.text(EMISOR.identificacion, pageW/2, y, { align:"center" });
   }
 
-  const footText = type==="cotizacion" ? (EMISOR.ciudad+"  ·  "+EMISOR.telefono+"  ·  "+EMISOR.correo) : (EMISOR.direccion+"  ·  "+EMISOR.telefono+"  ·  "+EMISOR.correo);
+  const footText = type==="cotizacion" ? EMISOR.nombre : (EMISOR.direccion+"  ·  "+EMISOR.telefono+"  ·  "+EMISOR.correo);
   doc.setDrawColor(230,230,230); doc.line(marginX, pageH-22, pageW-marginX, pageH-22);
   doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(138,149,142);
   doc.text(footText, pageW/2, pageH-16, { align:"center" });
