@@ -315,7 +315,7 @@ img{max-width:100%;display:block;}
 
 /* ---------- footer ---------- */
 #siteFooter{background:var(--ink);color:var(--ivory);padding-block:52px 28px;}
-.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px;}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:32px;}
 @media (max-width:760px){ .foot-grid{grid-template-columns:1fr 1fr;} }
 @media (max-width:480px){ .foot-grid{grid-template-columns:1fr;} }
 .foot-grid h5{font-size:12.5px;text-transform:uppercase;letter-spacing:.1em;color:#B9C7C2;margin-bottom:14px;}
@@ -623,6 +623,7 @@ td.wrap{white-space:normal;}
 .doc-preview-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;flex-wrap:wrap;gap:8px;}
 .doc-preview-title h2{font-family:var(--font-display);font-size:22px;color:#3E6A6F;}
 .doc-preview-title span{font-size:12.5px;color:#5B685F;}
+.doc-preview-tagline{font-family:var(--font-display);font-size:14.5px;font-style:italic;color:#5F8F95;margin:-6px 0 18px;}
 .doc-preview-row{display:flex;justify-content:space-between;gap:14px;font-size:13px;padding:7px 0;border-bottom:1px solid #EDEBE3;}
 .doc-preview-row b{color:#5B685F;font-weight:600;}
 .doc-preview table{width:100%;min-width:0;table-layout:fixed;border-collapse:collapse;margin-top:14px;font-size:12.5px;}
@@ -801,6 +802,7 @@ const EMISOR = {
   titular: "Robin Julián Murillo Ramírez",
   identificacion: "C.C. 75.100.397 de Manizales",
   direccion: "Carrera 42A # 11-42, Barrio Estambul, Manizales, Caldas",
+  ciudad: "Manizales, Caldas",
   telefono: "314 873 4314",
   correo: "elviajeroinquieto11@gmail.com",
 };
@@ -1012,7 +1014,7 @@ function siteHeader(){
   return '' +
   '<header id="siteHeader"><div class="container nav-row">' +
     '<div class="brand" data-go="home">' + '<div class="brand-mark"><img class="logo-light" src="photos/logo-mark-ink.png" alt="El Viajero Inquieto"><img class="logo-dark" src="photos/logo-mark-white.png" alt="El Viajero Inquieto"></div>' +
-      '<div><span class="brand-word">El Viajero Inquieto</span><span class="brand-sub">Agencia de viajes</span></div>' +
+      '<div><span class="brand-word">El Viajero Inquieto</span><span class="brand-sub">Viaja por Colombia →</span></div>' +
     '</div>' +
     '<nav class="nav-links">' + links.map(function(l){ return '<span class="nav-link'+(isActive(l[0])?' active':'')+'" data-go="'+l[0]+'">'+l[1]+'</span>'; }).join('') + '</nav>' +
     '<div class="nav-cta">' +
@@ -1038,10 +1040,6 @@ function siteFooter(){
         '<span class="foot-link" data-go="nosotros">Nosotros</span>' +
         '<span class="foot-link" data-go="experiencias">Experiencias</span>' +
         '<span class="foot-link" data-go="contacto">Contacto</span></div>' +
-      '<div><h5>Contacto</h5>' +
-        '<span class="foot-link">hola@elviajeroinquieto.co</span>' +
-        '<span class="foot-link">+57 300 000 0000</span>' +
-        '<span class="foot-link">Manizales, Caldas</span></div>' +
     '</div>' +
     '<div class="foot-bottom"><span>© 2026 El Viajero Inquieto — sitio de demostración preparado por AdiSoft</span>' +
       '<span class="foot-admin-group">' +
@@ -1709,10 +1707,13 @@ function docPreviewPanel(){
     const dirCiudad=[d.clienteDireccion,d.clienteCiudad].filter(Boolean).join(", ");
     if(dirCiudad) clienteLines.push(esc(dirCiudad));
   }
+  const emisorLines = type==="cotizacion"
+    ? [EMISOR.ciudad, "Cel: "+EMISOR.telefono, EMISOR.correo]
+    : [EMISOR.titular, EMISOR.identificacion, EMISOR.direccion, EMISOR.telefono+' · '+EMISOR.correo];
   const parties =
     '<div class="doc-preview-parties">' +
       '<div class="doc-preview-party"><span class="doc-preview-party-tag">De</span><b>'+esc(EMISOR.nombre)+'</b>' +
-        '<p>'+esc(EMISOR.titular)+'</p><p>'+esc(EMISOR.identificacion)+'</p><p>'+esc(EMISOR.direccion)+'</p><p>'+esc(EMISOR.telefono)+' · '+esc(EMISOR.correo)+'</p></div>' +
+        emisorLines.map(function(l){return '<p>'+esc(l)+'</p>';}).join('') + '</div>' +
       '<div class="doc-preview-party"><span class="doc-preview-party-tag">'+clienteTag+'</span><b>'+(esc(d.cliente||"")||"—")+'</b>' +
         (clienteLines.length ? clienteLines.map(function(l){return '<p>'+l+'</p>';}).join('') : '<p>—</p>') +
       '</div>' +
@@ -1731,7 +1732,7 @@ function docPreviewPanel(){
     body =
       (d.objeto ? '<div class="doc-preview-objeto"><b>Asunto</b>'+esc(d.objeto)+'</div>' : '') +
       itemsTable +
-      '<div class="doc-preview-total"><span>Total a pagar</span><b>'+cop(itemsTotal)+'</b></div>' +
+      '<div class="doc-preview-total"><span>Valor de tu viaje</span><b>'+cop(itemsTotal)+'</b></div>' +
       (d.validoHasta ? '<span class="doc-preview-badge">'+icon('calendar')+'Válida hasta el '+formatDateEs(d.validoHasta)+'</span>' : '');
   } else {
     body = '<div class="doc-preview-row"><b>Forma de pago</b><span>'+(d.formaPago||"Transferencia")+'</span></div>' +
@@ -1741,16 +1742,19 @@ function docPreviewPanel(){
   }
 
   const obs = d.observaciones ? '<div class="doc-preview-obs"><b>Observaciones</b>'+esc(d.observaciones)+'</div>' : '';
-  const sign = '<div class="doc-preview-sign"><div class="doc-preview-sign-line"></div><b>'+esc(EMISOR.titular)+'</b><span>'+esc(EMISOR.identificacion)+'</span></div>';
+  const sign = type==="cotizacion" ? '' : '<div class="doc-preview-sign"><div class="doc-preview-sign-line"></div><b>'+esc(EMISOR.titular)+'</b><span>'+esc(EMISOR.identificacion)+'</span></div>';
+  const tagline = type==="cotizacion" ? '<p class="doc-preview-tagline">✈️ Tu viaje te espera — este es el plan que armamos para ti.</p>' : '';
+  const footInfo = type==="cotizacion" ? (EMISOR.ciudad+' · '+EMISOR.telefono+' · '+EMISOR.correo) : (EMISOR.direccion+' · '+EMISOR.telefono+' · '+EMISOR.correo);
 
   return '<div class="doc-preview"><div class="doc-preview-inner">' +
     '<div class="doc-preview-head"><img src="photos/logo-mark-ink.png" alt=""><div><b>El Viajero Inquieto</b><span>Agencia de viajes · Eje cafetero, Colombia</span></div></div>' +
     '<div class="doc-preview-title"><h2>'+typeLabel+' No. '+counter+'</h2><span>Fecha: '+fecha+'</span></div>' +
+    tagline +
     parties +
     body +
     obs +
     sign +
-    '<div class="doc-preview-foot">'+EMISOR.direccion+' · '+EMISOR.telefono+' · '+EMISOR.correo+'</div>' +
+    '<div class="doc-preview-foot">'+footInfo+'</div>' +
   '</div></div>';
 }
 function adminDocumentos(){
@@ -1801,6 +1805,13 @@ function generateDocPDF(){
   doc.line(marginX, y, pageW-marginX, y);
   y+=8;
 
+  if(type==="cotizacion"){
+    doc.setFont("times","italic"); doc.setFontSize(11); doc.setTextColor(95,143,149);
+    const tagLines = doc.splitTextToSize("Tu viaje te espera — este es el plan que armamos para ti.", pageW-marginX*2);
+    doc.text(tagLines, marginX, y);
+    y += 5.5*tagLines.length + 4;
+  }
+
   function row(label, value){
     doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(91,104,95);
     doc.text(label, marginX, y);
@@ -1832,7 +1843,9 @@ function generateDocPDF(){
   }
   const colW = (pageW-marginX*2-14)/2;
   const leftX = marginX, rightX = marginX+colW+14;
-  const emisorLines = [EMISOR.titular, EMISOR.identificacion, EMISOR.direccion, EMISOR.telefono+" · "+EMISOR.correo];
+  const emisorLines = type==="cotizacion"
+    ? [EMISOR.ciudad, "Cel: "+EMISOR.telefono, EMISOR.correo]
+    : [EMISOR.titular, EMISOR.identificacion, EMISOR.direccion, EMISOR.telefono+" · "+EMISOR.correo];
   const clienteTagPdf = type==="pago"?"Beneficiario":type==="cobro"?"Cobrar a":"Cliente";
   const clienteExtra = [];
   if(d.clienteId) clienteExtra.push(d.clienteId);
@@ -1894,7 +1907,7 @@ function generateDocPDF(){
     y+=3;
   });
   y+=3;
-  totalBanner(type==="cotizacion"?"TOTAL A PAGAR":type==="pago"?"VALOR PAGADO":"VALOR A COBRAR", cop(itemsTotal));
+  totalBanner(type==="cotizacion"?"VALOR DE TU VIAJE":type==="pago"?"VALOR PAGADO":"VALOR A COBRAR", cop(itemsTotal));
   if(type==="cotizacion" && d.validoHasta){
     const label = "Válida hasta el "+formatDateEs(d.validoHasta);
     doc.setFont("helvetica","bold"); doc.setFontSize(8.5);
@@ -1922,21 +1935,24 @@ function generateDocPDF(){
     y += 5*obsLines.length + 6;
   }
 
-  /* Línea de firma del emisor, como en las cuentas de cobro/pago reales */
-  y += 8;
-  const signW=70, signX=pageW/2-signW/2;
-  doc.setDrawColor(31,41,38); doc.setLineWidth(0.3);
-  doc.line(signX, y, signX+signW, y);
-  y+=5;
-  doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(31,41,38);
-  doc.text(EMISOR.titular, pageW/2, y, { align:"center" });
-  y+=4.5;
-  doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(91,104,95);
-  doc.text(EMISOR.identificacion, pageW/2, y, { align:"center" });
+  /* Línea de firma del emisor, como en las cuentas de cobro/pago reales (la cotización no lleva firma formal) */
+  if(type!=="cotizacion"){
+    y += 8;
+    const signW=70, signX=pageW/2-signW/2;
+    doc.setDrawColor(31,41,38); doc.setLineWidth(0.3);
+    doc.line(signX, y, signX+signW, y);
+    y+=5;
+    doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(31,41,38);
+    doc.text(EMISOR.titular, pageW/2, y, { align:"center" });
+    y+=4.5;
+    doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(91,104,95);
+    doc.text(EMISOR.identificacion, pageW/2, y, { align:"center" });
+  }
 
+  const footText = type==="cotizacion" ? (EMISOR.ciudad+"  ·  "+EMISOR.telefono+"  ·  "+EMISOR.correo) : (EMISOR.direccion+"  ·  "+EMISOR.telefono+"  ·  "+EMISOR.correo);
   doc.setDrawColor(230,230,230); doc.line(marginX, pageH-22, pageW-marginX, pageH-22);
   doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(138,149,142);
-  doc.text(EMISOR.direccion+"  ·  "+EMISOR.telefono+"  ·  "+EMISOR.correo, pageW/2, pageH-16, { align:"center" });
+  doc.text(footText, pageW/2, pageH-16, { align:"center" });
 
   const safeClient = (d.cliente||"cliente").replace(/[^a-z0-9]+/gi,"_").replace(/^_+|_+$/g,"").slice(0,30) || "cliente";
   const prefix = type==="cotizacion"?"Cotizacion_":type==="cobro"?"CuentaDeCobro_":"CuentaDePago_";
