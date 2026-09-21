@@ -1,0 +1,17 @@
+{
+  "name": "El Viajero Inquieto — Panel de Gestión",
+  "short_name": "Gestión VI",
+  "description": "Calendario de reservas y generación de documentos de El Viajero Inquieto.",
+  "start_url": "./#/gestion",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F7F5EF",
+  "theme_color": "#1F2926",
+  "lang": "es-CO",
+  "icons": [
+    { "src": "photos/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "photos/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "photos/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

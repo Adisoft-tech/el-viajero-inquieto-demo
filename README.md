@@ -11,6 +11,8 @@ Es una aplicación de una sola página (HTML/CSS/JS vanilla, sin build ni depend
 - **Flujo de reserva** de 4 pasos con checkout simulado (Wompi: tarjeta, PSE, Nequi).
 - **Asistente de chat** que responde preguntas leyendo el catálogo cargado en la página — reglas locales en JavaScript, sin LLM ni backend.
 - **Panel de administración** (login simulado): resumen con métricas y gráfico, tabla de reservas, inventario editable en vivo, y edición de contenido de la portada.
+- **Panel de gestión** (login simulado, separado del panel administrativo): calendario de reservas de las fincas y generador de documentos (cotizaciones, cuentas de cobro y de pago) en PDF con el membrete de la marca.
+- **Instalable como PWA**: tiene manifest, ícono e íconos y service worker (`sw.js`), así que se puede "agregar a la pantalla de inicio" desde el navegador — al abrirse como app instalada entra directo al panel de gestión. Optimizado para verse bien en pantallas de celular.
 
 ## Cómo correrlo en local
 

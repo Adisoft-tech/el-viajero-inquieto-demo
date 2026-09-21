@@ -1,4 +1,13 @@
 <title>El Viajero Inquieto</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1F2926">
+<link rel="icon" href="photos/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="photos/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gestión VI">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -551,26 +560,34 @@ td.wrap{white-space:normal;}
 .carousel-arrow svg{width:16px;height:16px;}
 
 /* ---------- admin calendar ---------- */
-.cal-wrap{display:grid;grid-template-columns:1.6fr 1fr;gap:22px;align-items:start;}
-@media (max-width:980px){ .cal-wrap{grid-template-columns:1fr;} }
+.cal-wrap{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:22px;align-items:start;}
+@media (max-width:1180px){ .cal-wrap{grid-template-columns:minmax(0,1fr);} }
 .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap;}
 .cal-head h3{font-family:var(--font-body);font-size:17px;font-weight:700;text-transform:capitalize;}
 .cal-nav{display:flex;align-items:center;gap:8px;}
 .cal-nav button{width:32px;height:32px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .cal-nav button:hover{background:var(--accent-soft);border-color:var(--accent);}
 .cal-nav svg{width:14px;height:14px;}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;}
 .cal-daylabel{text-align:center;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;padding-bottom:6px;}
-.cal-day{min-height:118px;border:1px solid var(--border);border-radius:10px;padding:8px;cursor:pointer;background:var(--surface);display:flex;flex-direction:column;gap:4px;}
+.cal-day{min-height:118px;border:1px solid var(--border);border-radius:10px;padding:8px;cursor:pointer;background:var(--surface);display:flex;flex-direction:column;gap:4px;min-width:0;}
 .cal-day:hover{border-color:var(--accent);}
 .cal-day.other-month{opacity:.35;}
 .cal-day.today{border-color:var(--accent);border-width:2px;}
 .cal-day.selected{background:var(--accent-soft);border-color:var(--accent);}
 .cal-day-num{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;}
-.cal-chip{font-size:11.5px;font-weight:700;line-height:1.3;background:var(--sand);color:var(--ink);padding:3px 7px;border-radius:6px;white-space:normal;word-break:normal;overflow-wrap:break-word;width:100%;box-sizing:border-box;align-self:stretch;}
+.cal-chip{display:block;font-size:11.5px;font-weight:700;line-height:1.3;background:var(--sand);color:var(--ink);padding:3px 7px;border-radius:6px;white-space:normal;word-break:normal;overflow-wrap:break-word;width:100%;box-sizing:border-box;align-self:stretch;}
 :root[data-theme="dark"] .cal-chip{background:var(--accent-soft);color:var(--accent);}
 .cal-chip-more{font-size:10.5px;font-weight:700;color:var(--text-muted);padding:1px 7px;}
-@media (max-width:640px){ .cal-day{min-height:92px;} }
+@media (max-width:640px){
+  .cal-day{min-height:80px;padding:6px;gap:3px;}
+  .cal-grid{gap:5px;}
+  .cal-chip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;padding:3px 5px;}
+}
+@media (max-width:400px){
+  .cal-day-num{font-size:12px;}
+  .cal-chip, .cal-chip-more{font-size:9px;padding:2px 4px;}
+}
 .cal-side{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:20px;}
 .cal-side h4{font-family:var(--font-body);font-size:15px;font-weight:700;margin-bottom:12px;}
 .cal-booking-item{padding:11px 0;border-bottom:1px solid var(--border);}
@@ -605,15 +622,16 @@ td.wrap{white-space:normal;}
 .doc-type-tabs{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
 .doc-type-tab{border:1px solid var(--border-strong);background:var(--surface);border-radius:100px;padding:9px 18px;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--text);}
 .doc-type-tab.active{background:var(--ink);border-color:var(--ink);color:var(--ivory);}
-.doc-layout{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start;}
-@media (max-width:980px){ .doc-layout{grid-template-columns:1fr;} }
+.doc-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:26px;align-items:start;}
+@media (max-width:1180px){ .doc-layout{grid-template-columns:minmax(0,1fr);} }
 .doc-items-row{display:grid;grid-template-columns:1fr 70px 120px 32px;gap:8px;margin-bottom:8px;align-items:center;}
-@media (max-width:520px){ .doc-items-row{grid-template-columns:1fr 1fr;grid-template-areas:"desc desc" "qty price" "rm rm";} .doc-items-row :nth-child(1){grid-area:desc;} .doc-items-row :nth-child(2){grid-area:qty;} .doc-items-row :nth-child(3){grid-area:price;} .doc-items-row :nth-child(4){grid-area:rm;justify-self:end;} }
+@media (max-width:660px){ .doc-items-row{grid-template-columns:1fr 1fr;grid-template-areas:"desc desc" "qty price" "rm rm";} .doc-items-row :nth-child(1){grid-area:desc;} .doc-items-row :nth-child(2){grid-area:qty;} .doc-items-row :nth-child(3){grid-area:price;} .doc-items-row :nth-child(4){grid-area:rm;justify-self:end;} }
 .doc-items-row input{width:100%;}
 .doc-item-remove{width:30px;height:30px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .doc-item-remove svg{width:13px;height:13px;}
 
-.doc-preview{position:sticky;top:96px;background:#FFFFFF;color:#1F2926;border:1px solid var(--border);border-radius:var(--radius-m);padding:34px 30px;box-shadow:var(--shadow-md);position:relative;overflow:hidden;min-height:420px;}
+.doc-preview{position:sticky;top:96px;background:#FFFFFF;color:#1F2926;border:1px solid var(--border);border-radius:var(--radius-m);padding:34px 30px;box-shadow:var(--shadow-md);overflow:hidden;min-height:420px;}
+@media (max-width:1180px){ .doc-preview{position:relative;top:auto;} }
 .doc-preview::before{content:"";position:absolute;inset:0;background-image:url('photos/logo-mark-ink.png');background-repeat:no-repeat;background-position:center;background-size:62%;opacity:.06;pointer-events:none;}
 .doc-preview-inner{position:relative;z-index:1;}
 .doc-preview-head{display:flex;align-items:center;gap:12px;border-bottom:2px solid #1F2926;padding-bottom:14px;margin-bottom:18px;}
@@ -627,7 +645,7 @@ td.wrap{white-space:normal;}
 .doc-preview-row{display:flex;justify-content:space-between;gap:14px;font-size:13px;padding:7px 0;border-bottom:1px solid #EDEBE3;}
 .doc-preview-row b{color:#5B685F;font-weight:600;}
 .doc-preview table{width:100%;min-width:0;table-layout:fixed;border-collapse:collapse;margin-top:14px;font-size:12.5px;}
-.doc-preview th{text-align:left;background:#1F2926;color:#F7F5EF;padding:7px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+.doc-preview th{text-align:left;background:#1F2926;color:#F7F5EF;padding:7px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:normal;word-wrap:break-word;}
 .doc-preview td{padding:7px 8px;border-bottom:1px solid #EDEBE3;word-wrap:break-word;white-space:normal;}
 .doc-preview th:first-child, .doc-preview td:first-child{width:42%;}
 .doc-preview th:nth-child(2), .doc-preview td:nth-child(2){width:14%;}
@@ -2539,6 +2557,12 @@ function start(data){
   }
 }
 if(window.claude && window.claude.hot && window.claude.hot.ready){ window.claude.hot.ready(start); } else { start({}); }
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
 
 })();
 </script>
