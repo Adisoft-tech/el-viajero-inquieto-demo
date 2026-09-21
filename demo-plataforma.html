@@ -558,16 +558,18 @@ td.wrap{white-space:normal;}
 .cal-nav button{width:32px;height:32px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .cal-nav button:hover{background:var(--accent-soft);border-color:var(--accent);}
 .cal-nav svg{width:14px;height:14px;}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
 .cal-daylabel{text-align:center;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;padding-bottom:6px;}
-.cal-day{min-height:76px;border:1px solid var(--border);border-radius:10px;padding:6px;cursor:pointer;background:var(--surface);display:flex;flex-direction:column;gap:3px;}
+.cal-day{min-height:118px;border:1px solid var(--border);border-radius:10px;padding:8px;cursor:pointer;background:var(--surface);display:flex;flex-direction:column;gap:4px;}
 .cal-day:hover{border-color:var(--accent);}
 .cal-day.other-month{opacity:.35;}
 .cal-day.today{border-color:var(--accent);border-width:2px;}
 .cal-day.selected{background:var(--accent-soft);border-color:var(--accent);}
-.cal-day-num{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;}
-.cal-chip{font-size:10px;font-weight:700;background:var(--sand);color:var(--ink);padding:2px 6px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-day-num{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;}
+.cal-chip{font-size:11.5px;font-weight:700;line-height:1.3;background:var(--sand);color:var(--ink);padding:3px 7px;border-radius:6px;white-space:normal;word-break:normal;overflow-wrap:break-word;width:100%;box-sizing:border-box;align-self:stretch;}
 :root[data-theme="dark"] .cal-chip{background:var(--accent-soft);color:var(--accent);}
+.cal-chip-more{font-size:10.5px;font-weight:700;color:var(--text-muted);padding:1px 7px;}
+@media (max-width:640px){ .cal-day{min-height:92px;} }
 .cal-side{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:20px;}
 .cal-side h4{font-family:var(--font-body);font-size:15px;font-weight:700;margin-bottom:12px;}
 .cal-booking-item{padding:11px 0;border-bottom:1px solid var(--border);}
@@ -575,6 +577,19 @@ td.wrap{white-space:normal;}
 .cal-booking-item b{display:block;font-size:14px;}
 .cal-booking-item span{font-size:12.5px;color:var(--text-muted);display:block;margin-top:2px;}
 .cal-empty{font-size:13px;color:var(--text-muted);}
+
+/* filters + availability check */
+.cal-filters{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:16px 18px;margin-bottom:22px;display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:12px;align-items:end;}
+@media (max-width:760px){ .cal-filters{grid-template-columns:1fr 1fr;} }
+.cal-filters .btn{white-space:nowrap;}
+.cal-avail-list{display:flex;flex-direction:column;gap:10px;}
+.cal-avail-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;background:var(--surface-sunken);border:1px solid var(--border);border-radius:10px;}
+.cal-avail-item span:first-child{font-size:13.5px;font-weight:600;}
+.cal-avail-sub{font-size:12.5px;color:var(--text-muted);margin-bottom:14px;}
+
+/* booking form additions */
+.cal-form-subhead{grid-column:1/-1;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-top:6px;padding-top:14px;border-top:1px solid var(--border);}
+.cal-readonly{background:var(--bg-alt) !important;cursor:not-allowed;color:var(--text-muted);}
 
 /* ---------- documents ---------- */
 .doc-type-tabs{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
@@ -600,12 +615,39 @@ td.wrap{white-space:normal;}
 .doc-preview-title span{font-size:12.5px;color:#5B685F;}
 .doc-preview-row{display:flex;justify-content:space-between;gap:14px;font-size:13px;padding:7px 0;border-bottom:1px solid #EDEBE3;}
 .doc-preview-row b{color:#5B685F;font-weight:600;}
-.doc-preview table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12.5px;}
+.doc-preview table{width:100%;min-width:0;table-layout:fixed;border-collapse:collapse;margin-top:14px;font-size:12.5px;}
 .doc-preview th{text-align:left;background:#1F2926;color:#F7F5EF;padding:7px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
-.doc-preview td{padding:7px 8px;border-bottom:1px solid #EDEBE3;}
-.doc-preview-total{display:flex;justify-content:flex-end;gap:14px;margin-top:14px;font-size:16px;font-weight:700;color:#1F2926;}
+.doc-preview td{padding:7px 8px;border-bottom:1px solid #EDEBE3;word-wrap:break-word;white-space:normal;}
+.doc-preview th:first-child, .doc-preview td:first-child{width:42%;}
+.doc-preview th:nth-child(2), .doc-preview td:nth-child(2){width:14%;}
+.doc-preview th:nth-child(3), .doc-preview td:nth-child(3){width:22%;}
+.doc-preview th:last-child, .doc-preview td:last-child{width:22%;}
+/* De/Para: bloques de emisor y cliente en paralelo, como en cotizaciones y facturas reales */
+.doc-preview-parties{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #EDEBE3;}
+@media (max-width:480px){ .doc-preview-parties{grid-template-columns:1fr;} }
+.doc-preview-party-tag{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8A958E;margin-bottom:4px;}
+.doc-preview-party b{font-family:var(--font-display);font-size:15px;color:#1F2926;display:block;margin-bottom:3px;}
+.doc-preview-party p{font-size:11.5px;color:#5B685F;line-height:1.5;}
+/* Objeto/asunto: una línea corta que resume el propósito, distinta de la lista de ítems */
+.doc-preview-objeto{font-size:12.5px;color:#1F2926;background:#F7F5EF;border:1px solid #EDEBE3;border-radius:8px;padding:10px 13px;margin-bottom:16px;}
+.doc-preview-objeto b{color:#5B685F;font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.06em;display:block;margin-bottom:3px;}
+/* Banner de total a pagar en color de marca, para que el monto sea lo primero que se ve */
+.doc-preview-total{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:16px;background:#1F2926;color:#F7F5EF;border-radius:10px;padding:14px 18px;}
+.doc-preview-total span{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#C9D6D1;}
+.doc-preview-total b{font-family:var(--font-display);font-size:22px;font-weight:700;}
 .doc-preview-words{margin-top:16px;font-size:12px;font-style:italic;color:#5B685F;}
-.doc-preview-foot{margin-top:30px;padding-top:14px;border-top:1px solid #EDEBE3;font-size:11px;color:#8A958E;text-align:center;}
+/* Vigencia como chip de color, más visible que una nota al pie */
+.doc-preview-badge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:6px 13px;border-radius:100px;background:#E9E1D2;color:#1F2926;margin-top:14px;}
+.doc-preview-badge svg{width:13px;height:13px;}
+/* Observaciones: notas/términos libres cerca del final */
+.doc-preview-obs{margin-top:16px;font-size:12px;color:#5B685F;background:#FBF9F4;border-left:3px solid #8FA89A;padding:10px 13px;border-radius:0 8px 8px 0;line-height:1.5;}
+.doc-preview-obs b{display:block;color:#1F2926;font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.06em;margin-bottom:3px;}
+/* Línea de firma del emisor, como en las cuentas de cobro/pago reales */
+.doc-preview-sign{margin-top:32px;text-align:center;}
+.doc-preview-sign .doc-preview-sign-line{width:220px;max-width:70%;margin:0 auto 8px;border-top:1px solid #1F2926;}
+.doc-preview-sign b{font-size:12.5px;display:block;color:#1F2926;}
+.doc-preview-sign span{font-size:11px;color:#8A958E;}
+.doc-preview-foot{margin-top:26px;padding-top:14px;border-top:1px solid #EDEBE3;font-size:11px;color:#8A958E;text-align:center;}
 </style>
 
 <div id="app"></div>
@@ -736,12 +778,12 @@ let BOOKINGS = [
 const WEEKLY = [["Sem 1",5],["Sem 2",8],["Sem 3",11],["Sem 4",9],["Sem 5",13],["Sem 6",16]];
 
 let FINCA_BOOKINGS = [
-  {id:1, fincaId:"finca-serrana", guest:"Familia Gómez", phone:"300 000 0000", checkin:"2026-09-14", checkout:"2026-09-16", time:"15:00", guests:6},
-  {id:2, fincaId:"refugio-cocora", guest:"James Whitfield", phone:"+44 7000 000000", checkin:"2026-09-20", checkout:"2026-09-22", time:"14:00", guests:2},
-  {id:3, fincaId:"termales-otun", guest:"Camila Restrepo", phone:"300 111 2222", checkin:"2026-09-25", checkout:"2026-09-27", time:"16:00", guests:5},
-  {id:4, fincaId:"hacienda-buenavista", guest:"Familia Meyer", phone:"300 333 4444", checkin:"2026-09-30", checkout:"2026-10-03", time:"13:00", guests:10},
-  {id:5, fincaId:"mirador-quindio", guest:"Andrés Molina", phone:"300 555 6666", checkin:"2026-10-09", checkout:"2026-10-11", time:"15:30", guests:4},
-  {id:6, fincaId:"cafe-bosque", guest:"Marta Londoño", phone:"300 777 8888", checkin:"2026-10-16", checkout:"2026-10-18", time:"12:00", guests:3},
+  {id:1, fincaId:"finca-serrana", guest:"Familia Gómez", cedula:"43.215.678", phone:"300 000 0000", email:"familiagomez@gmail.com", checkin:"2026-09-14", checkout:"2026-09-16", time:"15:00", guests:6, payMethod:"Transferencia", total:840000, advance:400000, balance:440000},
+  {id:2, fincaId:"refugio-cocora", guest:"James Whitfield", cedula:"PA-778341", phone:"+44 7000 000000", email:"jwhitfield@gmail.com", checkin:"2026-09-20", checkout:"2026-09-22", time:"14:00", guests:2, payMethod:"Contado", total:560000, advance:560000, balance:0},
+  {id:3, fincaId:"termales-otun", guest:"Camila Restrepo", cedula:"1.053.201.884", phone:"300 111 2222", email:"camila.restrepo@hotmail.com", checkin:"2026-09-25", checkout:"2026-09-27", time:"16:00", guests:5, payMethod:"Efectivo", total:780000, advance:300000, balance:480000},
+  {id:4, fincaId:"hacienda-buenavista", guest:"Familia Meyer", cedula:"DE-4471002", phone:"300 333 4444", email:"family.meyer@web.de", checkin:"2026-09-30", checkout:"2026-10-03", time:"13:00", guests:10, payMethod:"Transferencia", total:1950000, advance:975000, balance:975000},
+  {id:5, fincaId:"mirador-quindio", guest:"Andrés Molina", cedula:"1.098.765.432", phone:"300 555 6666", email:"andres.molina@gmail.com", checkin:"2026-10-09", checkout:"2026-10-11", time:"15:30", guests:4, payMethod:"Crédito", total:620000, advance:200000, balance:420000},
+  {id:6, fincaId:"cafe-bosque", guest:"Marta Londoño", cedula:"24.678.901", phone:"300 777 8888", email:"marta.londono@yahoo.com", checkin:"2026-10-16", checkout:"2026-10-18", time:"12:00", guests:3, payMethod:"Transferencia", total:720000, advance:720000, balance:0},
 ];
 
 const EMISOR = {
@@ -923,7 +965,7 @@ const S = {
   catalog:{cat:"alojamientos", sort:"recomendado", town:"todos"},
   booking:{listingId:null, step:1, checkin:"", checkout:"", date:"", guests:2, name:"", email:"", phone:"", payMethod:"card"},
   admin:{authed:false, tab:"resumen", editing:null},
-  calendar:{year:2026, month:8, selectedDate:null, formOpen:false},
+  calendar:{year:2026, month:8, selectedDate:null, formOpen:false, filterFinca:"todas", filterFrom:"", filterTo:""},
   docs:{type:"cotizacion", counters:{cobro:1, pago:1, cotizacion:1}, items:[{desc:"", qty:1, price:0}]},
   chat:{open:false, messages:[], booted:false},
   detail:{forId:null, photoIndex:0, lightbox:false},
@@ -1427,7 +1469,12 @@ function inventoryRow(l){
 function fincaListings(){ return LISTINGS.filter(function(l){ return l.cat==="alojamientos"; }); }
 function fincaById(id){ return LISTINGS.find(function(l){ return l.id===id; }); }
 function isoDate(y,m,d){ return y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0"); }
-function bookingsOnDate(iso){ return FINCA_BOOKINGS.filter(function(b){ return iso>=b.checkin && iso<b.checkout; }); }
+function fincaFilteredBookings(){
+  const fincaId = S.calendar.filterFinca;
+  return (!fincaId || fincaId==="todas") ? FINCA_BOOKINGS : FINCA_BOOKINGS.filter(function(b){ return b.fincaId===fincaId; });
+}
+function bookingsOnDate(iso){ return fincaFilteredBookings().filter(function(b){ return iso>=b.checkin && iso<b.checkout; }); }
+function rangesOverlap(fromA,toA,fromB,toB){ return fromA<toB && fromB<toA; }
 function formatDateEs(iso){
   if(!iso) return "—";
   const d = new Date(iso+"T00:00:00");
@@ -1438,12 +1485,12 @@ function dayCell(dnum, otherMonth, iso){
   const c=S.calendar;
   const bookings = bookingsOnDate(iso);
   const cls = "cal-day"+(iso===DEMO_TODAY?" today":"")+(iso===c.selectedDate?" selected":"");
-  const shown = bookings.slice(0,2).map(function(b){
+  const shown = bookings.slice(0,3).map(function(b){
     const f=fincaById(b.fincaId);
     const short = f ? f.name.replace(/^(Finca|Cabañas|Hacienda|Refugio)\s+/,"") : b.fincaId;
     return '<span class="cal-chip">'+esc(short)+'</span>';
   }).join('');
-  const more = bookings.length>2 ? '<span class="cal-chip">+'+(bookings.length-2)+'</span>' : '';
+  const more = bookings.length>3 ? '<span class="cal-chip-more">+'+(bookings.length-3)+' más</span>' : '';
   return '<div class="'+cls+'" data-caldate="'+iso+'"><div class="cal-day-num">'+dnum+'</div>'+shown+more+'</div>';
 }
 function calGrid(){
@@ -1459,8 +1506,34 @@ function calGrid(){
   for(let d=1; d<=trailing; d++){ cells += dayCell(d, true, null); }
   return '<div class="cal-grid">'+cells+'</div>';
 }
+function calFilterBar(){
+  const c=S.calendar;
+  const fincas = fincaListings();
+  return '<div class="cal-filters">' +
+    '<div class="field"><label>Finca</label><select id="calFilterFinca">' +
+      '<option value="todas"'+(c.filterFinca==="todas"?' selected':'')+'>Todas las fincas</option>' +
+      fincas.map(function(f){ return '<option value="'+f.id+'"'+(c.filterFinca===f.id?' selected':'')+'>'+esc(f.name)+'</option>'; }).join('') +
+    '</select></div>' +
+    '<div class="field"><label>Desde</label><input id="calFilterFrom" type="date" value="'+(c.filterFrom||'')+'"></div>' +
+    '<div class="field"><label>Hasta</label><input id="calFilterTo" type="date" value="'+(c.filterTo||'')+'"></div>' +
+    '<button class="btn btn-ghost btn-sm" id="calFilterClear" type="button">Limpiar filtros</button>' +
+  '</div>';
+}
+function calAvailabilityPanel(){
+  const c=S.calendar;
+  const fincas = fincaListings();
+  const rows = fincas.map(function(f){
+    const clash = FINCA_BOOKINGS.some(function(b){ return b.fincaId===f.id && rangesOverlap(c.filterFrom,c.filterTo,b.checkin,b.checkout); });
+    return '<div class="cal-avail-item"><span>'+esc(f.name)+'</span>' +
+      '<span class="chip '+(clash?'chip-bad':'chip-ok')+'">'+(clash?'Reservada':'Disponible')+'</span></div>';
+  }).join('');
+  return '<div class="cal-side"><h4>Disponibilidad por rango</h4>' +
+    '<p class="cal-avail-sub">'+formatDateEs(c.filterFrom)+' → '+formatDateEs(c.filterTo)+'</p>' +
+    '<div class="cal-avail-list">'+rows+'</div></div>';
+}
 function calSidePanel(){
   const c=S.calendar;
+  if(c.filterFrom && c.filterTo){ return calAvailabilityPanel(); }
   if(!c.selectedDate){
     return '<div class="cal-side"><h4>Selecciona un día</h4><p class="cal-empty">Haz clic en una fecha del calendario para ver sus reservas, o crea una nueva con el botón "Nueva reserva".</p></div>';
   }
@@ -1470,7 +1543,9 @@ function calSidePanel(){
       const f=fincaById(b.fincaId);
       return '<div class="cal-booking-item"><b>'+(f?f.name:b.fincaId)+'</b>' +
         '<span>'+esc(b.guest)+' · '+b.guests+' huésped(es) · '+(b.phone||"")+'</span>' +
-        '<span>Llegada '+formatDateEs(b.checkin)+' · '+b.time+'h  →  Salida '+formatDateEs(b.checkout)+'</span></div>';
+        '<span>Llegada '+formatDateEs(b.checkin)+' · '+b.time+'h  →  Salida '+formatDateEs(b.checkout)+'</span>' +
+        '<span>C.C./Pasaporte '+esc(b.cedula||'—')+' · '+esc(b.email||'—')+'</span>' +
+        '<span>'+(b.payMethod||'—')+' · Total '+cop(b.total||0)+' · Abono '+cop(b.advance||0)+' · Saldo '+cop(b.balance||0)+'</span></div>';
     }).join('') : '<p class="cal-empty">Sin reservas para este día.</p>') +
   '</div>';
 }
@@ -1479,30 +1554,41 @@ function calBookingForm(){
   const fincas = fincaListings();
   return '<div class="panel"><div class="panel-head"><h3>Nueva reserva</h3><button class="icon-btn" id="calFormClose" aria-label="Cerrar">'+icon('close')+'</button></div>' +
     '<div class="form-grid">' +
-      '<div class="field full"><label>Finca</label><select id="calFinca">' + fincas.map(function(f){ return '<option value="'+f.id+'">'+f.name+'</option>'; }).join('') + '</select></div>' +
-      '<div class="field"><label>Huésped</label><input id="calGuest" placeholder="Nombre del huésped"></div>' +
-      '<div class="field"><label>Teléfono</label><input id="calPhone" placeholder="300 000 0000"></div>' +
+      '<div class="field full"><label>Finca</label><select id="calFinca">' + fincas.map(function(f){ return '<option value="'+f.id+'"'+(c.filterFinca!=="todas" && c.filterFinca===f.id?' selected':'')+'>'+esc(f.name)+'</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label>Nombre completo</label><input id="calGuest" placeholder="Nombre del huésped"></div>' +
+      '<div class="field"><label>Cédula / Pasaporte</label><input id="calCedula" placeholder="C.C. 0000000"></div>' +
+      '<div class="field"><label>Celular</label><input id="calPhone" placeholder="300 000 0000"></div>' +
+      '<div class="field"><label>Correo</label><input id="calEmail" type="email" placeholder="correo@ejemplo.com"></div>' +
       '<div class="field"><label>Llegada</label><input id="calCheckin" type="date" value="'+(c.selectedDate||'')+'"></div>' +
       '<div class="field"><label>Salida</label><input id="calCheckout" type="date"></div>' +
       '<div class="field"><label>Hora de llegada</label><input id="calTime" type="time" value="15:00"></div>' +
       '<div class="field"><label>Huéspedes</label><input id="calGuests" type="number" min="1" value="2"></div>' +
+      '<div class="cal-form-subhead">Información de pago</div>' +
+      '<div class="field"><label>Forma de pago</label><select id="calPayMethod">' +
+        '<option value="Transferencia">Transferencia</option><option value="Efectivo">Efectivo</option>' +
+        '<option value="Contado">Contado</option><option value="Crédito">Crédito</option>' +
+      '</select></div>' +
+      '<div class="field"><label>Valor total</label><input id="calTotal" type="number" min="0" step="10000" placeholder="0"></div>' +
+      '<div class="field"><label>Abona (anticipo)</label><input id="calAdvance" type="number" min="0" step="10000" placeholder="0"></div>' +
+      '<div class="field"><label>Saldo pendiente</label><input id="calBalance" class="cal-readonly" type="text" value="'+cop(0)+'" readonly></div>' +
     '</div>' +
     '<button class="btn btn-accent" style="margin-top:16px;" id="calSaveBtn">Guardar reserva</button>' +
   '</div>';
 }
 function upcomingBookingsTable(){
-  const rows = FINCA_BOOKINGS.slice().sort(function(a,b){ return a.checkin<b.checkin?-1:a.checkin>b.checkin?1:0; });
-  return '<div class="table-wrap"><table><thead><tr><th>Finca</th><th>Huésped</th><th>Llegada</th><th>Salida</th><th>Hora</th><th>Huéspedes</th></tr></thead><tbody>' +
-    rows.map(function(b){
+  const rows = fincaFilteredBookings().slice().sort(function(a,b){ return a.checkin<b.checkin?-1:a.checkin>b.checkin?1:0; });
+  return '<div class="table-wrap"><table><thead><tr><th>Finca</th><th>Huésped</th><th>Cédula</th><th>Correo</th><th>Llegada</th><th>Salida</th><th>Hora</th><th>Huéspedes</th><th>Pago</th><th>Total</th><th>Abono</th><th>Saldo</th></tr></thead><tbody>' +
+    (rows.length ? rows.map(function(b){
       const f=fincaById(b.fincaId);
-      return '<tr><td class="wrap">'+(f?f.name:b.fincaId)+'</td><td class="wrap">'+esc(b.guest)+'</td><td>'+formatDateEs(b.checkin)+'</td><td>'+formatDateEs(b.checkout)+'</td><td>'+b.time+'</td><td class="tabular">'+b.guests+'</td></tr>';
-    }).join('') +
+      return '<tr><td class="wrap">'+(f?f.name:b.fincaId)+'</td><td class="wrap">'+esc(b.guest)+'</td><td>'+esc(b.cedula||'—')+'</td><td class="wrap">'+esc(b.email||'—')+'</td><td>'+formatDateEs(b.checkin)+'</td><td>'+formatDateEs(b.checkout)+'</td><td>'+b.time+'</td><td class="tabular">'+b.guests+'</td><td>'+(b.payMethod||'—')+'</td><td class="tabular">'+cop(b.total||0)+'</td><td class="tabular">'+cop(b.advance||0)+'</td><td class="tabular">'+cop(b.balance||0)+'</td></tr>';
+    }).join('') : '<tr><td colspan="12"><p class="empty-note">No hay reservas para esta finca.</p></td></tr>') +
   '</tbody></table></div>';
 }
 function adminCalendario(){
   const c=S.calendar;
   return '<div class="fade-in"><div class="admin-head"><div><h1>Calendario de reservas</h1><p>Disponibilidad de las fincas y cabañas ya cargadas en el catálogo.</p></div>' +
     '<button class="btn btn-primary btn-sm" id="calNewBtn">'+icon('plus')+' Nueva reserva</button></div>' +
+    calFilterBar() +
     (c.formOpen ? calBookingForm() : '') +
     '<div class="cal-wrap"><div class="panel"><div class="cal-head"><h3>'+MONTHS_ES[c.month]+' '+c.year+'</h3>' +
       '<div class="cal-nav"><button id="calPrev" aria-label="Mes anterior">'+icon('chevLeft')+'</button><button id="calNext" aria-label="Mes siguiente">'+icon('chevRight')+'</button></div></div>' +
@@ -1520,17 +1606,23 @@ function docForm(){
   const d=S.docs, type=d.type;
   const counter=String(d.counters[type]).padStart(4,"0");
   const typeLabel = type==="cotizacion"?"Cotización":type==="cobro"?"Cuenta de cobro":"Cuenta de pago";
-  const clienteLabel = type==="pago"?"Beneficiario (a quién se paga)":type==="cobro"?"Cobrar a":"Cliente";
+  const clienteLabel = type==="pago"?"Beneficiario (a quién se paga)":type==="cobro"?"Cobrar a":"Cliente / Razón social";
   let html = '<div class="panel"><div class="panel-head"><h3>'+typeLabel+' No. '+counter+'</h3></div>' +
     '<div class="form-grid">' +
     '<div class="field"><label>Fecha</label><input id="docFecha" type="date" value="'+(d.fecha||DEMO_TODAY)+'"></div>' +
-    '<div class="field"><label>'+clienteLabel+'</label><input id="docCliente" placeholder="Nombre o empresa" value="'+esc(d.cliente||"")+'"></div>';
+    '<div class="field"><label>'+clienteLabel+'</label><input id="docCliente" placeholder="Nombre o empresa" value="'+esc(d.cliente||"")+'"></div>' +
+    '<div class="field"><label>Cédula / NIT (opcional)</label><input id="docClienteId" placeholder="C.C. o NIT" value="'+esc(d.clienteId||"")+'"></div>';
   if(type!=="cotizacion"){
-    html += '<div class="field full"><label>Identificación (C.C. / NIT, opcional)</label><input id="docClienteId" placeholder="C.C. o NIT" value="'+esc(d.clienteId||"")+'"></div>';
     html += '<div class="field"><label>Forma de pago</label><select id="docFormaPago">' +
       ["Transferencia","Efectivo","Nequi"].map(function(o){ return '<option'+(d.formaPago===o?' selected':'')+'>'+o+'</option>'; }).join('') + '</select></div>';
   } else {
     html += '<div class="field"><label>Válida hasta</label><input id="docValidez" type="date" value="'+(d.validoHasta||"")+'"></div>';
+    html += '<div class="cal-form-subhead">Datos de contacto del cliente</div>' +
+      '<div class="field"><label>Celular</label><input id="docClienteCelular" placeholder="300 000 0000" value="'+esc(d.clienteCelular||"")+'"></div>' +
+      '<div class="field"><label>Correo</label><input id="docClienteCorreo" type="email" placeholder="correo@ejemplo.com" value="'+esc(d.clienteCorreo||"")+'"></div>' +
+      '<div class="field"><label>Dirección</label><input id="docClienteDireccion" placeholder="Dirección" value="'+esc(d.clienteDireccion||"")+'"></div>' +
+      '<div class="field"><label>Ciudad</label><input id="docClienteCiudad" placeholder="Ciudad" value="'+esc(d.clienteCiudad||"")+'"></div>' +
+      '<div class="field full"><label>Objeto de la cotización</label><input id="docObjeto" placeholder="Ej. Plan familiar 4 días / 3 noches en el eje cafetero" value="'+esc(d.objeto||"")+'"></div>';
   }
   html += '</div>';
 
@@ -1549,6 +1641,7 @@ function docForm(){
     html += '<div class="field full" style="margin-top:14px;"><label>Concepto</label><textarea id="docConcepto" rows="3" style="width:100%;border:1px solid var(--border-strong);background:var(--surface-sunken);color:var(--text);border-radius:var(--radius-s);padding:10px 12px;font-family:var(--font-body);font-size:14px;">'+esc(d.concepto||"")+'</textarea></div>';
     html += '<div class="field full" style="margin-top:14px;"><label>Valor total (COP)</label><input id="docValor" type="number" min="0" step="1000" value="'+(d.valor||0)+'"></div>';
   }
+  html += '<div class="field full" style="margin-top:14px;"><label>Observaciones (opcional)</label><textarea id="docObservaciones" rows="'+(type==="cotizacion"?"3":"2")+'" placeholder="'+(type==="cotizacion"?"Términos, incluye/no incluye, condiciones de pago…":"Notas adicionales…")+'" style="width:100%;border:1px solid var(--border-strong);background:var(--surface-sunken);color:var(--text);border-radius:var(--radius-s);padding:10px 12px;font-family:var(--font-body);font-size:14px;">'+esc(d.observaciones||"")+'</textarea></div>';
   html += '<button class="btn btn-accent btn-block" style="margin-top:22px;" id="docDownloadBtn">'+icon('download')+' Descargar PDF</button></div>';
   return html;
 }
@@ -1557,6 +1650,25 @@ function docPreviewPanel(){
   const counter=String(d.counters[type]).padStart(4,"0");
   const typeLabel = type==="cotizacion"?"COTIZACIÓN":type==="cobro"?"CUENTA DE COBRO":"CUENTA DE PAGO";
   const fecha = formatDateEs(d.fecha||DEMO_TODAY);
+  const clienteTag = type==="pago"?"Beneficiario":type==="cobro"?"Cobrar a":"Cliente";
+
+  const clienteLines = [];
+  if(d.clienteId) clienteLines.push(esc(d.clienteId));
+  if(type==="cotizacion"){
+    if(d.clienteCelular) clienteLines.push("Cel: "+esc(d.clienteCelular));
+    if(d.clienteCorreo) clienteLines.push(esc(d.clienteCorreo));
+    const dirCiudad=[d.clienteDireccion,d.clienteCiudad].filter(Boolean).join(", ");
+    if(dirCiudad) clienteLines.push(esc(dirCiudad));
+  }
+  const parties =
+    '<div class="doc-preview-parties">' +
+      '<div class="doc-preview-party"><span class="doc-preview-party-tag">De</span><b>'+esc(EMISOR.nombre)+'</b>' +
+        '<p>'+esc(EMISOR.titular)+'</p><p>'+esc(EMISOR.identificacion)+'</p><p>'+esc(EMISOR.direccion)+'</p><p>'+esc(EMISOR.telefono)+' · '+esc(EMISOR.correo)+'</p></div>' +
+      '<div class="doc-preview-party"><span class="doc-preview-party-tag">'+clienteTag+'</span><b>'+(esc(d.cliente||"")||"—")+'</b>' +
+        (clienteLines.length ? clienteLines.map(function(l){return '<p>'+l+'</p>';}).join('') : '<p>—</p>') +
+      '</div>' +
+    '</div>';
+
   let body="";
   if(type==="cotizacion"){
     const rows = d.items.map(function(it){
@@ -1564,22 +1676,29 @@ function docPreviewPanel(){
       return '<tr><td>'+(esc(it.desc)||"—")+'</td><td class="tabular" style="text-align:center;">'+(it.qty||0)+'</td><td class="tabular" style="text-align:right;">'+cop(it.price||0)+'</td><td class="tabular" style="text-align:right;">'+cop(sub)+'</td></tr>';
     }).join('');
     const total = d.items.reduce(function(a,it){ return a+(it.qty||0)*(it.price||0); },0);
-    body = '<div class="doc-preview-row"><b>Cliente</b><span>'+esc(d.cliente||"—")+'</span></div>' +
+    body =
+      (d.objeto ? '<div class="doc-preview-objeto"><b>Asunto</b>'+esc(d.objeto)+'</div>' : '') +
       '<table><thead><tr><th>Descripción</th><th style="text-align:center;">Cant.</th><th style="text-align:right;">Valor unit.</th><th style="text-align:right;">Subtotal</th></tr></thead><tbody>' +
       (rows || '<tr><td colspan="4" style="color:#8A958E;">Agrega ítems a la cotización…</td></tr>') + '</tbody></table>' +
-      '<div class="doc-preview-total"><span>Total</span><span>'+cop(total)+'</span></div>' +
-      (d.validoHasta ? '<p class="doc-preview-words">Cotización válida hasta el '+formatDateEs(d.validoHasta)+'.</p>' : '');
+      '<div class="doc-preview-total"><span>Total a pagar</span><b>'+cop(total)+'</b></div>' +
+      (d.validoHasta ? '<span class="doc-preview-badge">'+icon('calendar')+'Válida hasta el '+formatDateEs(d.validoHasta)+'</span>' : '');
   } else {
-    body = '<div class="doc-preview-row"><b>'+(type==="pago"?"Beneficiario":"Cobrar a")+'</b><span>'+esc(d.cliente||"—")+(d.clienteId?(' · '+esc(d.clienteId)):'')+'</span></div>' +
-      '<div class="doc-preview-row"><b>Concepto</b><span>'+esc(d.concepto||"—")+'</span></div>' +
+    body = '<div class="doc-preview-row"><b>Concepto</b><span>'+esc(d.concepto||"—")+'</span></div>' +
       '<div class="doc-preview-row"><b>Forma de pago</b><span>'+(d.formaPago||"Transferencia")+'</span></div>' +
-      '<div class="doc-preview-total"><span>Valor</span><span>'+cop(d.valor||0)+'</span></div>' +
+      '<div class="doc-preview-total"><span>Valor</span><b>'+cop(d.valor||0)+'</b></div>' +
       '<p class="doc-preview-words">Son: '+copWords(d.valor||0)+'.</p>';
   }
+
+  const obs = d.observaciones ? '<div class="doc-preview-obs"><b>Observaciones</b>'+esc(d.observaciones)+'</div>' : '';
+  const sign = '<div class="doc-preview-sign"><div class="doc-preview-sign-line"></div><b>'+esc(EMISOR.titular)+'</b><span>'+esc(EMISOR.identificacion)+'</span></div>';
+
   return '<div class="doc-preview"><div class="doc-preview-inner">' +
     '<div class="doc-preview-head"><img src="photos/logo-mark-ink.png" alt=""><div><b>El Viajero Inquieto</b><span>Agencia de viajes · Eje cafetero, Colombia</span></div></div>' +
     '<div class="doc-preview-title"><h2>'+typeLabel+' No. '+counter+'</h2><span>Fecha: '+fecha+'</span></div>' +
+    parties +
     body +
+    obs +
+    sign +
     '<div class="doc-preview-foot">'+EMISOR.direccion+' · '+EMISOR.telefono+' · '+EMISOR.correo+'</div>' +
   '</div></div>';
 }
@@ -1626,7 +1745,10 @@ function generateDocPDF(){
   doc.text(typeLabel+" No. "+counter, marginX, y);
   doc.setTextColor(91,104,95); doc.setFont("helvetica","normal"); doc.setFontSize(10);
   doc.text("Fecha: "+formatDateEs(d.fecha||DEMO_TODAY), pageW-marginX, y, { align:"right" });
-  y+=12;
+  y+=10;
+  doc.setDrawColor(233,225,210); doc.setLineWidth(0.3);
+  doc.line(marginX, y, pageW-marginX, y);
+  y+=8;
 
   function row(label, value){
     doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(91,104,95);
@@ -1639,9 +1761,65 @@ function generateDocPDF(){
     y+=4;
   }
 
+  /* Bloque "De / Para": emisor y cliente en paralelo, como en cotizaciones y facturas reales */
+  function partyBlock(x, w, tag, name, lines, yStart){
+    let ly=yStart;
+    doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(138,149,142);
+    doc.text(String(tag).toUpperCase(), x, ly);
+    ly += 5.2;
+    doc.setFont("times","bold"); doc.setFontSize(11.5); doc.setTextColor(31,41,38);
+    const nameLines = doc.splitTextToSize(name||"—", w);
+    doc.text(nameLines, x, ly);
+    ly += 4.8*nameLines.length;
+    doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(91,104,95);
+    lines.forEach(function(line){
+      const wrapped = doc.splitTextToSize(line, w);
+      doc.text(wrapped, x, ly);
+      ly += 4.2*wrapped.length;
+    });
+    return ly;
+  }
+  const colW = (pageW-marginX*2-14)/2;
+  const leftX = marginX, rightX = marginX+colW+14;
+  const emisorLines = [EMISOR.titular, EMISOR.identificacion, EMISOR.direccion, EMISOR.telefono+" · "+EMISOR.correo];
+  const clienteTagPdf = type==="pago"?"Beneficiario":type==="cobro"?"Cobrar a":"Cliente";
+  const clienteExtra = [];
+  if(d.clienteId) clienteExtra.push(d.clienteId);
   if(type==="cotizacion"){
-    row("Cliente:", d.cliente);
-    y+=3;
+    if(d.clienteCelular) clienteExtra.push("Cel: "+d.clienteCelular);
+    if(d.clienteCorreo) clienteExtra.push(d.clienteCorreo);
+    const dirCiudad=[d.clienteDireccion,d.clienteCiudad].filter(Boolean).join(", ");
+    if(dirCiudad) clienteExtra.push(dirCiudad);
+  }
+  const partyStartY = y;
+  const yAfterLeft = partyBlock(leftX, colW, "De", EMISOR.nombre, emisorLines, partyStartY);
+  const yAfterRight = partyBlock(rightX, colW, clienteTagPdf, d.cliente, clienteExtra, partyStartY);
+  y = Math.max(yAfterLeft, yAfterRight) + 4;
+  doc.setDrawColor(237,235,227); doc.setLineWidth(0.3);
+  doc.line(marginX, y, pageW-marginX, y);
+  y += 8;
+
+  function totalBanner(label, valueText){
+    const bannerH=16;
+    doc.setFillColor(31,41,38);
+    doc.roundedRect(marginX, y, pageW-marginX*2, bannerH, 2, 2, "F");
+    doc.setTextColor(201,214,209); doc.setFont("helvetica","bold"); doc.setFontSize(8.5);
+    doc.text(label, marginX+8, y+6.5);
+    doc.setTextColor(247,245,239); doc.setFont("times","bold"); doc.setFontSize(15);
+    doc.text(valueText, pageW-marginX-8, y+11.5, { align:"right" });
+    y += bannerH+8;
+  }
+
+  if(type==="cotizacion"){
+    if(d.objeto){
+      doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(138,149,142);
+      doc.text("ASUNTO", marginX, y);
+      y+=5;
+      doc.setFont("helvetica","normal"); doc.setFontSize(9.5); doc.setTextColor(31,41,38);
+      const objLines = doc.splitTextToSize(d.objeto, pageW-marginX*2);
+      doc.text(objLines, marginX, y);
+      y += 5*objLines.length + 6;
+    }
     doc.setFillColor(31,41,38); doc.rect(marginX,y,pageW-marginX*2,8,"F");
     doc.setTextColor(247,245,239); doc.setFont("helvetica","bold"); doc.setFontSize(9);
     doc.text("Descripción", marginX+3, y+5.5);
@@ -1662,29 +1840,50 @@ function generateDocPDF(){
       doc.setDrawColor(237,235,227); doc.line(marginX,y-1,pageW-marginX,y-1);
       y+=3;
     });
-    y+=5;
-    doc.setFont("times","bold"); doc.setFontSize(13); doc.setTextColor(31,41,38);
-    doc.text("Total: "+cop(total), pageW-marginX, y, { align:"right" });
-    y+=10;
+    y+=3;
+    totalBanner("TOTAL A PAGAR", cop(total));
     if(d.validoHasta){
-      doc.setFont("helvetica","italic"); doc.setFontSize(9.5); doc.setTextColor(91,104,95);
-      doc.text("Cotización válida hasta el "+formatDateEs(d.validoHasta)+".", marginX, y);
-      y+=8;
+      const label = "Válida hasta el "+formatDateEs(d.validoHasta);
+      doc.setFont("helvetica","bold"); doc.setFontSize(8.5);
+      const tw = doc.getTextWidth(label)+10;
+      doc.setDrawColor(143,168,154); doc.setFillColor(233,225,210); doc.setLineWidth(0.3);
+      doc.roundedRect(marginX, y, tw, 8, 4, 4, "FD");
+      doc.setTextColor(31,41,38);
+      doc.text(label, marginX+5, y+5.4);
+      y += 14;
     }
   } else {
-    row(type==="pago"?"Beneficiario:":"Cobrar a:", d.cliente);
-    if(d.clienteId) row("Identificación:", d.clienteId);
     row("Concepto:", d.concepto);
     row("Forma de pago:", d.formaPago||"Transferencia");
-    y+=5;
-    doc.setFont("times","bold"); doc.setFontSize(16); doc.setTextColor(31,41,38);
-    doc.text("Valor: "+cop(d.valor||0), marginX, y);
-    y+=8;
+    y+=3;
+    totalBanner("VALOR", cop(d.valor||0));
     doc.setFont("helvetica","italic"); doc.setFontSize(9.5); doc.setTextColor(91,104,95);
     const wordsLines = doc.splitTextToSize("Son: "+copWords(d.valor||0)+".", pageW-marginX*2);
     doc.text(wordsLines, marginX, y);
-    y += 6*wordsLines.length+6;
+    y += 5*wordsLines.length+6;
   }
+
+  if(d.observaciones){
+    doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(138,149,142);
+    doc.text("OBSERVACIONES", marginX, y);
+    y+=5;
+    doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(91,104,95);
+    const obsLines = doc.splitTextToSize(d.observaciones, pageW-marginX*2);
+    doc.text(obsLines, marginX, y);
+    y += 5*obsLines.length + 6;
+  }
+
+  /* Línea de firma del emisor, como en las cuentas de cobro/pago reales */
+  y += 8;
+  const signW=70, signX=pageW/2-signW/2;
+  doc.setDrawColor(31,41,38); doc.setLineWidth(0.3);
+  doc.line(signX, y, signX+signW, y);
+  y+=5;
+  doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(31,41,38);
+  doc.text(EMISOR.titular, pageW/2, y, { align:"center" });
+  y+=4.5;
+  doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(91,104,95);
+  doc.text(EMISOR.identificacion, pageW/2, y, { align:"center" });
 
   doc.setDrawColor(230,230,230); doc.line(marginX, pageH-22, pageW-marginX, pageH-22);
   doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(138,149,142);
@@ -1978,19 +2177,46 @@ function bindAdmin(){
   if(calNewBtn){ calNewBtn.addEventListener("click", function(){ S.calendar.formOpen=true; render(); }); }
   const calFormClose=document.getElementById("calFormClose");
   if(calFormClose){ calFormClose.addEventListener("click", function(){ S.calendar.formOpen=false; render(); }); }
+
+  const calFilterFinca=document.getElementById("calFilterFinca");
+  if(calFilterFinca){ calFilterFinca.addEventListener("change", function(){ S.calendar.filterFinca=calFilterFinca.value; render(); }); }
+  const calFilterFrom=document.getElementById("calFilterFrom");
+  if(calFilterFrom){ calFilterFrom.addEventListener("change", function(){ S.calendar.filterFrom=calFilterFrom.value; render(); }); }
+  const calFilterTo=document.getElementById("calFilterTo");
+  if(calFilterTo){ calFilterTo.addEventListener("change", function(){ S.calendar.filterTo=calFilterTo.value; render(); }); }
+  const calFilterClear=document.getElementById("calFilterClear");
+  if(calFilterClear){ calFilterClear.addEventListener("click", function(){ S.calendar.filterFinca="todas"; S.calendar.filterFrom=""; S.calendar.filterTo=""; render(); }); }
+
+  const calTotalInput=document.getElementById("calTotal"), calAdvanceInput=document.getElementById("calAdvance"), calBalanceInput=document.getElementById("calBalance");
+  if(calTotalInput && calAdvanceInput && calBalanceInput){
+    const recalcBalance=function(){
+      const total=parseFloat(calTotalInput.value)||0;
+      const advance=parseFloat(calAdvanceInput.value)||0;
+      calBalanceInput.value = cop(Math.max(total-advance,0));
+    };
+    calTotalInput.addEventListener("input", recalcBalance);
+    calAdvanceInput.addEventListener("input", recalcBalance);
+  }
+
   const calSaveBtn=document.getElementById("calSaveBtn");
   if(calSaveBtn){ calSaveBtn.addEventListener("click", function(){
     const fincaId=document.getElementById("calFinca").value;
     const guest=document.getElementById("calGuest").value.trim();
+    const cedula=document.getElementById("calCedula").value.trim();
     const phone=document.getElementById("calPhone").value.trim();
+    const email=document.getElementById("calEmail").value.trim();
     const guests=parseInt(document.getElementById("calGuests").value,10)||1;
     const checkin=document.getElementById("calCheckin").value;
     const checkout=document.getElementById("calCheckout").value;
     const time=document.getElementById("calTime").value||"15:00";
+    const payMethod=document.getElementById("calPayMethod").value;
+    const total=parseFloat(document.getElementById("calTotal").value)||0;
+    const advance=parseFloat(document.getElementById("calAdvance").value)||0;
+    const balance=Math.max(total-advance,0);
     if(!guest){ toast("Escribe el nombre del huésped"); return; }
     if(!checkin || !checkout || checkout<=checkin){ toast("Revisa las fechas de llegada y salida"); return; }
     const id = FINCA_BOOKINGS.length ? Math.max.apply(null, FINCA_BOOKINGS.map(function(b){return b.id;}))+1 : 1;
-    FINCA_BOOKINGS.push({ id:id, fincaId:fincaId, guest:guest, phone:phone, checkin:checkin, checkout:checkout, time:time, guests:guests });
+    FINCA_BOOKINGS.push({ id:id, fincaId:fincaId, guest:guest, cedula:cedula, phone:phone, email:email, checkin:checkin, checkout:checkout, time:time, guests:guests, payMethod:payMethod, total:total, advance:advance, balance:balance });
     const dt=new Date(checkin+"T00:00:00");
     S.calendar.year=dt.getFullYear(); S.calendar.month=dt.getMonth(); S.calendar.selectedDate=checkin; S.calendar.formOpen=false;
     const f=fincaById(fincaId);
@@ -2016,6 +2242,18 @@ function bindAdmin(){
   if(docFormaPago){ docFormaPago.addEventListener("change", function(){ S.docs.formaPago=docFormaPago.value; render(); }); }
   const docValidez=document.getElementById("docValidez");
   if(docValidez){ docValidez.addEventListener("change", function(){ S.docs.validoHasta=docValidez.value; render(); }); }
+  const docClienteCelular=document.getElementById("docClienteCelular");
+  if(docClienteCelular){ docClienteCelular.addEventListener("change", function(){ S.docs.clienteCelular=docClienteCelular.value; render(); }); }
+  const docClienteCorreo=document.getElementById("docClienteCorreo");
+  if(docClienteCorreo){ docClienteCorreo.addEventListener("change", function(){ S.docs.clienteCorreo=docClienteCorreo.value; render(); }); }
+  const docClienteDireccion=document.getElementById("docClienteDireccion");
+  if(docClienteDireccion){ docClienteDireccion.addEventListener("change", function(){ S.docs.clienteDireccion=docClienteDireccion.value; render(); }); }
+  const docClienteCiudad=document.getElementById("docClienteCiudad");
+  if(docClienteCiudad){ docClienteCiudad.addEventListener("change", function(){ S.docs.clienteCiudad=docClienteCiudad.value; render(); }); }
+  const docObjeto=document.getElementById("docObjeto");
+  if(docObjeto){ docObjeto.addEventListener("change", function(){ S.docs.objeto=docObjeto.value; render(); }); }
+  const docObservaciones=document.getElementById("docObservaciones");
+  if(docObservaciones){ docObservaciones.addEventListener("change", function(){ S.docs.observaciones=docObservaciones.value; render(); }); }
   document.querySelectorAll("[data-itemfield]").forEach(function(el){
     el.addEventListener("change", function(){
       const idx=parseInt(el.getAttribute("data-itemidx"),10);
