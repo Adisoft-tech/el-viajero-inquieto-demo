@@ -1674,7 +1674,8 @@ function docForm(){
   const counter=String(d.counters[type]).padStart(4,"0");
   const typeLabel = type==="cotizacion"?"Cotización":type==="cobro"?"Cuenta de cobro":"Cuenta de pago";
   const clienteLabel = type==="pago"?"Beneficiario (a quién se paga)":type==="cobro"?"Cobrar a":"Cliente / Razón social";
-  let html = '<div class="panel"><div class="panel-head"><h3>'+typeLabel+' No. '+counter+'</h3></div>' +
+  const titleText = type==="cotizacion" ? typeLabel : (typeLabel+' No. '+counter);
+  let html = '<div class="panel"><div class="panel-head"><h3>'+titleText+'</h3></div>' +
     '<div class="form-grid">' +
     '<div class="field"><label>Fecha</label><input id="docFecha" type="date" value="'+(d.fecha||DEMO_TODAY)+'"></div>' +
     '<div class="field"><label>'+clienteLabel+'</label><input id="docCliente" placeholder="Nombre o empresa" value="'+esc(d.cliente||"")+'"></div>' +
@@ -1766,7 +1767,7 @@ function docPreviewPanel(){
 
   return '<div class="doc-preview"><div class="doc-preview-inner">' +
     '<div class="doc-preview-head"><img src="photos/logo-mark-ink.png" alt=""><div><b>El Viajero Inquieto</b><span>Tu aliado al viajar</span></div></div>' +
-    '<div class="doc-preview-title"><h2>'+typeLabel+' No. '+counter+'</h2><span>Fecha: '+fecha+'</span></div>' +
+    '<div class="doc-preview-title"><h2>'+(type==="cotizacion"?typeLabel:(typeLabel+' No. '+counter))+'</h2><span>Fecha: '+fecha+'</span></div>' +
     tagline +
     parties +
     body +
@@ -1815,7 +1816,7 @@ function generateDocPDF(){
   let y=47;
   doc.setTextColor(62,106,111);
   doc.setFont("times","bold"); doc.setFontSize(18);
-  doc.text(typeLabel+" No. "+counter, marginX, y);
+  doc.text(type==="cotizacion"?typeLabel:(typeLabel+" No. "+counter), marginX, y);
   doc.setTextColor(91,104,95); doc.setFont("helvetica","normal"); doc.setFontSize(10);
   doc.text("Fecha: "+formatDateEs(d.fecha||DEMO_TODAY), pageW-marginX, y, { align:"right" });
   y+=10;
@@ -1977,7 +1978,7 @@ function generateDocPDF(){
   doc.save(prefix+counter+"_"+safeClient+".pdf");
 
   d.counters[type] = d.counters[type]+1;
-  toast(typeLabel+" descargada — próximo consecutivo No. "+String(d.counters[type]).padStart(4,"0"));
+  toast(type==="cotizacion" ? (typeLabel+" descargada") : (typeLabel+" descargada — próximo consecutivo No. "+String(d.counters[type]).padStart(4,"0")));
   render();
 }
 
