@@ -323,6 +323,7 @@ img{max-width:100%;display:block;}
 .foot-link:hover{opacity:1;text-decoration:underline;}
 .foot-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:40px;padding-top:22px;border-top:1px solid rgba(247,245,239,0.14);font-size:12.5px;color:#9FB0AA;flex-wrap:wrap;gap:10px;}
 .foot-admin{cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+.foot-admin-group{display:flex;gap:18px;flex-wrap:wrap;}
 
 /* ---------- booking flow ---------- */
 .flow-wrap{max-width:760px;margin:0 auto;}
@@ -974,6 +975,7 @@ const S = {
   catalog:{cat:"alojamientos", sort:"recomendado", town:"todos"},
   booking:{listingId:null, step:1, checkin:"", checkout:"", date:"", guests:2, name:"", email:"", phone:"", payMethod:"card"},
   admin:{authed:false, tab:"resumen", editing:null},
+  gestion:{authed:false, tab:"calendario"},
   calendar:{year:2026, month:8, selectedDate:null, formOpen:false, filterFinca:"todas", filterFrom:"", filterTo:""},
   docs:{type:"cotizacion", counters:{cobro:1, pago:1, cotizacion:1}, items:[{desc:"", qty:1, price:0}]},
   chat:{open:false, messages:[], booted:false},
@@ -989,6 +991,11 @@ function toggleFavorite(id){
 
 function navigate(route, params){
   S.route=route; S.params=params||{};
+  try{
+    if(route==="admin-login" || route==="admin"){ if(location.hash!=="#/admin") location.hash="#/admin"; }
+    else if(route==="gestion-login" || route==="gestion"){ if(location.hash!=="#/gestion") location.hash="#/gestion"; }
+    else if(location.hash){ history.replaceState(null,"",location.pathname+location.search); }
+  }catch(e){}
   window.scrollTo({top:0,behavior:"instant" in window ? "instant":"auto"});
   render();
 }
@@ -1037,7 +1044,10 @@ function siteFooter(){
         '<span class="foot-link">Manizales, Caldas</span></div>' +
     '</div>' +
     '<div class="foot-bottom"><span>© 2026 El Viajero Inquieto — sitio de demostración preparado por AdiSoft</span>' +
-      '<span class="foot-admin" data-go="admin-login">Panel administrativo (demo) →</span></div>' +
+      '<span class="foot-admin-group">' +
+        '<span class="foot-admin" data-go="admin-login">Panel administrativo (demo) →</span>' +
+        '<span class="foot-admin" data-go="gestion-login">Panel de gestión (demo) →</span>' +
+      '</span></div>' +
   '</div></footer>';
 }
 
@@ -1379,7 +1389,7 @@ function renderAdminLogin(){
     '<div class="field"><label>Correo</label><input id="loginEmail" placeholder="equipo@elviajeroinquieto.co"></div>' +
     '<div class="field"><label>Contraseña</label><input id="loginPass" type="password" placeholder="••••••••"></div>' +
     '<button class="btn btn-primary btn-block" id="loginBtn" style="margin-top:6px;">Ingresar</button>' +
-    '<button class="btn btn-ghost btn-block" style="margin-top:10px;" data-go="home">Volver al sitio</button>' +
+    '<button class="btn btn-ghost btn-block" style="margin-top:10px;" id="adminLoginBack">Volver al sitio</button>' +
     '<p style="font-size:12px;color:var(--text-muted);margin-top:16px;text-align:center;">Cualquier dato ingresa en esta demo — la versión final valida credenciales reales.</p>' +
   '</div></div>';
 }
@@ -1394,13 +1404,42 @@ function renderAdmin(){
       adminNavItem("resumen","dash","Resumen") +
       adminNavItem("reservas","bookings","Reservas") +
       adminNavItem("inventario","inventory","Inventario") +
-      adminNavItem("calendario","calendar","Calendario") +
-      adminNavItem("documentos","docFile","Documentos") +
       adminNavItem("contenido","content","Contenido del sitio") +
-      '<div class="admin-exit" data-go="home">'+icon('logout')+' Salir al sitio</div>' +
+      '<div class="admin-nav-item" id="adminToGestion">'+icon('calendar')+'<span>Ir a Panel de gestión</span></div>' +
+      '<div class="admin-exit" id="adminExitBtn">'+icon('logout')+' Salir al sitio</div>' +
     '</aside>' +
     '<main id="adminMain">' +
-      (tab==="resumen"?adminResumen():tab==="reservas"?adminReservas():tab==="inventario"?adminInventario():tab==="calendario"?adminCalendario():tab==="documentos"?adminDocumentos():adminContenido()) +
+      (tab==="resumen"?adminResumen():tab==="reservas"?adminReservas():tab==="inventario"?adminInventario():adminContenido()) +
+    '</main>' +
+  '</div>';
+}
+function renderGestionLogin(){
+  return '<div class="login-wrap"><div class="login-card fade-in">' +
+    '<img src="photos/logo-stacked-ink.png" alt="El Viajero Inquieto" style="width:150px;margin:0 auto 22px;display:block;">' +
+    '<h2 style="text-align:center;">Panel de gestión</h2><p style="text-align:center;">Calendario de reservas y generación de documentos · '+
+    '<span class="badge badge-demo" style="vertical-align:middle;">Demo</span></p>' +
+    '<div class="field"><label>Correo</label><input id="gestionLoginEmail" placeholder="equipo@elviajeroinquieto.co"></div>' +
+    '<div class="field"><label>Contraseña</label><input id="gestionLoginPass" type="password" placeholder="••••••••"></div>' +
+    '<button class="btn btn-primary btn-block" id="gestionLoginBtn" style="margin-top:6px;">Ingresar</button>' +
+    '<button class="btn btn-ghost btn-block" style="margin-top:10px;" id="gestionLoginBack">Volver al sitio</button>' +
+    '<p style="font-size:12px;color:var(--text-muted);margin-top:16px;text-align:center;">Cualquier dato ingresa en esta demo — la versión final valida credenciales reales.</p>' +
+  '</div></div>';
+}
+function gestionNavItem(key,iconName,label){
+  return '<div class="admin-nav-item'+(S.gestion.tab===key?' active':'')+'" data-gtab="'+key+'">'+icon(iconName)+'<span>'+label+'</span></div>';
+}
+function renderGestion(){
+  const tab=S.gestion.tab;
+  return '<div id="adminShell">' +
+    '<aside id="adminSidebar">' +
+      '<div class="admin-brand"><div class="brand-mark" style="width:28px;height:28px;"><img src="photos/logo-mark-white.png" alt="" style="width:100%;height:100%;object-fit:contain;"></div><span>Gestión</span></div>' +
+      gestionNavItem("calendario","calendar","Calendario") +
+      gestionNavItem("documentos","docFile","Documentos") +
+      '<div class="admin-nav-item" id="gestionToAdmin">'+icon('dash')+'<span>Ir a Panel administrativo</span></div>' +
+      '<div class="admin-exit" id="gestionExitBtn">'+icon('logout')+' Salir al sitio</div>' +
+    '</aside>' +
+    '<main id="adminMain">' +
+      (tab==="calendario"?adminCalendario():adminDocumentos()) +
     '</main>' +
   '</div>';
 }
@@ -1936,6 +1975,17 @@ function render(){
     bindAdmin();
     return;
   }
+  if(S.route==="gestion-login"){
+    app.innerHTML = renderGestionLogin();
+    bindGestionLogin();
+    return;
+  }
+  if(S.route==="gestion"){
+    if(!S.gestion.authed){ navigate("gestion-login"); return; }
+    app.innerHTML = renderGestion();
+    bindGestion();
+    return;
+  }
 
   let main="";
   if(S.route==="home") main=renderHome();
@@ -1987,6 +2037,7 @@ function bindPublic(){
       const r=el.getAttribute("data-go");
       S.mobileOpen=false;
       if(r==="admin-login"){ navigate("admin-login"); return; }
+      if(r==="gestion-login"){ navigate("gestion-login"); return; }
       if(["home","alojamientos","parques","tours","nosotros","experiencias","contacto"].indexOf(r)>-1){ navigate(r); }
     });
   });
@@ -2117,6 +2168,18 @@ function bindLogin(){
     S.admin.authed=true; S.admin.tab="resumen";
     navigate("admin");
   }); }
+  const back=document.getElementById("adminLoginBack");
+  if(back){ back.addEventListener("click", function(){ navigate("home"); }); }
+}
+
+function bindGestionLogin(){
+  const btn=document.getElementById("gestionLoginBtn");
+  if(btn){ btn.addEventListener("click", function(){
+    S.gestion.authed=true; S.gestion.tab="calendario";
+    navigate("gestion");
+  }); }
+  const back=document.getElementById("gestionLoginBack");
+  if(back){ back.addEventListener("click", function(){ navigate("home"); }); }
 }
 
 function bindAdmin(){
@@ -2175,6 +2238,21 @@ function bindAdmin(){
       if(prev) prev.textContent=el.value;
     }); }
   });
+
+  const adminExitBtn=document.getElementById("adminExitBtn");
+  if(adminExitBtn){ adminExitBtn.addEventListener("click", function(){ navigate("home"); }); }
+  const adminToGestion=document.getElementById("adminToGestion");
+  if(adminToGestion){ adminToGestion.addEventListener("click", function(){ navigate(S.gestion.authed ? "gestion" : "gestion-login"); }); }
+}
+
+function bindGestion(){
+  document.querySelectorAll("[data-gtab]").forEach(function(el){
+    el.addEventListener("click", function(){ S.gestion.tab=el.getAttribute("data-gtab"); render(); });
+  });
+  const gestionExitBtn=document.getElementById("gestionExitBtn");
+  if(gestionExitBtn){ gestionExitBtn.addEventListener("click", function(){ navigate("home"); }); }
+  const gestionToAdmin=document.getElementById("gestionToAdmin");
+  if(gestionToAdmin){ gestionToAdmin.addEventListener("click", function(){ navigate(S.admin.authed ? "admin" : "admin-login"); }); }
 
   /* ---- Calendario de reservas ---- */
   const calPrev=document.getElementById("calPrev"), calNext=document.getElementById("calNext");
@@ -2408,7 +2486,22 @@ document.head.appendChild(styleTag);
 
 /* ================= BOOT ================= */
 function start(data){
+  try{
+    const h=location.hash;
+    if(h==="#/admin"){ S.route = S.admin.authed ? "admin" : "admin-login"; }
+    else if(h==="#/gestion"){ S.route = S.gestion.authed ? "gestion" : "gestion-login"; }
+  }catch(e){}
   render();
+  window.addEventListener("hashchange", function(){
+    const h=location.hash;
+    if(h==="#/admin"){
+      if(S.route!=="admin" && S.route!=="admin-login"){ navigate(S.admin.authed?"admin":"admin-login"); }
+    } else if(h==="#/gestion"){
+      if(S.route!=="gestion" && S.route!=="gestion-login"){ navigate(S.gestion.authed?"gestion":"gestion-login"); }
+    } else if(h===""||h==="#"){
+      if(["admin","admin-login","gestion","gestion-login"].indexOf(S.route)>-1){ navigate("home"); }
+    }
+  });
   document.addEventListener("keydown", function(e){
     if(!S.detail.lightbox) return;
     const l=byId(S.detail.forId); const gallery=l?galleryFor(l):[];
