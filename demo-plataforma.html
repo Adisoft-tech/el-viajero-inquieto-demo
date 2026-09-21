@@ -1626,8 +1626,9 @@ function docForm(){
   }
   html += '</div>';
 
-  if(type==="cotizacion"){
-    html += '<div style="margin-top:18px;"><label style="display:block;font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Ítems de la cotización</label>';
+  {
+    const itemsLabel = type==="cotizacion"?"Ítems de la cotización":type==="cobro"?"Ítems a cobrar":"Ítems del pago";
+    html += '<div style="margin-top:18px;"><label style="display:block;font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">'+itemsLabel+'</label>';
     html += d.items.map(function(it,i){
       return '<div class="doc-items-row">' +
         '<input placeholder="Descripción" data-itemfield="desc" data-itemidx="'+i+'" value="'+esc(it.desc)+'">' +
@@ -1637,9 +1638,6 @@ function docForm(){
       '</div>';
     }).join('');
     html += '<button type="button" class="btn btn-ghost btn-sm" id="docAddItem" style="margin-top:6px;">'+icon('plus')+' Agregar ítem</button></div>';
-  } else {
-    html += '<div class="field full" style="margin-top:14px;"><label>Concepto</label><textarea id="docConcepto" rows="3" style="width:100%;border:1px solid var(--border-strong);background:var(--surface-sunken);color:var(--text);border-radius:var(--radius-s);padding:10px 12px;font-family:var(--font-body);font-size:14px;">'+esc(d.concepto||"")+'</textarea></div>';
-    html += '<div class="field full" style="margin-top:14px;"><label>Valor total (COP)</label><input id="docValor" type="number" min="0" step="1000" value="'+(d.valor||0)+'"></div>';
   }
   html += '<div class="field full" style="margin-top:14px;"><label>Observaciones (opcional)</label><textarea id="docObservaciones" rows="'+(type==="cotizacion"?"3":"2")+'" placeholder="'+(type==="cotizacion"?"Términos, incluye/no incluye, condiciones de pago…":"Notas adicionales…")+'" style="width:100%;border:1px solid var(--border-strong);background:var(--surface-sunken);color:var(--text);border-radius:var(--radius-s);padding:10px 12px;font-family:var(--font-body);font-size:14px;">'+esc(d.observaciones||"")+'</textarea></div>';
   html += '<button class="btn btn-accent btn-block" style="margin-top:22px;" id="docDownloadBtn">'+icon('download')+' Descargar PDF</button></div>';
@@ -1669,24 +1667,26 @@ function docPreviewPanel(){
       '</div>' +
     '</div>';
 
+  const itemRows = d.items.map(function(it){
+    const sub=(it.qty||0)*(it.price||0);
+    return '<tr><td>'+(esc(it.desc)||"—")+'</td><td class="tabular" style="text-align:center;">'+(it.qty||0)+'</td><td class="tabular" style="text-align:right;">'+cop(it.price||0)+'</td><td class="tabular" style="text-align:right;">'+cop(sub)+'</td></tr>';
+  }).join('');
+  const itemsTotal = d.items.reduce(function(a,it){ return a+(it.qty||0)*(it.price||0); },0);
+  const itemsTable = '<table><thead><tr><th>Descripción</th><th style="text-align:center;">Cant.</th><th style="text-align:right;">Valor unit.</th><th style="text-align:right;">Subtotal</th></tr></thead><tbody>' +
+    (itemRows || '<tr><td colspan="4" style="color:#8A958E;">Agrega ítems…</td></tr>') + '</tbody></table>';
+
   let body="";
   if(type==="cotizacion"){
-    const rows = d.items.map(function(it){
-      const sub=(it.qty||0)*(it.price||0);
-      return '<tr><td>'+(esc(it.desc)||"—")+'</td><td class="tabular" style="text-align:center;">'+(it.qty||0)+'</td><td class="tabular" style="text-align:right;">'+cop(it.price||0)+'</td><td class="tabular" style="text-align:right;">'+cop(sub)+'</td></tr>';
-    }).join('');
-    const total = d.items.reduce(function(a,it){ return a+(it.qty||0)*(it.price||0); },0);
     body =
       (d.objeto ? '<div class="doc-preview-objeto"><b>Asunto</b>'+esc(d.objeto)+'</div>' : '') +
-      '<table><thead><tr><th>Descripción</th><th style="text-align:center;">Cant.</th><th style="text-align:right;">Valor unit.</th><th style="text-align:right;">Subtotal</th></tr></thead><tbody>' +
-      (rows || '<tr><td colspan="4" style="color:#8A958E;">Agrega ítems a la cotización…</td></tr>') + '</tbody></table>' +
-      '<div class="doc-preview-total"><span>Total a pagar</span><b>'+cop(total)+'</b></div>' +
+      itemsTable +
+      '<div class="doc-preview-total"><span>Total a pagar</span><b>'+cop(itemsTotal)+'</b></div>' +
       (d.validoHasta ? '<span class="doc-preview-badge">'+icon('calendar')+'Válida hasta el '+formatDateEs(d.validoHasta)+'</span>' : '');
   } else {
-    body = '<div class="doc-preview-row"><b>Concepto</b><span>'+esc(d.concepto||"—")+'</span></div>' +
-      '<div class="doc-preview-row"><b>Forma de pago</b><span>'+(d.formaPago||"Transferencia")+'</span></div>' +
-      '<div class="doc-preview-total"><span>Valor</span><b>'+cop(d.valor||0)+'</b></div>' +
-      '<p class="doc-preview-words">Son: '+copWords(d.valor||0)+'.</p>';
+    body = '<div class="doc-preview-row"><b>Forma de pago</b><span>'+(d.formaPago||"Transferencia")+'</span></div>' +
+      itemsTable +
+      '<div class="doc-preview-total"><span>'+(type==="pago"?"Valor pagado":"Valor a cobrar")+'</span><b>'+cop(itemsTotal)+'</b></div>' +
+      '<p class="doc-preview-words">Son: '+copWords(itemsTotal)+'.</p>';
   }
 
   const obs = d.observaciones ? '<div class="doc-preview-obs"><b>Observaciones</b>'+esc(d.observaciones)+'</div>' : '';
@@ -1810,55 +1810,53 @@ function generateDocPDF(){
     y += bannerH+8;
   }
 
-  if(type==="cotizacion"){
-    if(d.objeto){
-      doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(138,149,142);
-      doc.text("ASUNTO", marginX, y);
-      y+=5;
-      doc.setFont("helvetica","normal"); doc.setFontSize(9.5); doc.setTextColor(31,41,38);
-      const objLines = doc.splitTextToSize(d.objeto, pageW-marginX*2);
-      doc.text(objLines, marginX, y);
-      y += 5*objLines.length + 6;
-    }
-    doc.setFillColor(31,41,38); doc.rect(marginX,y,pageW-marginX*2,8,"F");
-    doc.setTextColor(247,245,239); doc.setFont("helvetica","bold"); doc.setFontSize(9);
-    doc.text("Descripción", marginX+3, y+5.5);
-    doc.text("Cant.", pageW-marginX-58, y+5.5);
-    doc.text("Valor unit.", pageW-marginX-40, y+5.5);
-    doc.text("Subtotal", pageW-marginX-3, y+5.5, { align:"right" });
-    y+=8;
-    doc.setTextColor(31,41,38); doc.setFont("helvetica","normal"); doc.setFontSize(9.5);
-    let total=0;
-    (d.items||[]).forEach(function(it){
-      const sub=(it.qty||0)*(it.price||0); total+=sub;
-      const descLines=doc.splitTextToSize(it.desc||"—", pageW-marginX*2-90);
-      doc.text(descLines, marginX+3, y+5);
-      doc.text(String(it.qty||0), pageW-marginX-58, y+5);
-      doc.text(cop(it.price||0), pageW-marginX-40, y+5);
-      doc.text(cop(sub), pageW-marginX-3, y+5, { align:"right" });
-      y += 6.2*Math.max(1,descLines.length);
-      doc.setDrawColor(237,235,227); doc.line(marginX,y-1,pageW-marginX,y-1);
-      y+=3;
-    });
-    y+=3;
-    totalBanner("TOTAL A PAGAR", cop(total));
-    if(d.validoHasta){
-      const label = "Válida hasta el "+formatDateEs(d.validoHasta);
-      doc.setFont("helvetica","bold"); doc.setFontSize(8.5);
-      const tw = doc.getTextWidth(label)+10;
-      doc.setDrawColor(143,168,154); doc.setFillColor(233,225,210); doc.setLineWidth(0.3);
-      doc.roundedRect(marginX, y, tw, 8, 4, 4, "FD");
-      doc.setTextColor(31,41,38);
-      doc.text(label, marginX+5, y+5.4);
-      y += 14;
-    }
-  } else {
-    row("Concepto:", d.concepto);
+  if(type!=="cotizacion"){
     row("Forma de pago:", d.formaPago||"Transferencia");
+  }
+  if(type==="cotizacion" && d.objeto){
+    doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(138,149,142);
+    doc.text("ASUNTO", marginX, y);
+    y+=5;
+    doc.setFont("helvetica","normal"); doc.setFontSize(9.5); doc.setTextColor(31,41,38);
+    const objLines = doc.splitTextToSize(d.objeto, pageW-marginX*2);
+    doc.text(objLines, marginX, y);
+    y += 5*objLines.length + 6;
+  }
+  doc.setFillColor(31,41,38); doc.rect(marginX,y,pageW-marginX*2,8,"F");
+  doc.setTextColor(247,245,239); doc.setFont("helvetica","bold"); doc.setFontSize(9);
+  doc.text("Descripción", marginX+3, y+5.5);
+  doc.text("Cant.", pageW-marginX-58, y+5.5);
+  doc.text("Valor unit.", pageW-marginX-40, y+5.5);
+  doc.text("Subtotal", pageW-marginX-3, y+5.5, { align:"right" });
+  y+=8;
+  doc.setTextColor(31,41,38); doc.setFont("helvetica","normal"); doc.setFontSize(9.5);
+  let itemsTotal=0;
+  (d.items||[]).forEach(function(it){
+    const sub=(it.qty||0)*(it.price||0); itemsTotal+=sub;
+    const descLines=doc.splitTextToSize(it.desc||"—", pageW-marginX*2-90);
+    doc.text(descLines, marginX+3, y+5);
+    doc.text(String(it.qty||0), pageW-marginX-58, y+5);
+    doc.text(cop(it.price||0), pageW-marginX-40, y+5);
+    doc.text(cop(sub), pageW-marginX-3, y+5, { align:"right" });
+    y += 6.2*Math.max(1,descLines.length);
+    doc.setDrawColor(237,235,227); doc.line(marginX,y-1,pageW-marginX,y-1);
     y+=3;
-    totalBanner("VALOR", cop(d.valor||0));
+  });
+  y+=3;
+  totalBanner(type==="cotizacion"?"TOTAL A PAGAR":type==="pago"?"VALOR PAGADO":"VALOR A COBRAR", cop(itemsTotal));
+  if(type==="cotizacion" && d.validoHasta){
+    const label = "Válida hasta el "+formatDateEs(d.validoHasta);
+    doc.setFont("helvetica","bold"); doc.setFontSize(8.5);
+    const tw = doc.getTextWidth(label)+10;
+    doc.setDrawColor(143,168,154); doc.setFillColor(233,225,210); doc.setLineWidth(0.3);
+    doc.roundedRect(marginX, y, tw, 8, 4, 4, "FD");
+    doc.setTextColor(31,41,38);
+    doc.text(label, marginX+5, y+5.4);
+    y += 14;
+  }
+  if(type!=="cotizacion"){
     doc.setFont("helvetica","italic"); doc.setFontSize(9.5); doc.setTextColor(91,104,95);
-    const wordsLines = doc.splitTextToSize("Son: "+copWords(d.valor||0)+".", pageW-marginX*2);
+    const wordsLines = doc.splitTextToSize("Son: "+copWords(itemsTotal)+".", pageW-marginX*2);
     doc.text(wordsLines, marginX, y);
     y += 5*wordsLines.length+6;
   }
@@ -2234,10 +2232,6 @@ function bindAdmin(){
   if(docCliente){ docCliente.addEventListener("change", function(){ S.docs.cliente=docCliente.value; render(); }); }
   const docClienteId=document.getElementById("docClienteId");
   if(docClienteId){ docClienteId.addEventListener("change", function(){ S.docs.clienteId=docClienteId.value; render(); }); }
-  const docConcepto=document.getElementById("docConcepto");
-  if(docConcepto){ docConcepto.addEventListener("change", function(){ S.docs.concepto=docConcepto.value; render(); }); }
-  const docValor=document.getElementById("docValor");
-  if(docValor){ docValor.addEventListener("change", function(){ S.docs.valor=parseFloat(docValor.value)||0; render(); }); }
   const docFormaPago=document.getElementById("docFormaPago");
   if(docFormaPago){ docFormaPago.addEventListener("change", function(){ S.docs.formaPago=docFormaPago.value; render(); }); }
   const docValidez=document.getElementById("docValidez");
