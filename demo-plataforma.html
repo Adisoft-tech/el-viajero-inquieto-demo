@@ -447,8 +447,8 @@ td.wrap{white-space:normal;}
 .empty-note{font-size:13.5px;color:var(--text-muted);padding:18px 0;text-align:center;}
 
 /* ---------- chat widget ---------- */
-#chatRoot{position:fixed;right:20px;bottom:20px;z-index:80;display:flex;flex-direction:column;align-items:flex-end;gap:14px;}
-@media (max-width:480px){ #chatRoot{right:14px;bottom:14px;} }
+.chat-root{position:fixed;right:20px;bottom:20px;z-index:80;display:flex;flex-direction:column;align-items:flex-end;gap:14px;}
+@media (max-width:480px){ .chat-root{right:14px;bottom:14px;} }
 .chat-fab{width:58px;height:58px;border-radius:50%;background:var(--ink);color:var(--ivory);border:none;cursor:pointer;box-shadow:var(--shadow-lg);display:flex;align-items:center;justify-content:center;flex:none;transition:transform .15s ease;}
 .chat-fab:hover{transform:scale(1.05);}
 .chat-fab svg{width:26px;height:26px;}
@@ -465,6 +465,8 @@ td.wrap{white-space:normal;}
 .chat-panel.open{display:flex;}
 .chat-head{background:var(--ink);color:var(--ivory);padding:16px 18px;display:flex;align-items:center;gap:10px;flex:none;}
 .chat-head img{width:32px;height:32px;object-fit:contain;flex:none;}
+.cal-chat-head-icon{width:32px;height:32px;flex:none;border-radius:50%;background:rgba(247,245,239,0.14);display:flex;align-items:center;justify-content:center;}
+.cal-chat-head-icon svg{width:17px;height:17px;}
 .chat-head b{font-family:var(--font-display);font-size:17px;display:block;}
 .chat-head span{font-size:11.5px;color:#B9C7C2;display:flex;align-items:center;gap:5px;}
 .chat-head span::before{content:"";width:7px;height:7px;border-radius:50%;background:#7ED0A0;display:inline-block;}
@@ -1034,6 +1036,7 @@ const S = {
   calendar:{year:2026, month:8, selectedDate:null, formOpen:false, filterFinca:"todas", filterFrom:"", filterTo:"", sortKey:"checkin", sortDir:"asc", page:1, pageSize:8},
   docs:{type:"cotizacion", counters:{cobro:1, pago:1, cotizacion:1}, items:[{desc:"", qty:1, price:0}]},
   chat:{open:false, messages:[], booted:false},
+  calChat:{open:false, messages:[]},
   detail:{forId:null, photoIndex:0, lightbox:false},
   favorites:(function(){ try{ return JSON.parse(localStorage.getItem("vi_favorites")||"[]"); }catch(e){ return []; } })(),
 };
@@ -1492,6 +1495,7 @@ function renderGestion(){
     '<main id="adminMain">' +
       (tab==="calendario"?adminCalendario():adminDocumentos()) +
     '</main>' +
+    (tab==="calendario" ? renderCalChatWidget() : '') +
   '</div>';
 }
 function adminResumen(){
@@ -1707,6 +1711,83 @@ function importBookingsFromExcel(file){
   reader.onerror = function(){ toast("No se pudo leer el archivo."); };
   reader.readAsArrayBuffer(file);
 }
+
+/* ---- Asistente de disponibilidad (chat local, sin LLM — solo lee FINCA_BOOKINGS) ---- */
+function findFincaMentionedIn(text){
+  const norm = normalizeText(text);
+  const fincas = fincaListings();
+  let match = fincas.find(function(f){ return norm.indexOf(normalizeText(f.name))>-1; });
+  if(match) return match;
+  const stop = ["finca","fincas","cabanas","cabana","hacienda","haciendas","refugio","el","la","los","las","de","del","y"];
+  match = fincas.find(function(f){
+    const words = normalizeText(f.name).split(" ").filter(function(w){ return w.length>2 && stop.indexOf(w)===-1; });
+    return words.some(function(w){ return norm.indexOf(w)>-1; });
+  });
+  return match || null;
+}
+function parseSpokenDate(text, todayIso){
+  const norm = normalizeText(text);
+  if(/\bhoy\b/.test(norm)) return todayIso;
+  if(/\bmanana\b/.test(norm)){
+    const d=new Date(todayIso+"T00:00:00"); d.setDate(d.getDate()+1);
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  let m = norm.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
+  m = norm.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if(m) return m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0");
+  m = norm.match(/(\d{1,2})\s+de\s+([a-z]+)(?:\s+de\s+(\d{4}))?/);
+  if(m){
+    const day = parseInt(m[1],10);
+    const monthIdx = MONTHS_ES.findIndex(function(mo){ return normalizeText(mo)===m[2]; });
+    if(monthIdx>-1){
+      const year = m[3] ? parseInt(m[3],10) : new Date(todayIso+"T00:00:00").getFullYear();
+      return isoDate(year, monthIdx, day);
+    }
+  }
+  return null;
+}
+function answerCalendarChat(query){
+  const todayIso = DEMO_TODAY;
+  const finca = findFincaMentionedIn(query);
+  const dateIso = parseSpokenDate(query, todayIso);
+
+  if(dateIso && isNaN(new Date(dateIso+"T00:00:00").getTime())){
+    return { text: "Esa fecha no parece válida. Prueba con un formato como 25/12/2026 o \"25 de diciembre\".", chips:["¿Qué finca está libre mañana?","Fincas libres hoy"] };
+  }
+  if(finca && dateIso){
+    const occ = FINCA_BOOKINGS.find(function(b){ return b.fincaId===finca.id && dateIso>=b.checkin && dateIso<b.checkout; });
+    return {
+      text: occ
+        ? (finca.name+" está reservada el "+formatDateEs(dateIso)+" — huésped "+occ.guest+" ("+formatDateEs(occ.checkin)+" → "+formatDateEs(occ.checkout)+").")
+        : ("Sí, "+finca.name+" está disponible el "+formatDateEs(dateIso)+"."),
+      gotoDate: dateIso,
+    };
+  }
+  if(dateIso && !finca){
+    const fincas = fincaListings();
+    const free=[], occupied=[];
+    fincas.forEach(function(f){
+      const occ = FINCA_BOOKINGS.find(function(b){ return b.fincaId===f.id && dateIso>=b.checkin && dateIso<b.checkout; });
+      (occ?occupied:free).push(f.name);
+    });
+    let text = "El "+formatDateEs(dateIso)+": ";
+    text += free.length ? ("libres → "+free.join(", ")+". ") : "no hay fincas libres. ";
+    if(occupied.length) text += "reservadas → "+occupied.join(", ")+".";
+    return { text: text, gotoDate: dateIso };
+  }
+  if(finca && !dateIso){
+    const upcoming = FINCA_BOOKINGS.filter(function(b){ return b.fincaId===finca.id && b.checkout>=todayIso; }).sort(function(a,b){ return a.checkin<b.checkin?-1:1; });
+    if(!upcoming.length) return { text: finca.name+" no tiene reservas próximas registradas — está libre en cualquier fecha." };
+    const next = upcoming[0];
+    return { text: finca.name+" tiene "+upcoming.length+" reserva(s) próximas. La más cercana: "+formatDateEs(next.checkin)+" → "+formatDateEs(next.checkout)+" ("+next.guest+"). Dime una fecha y te digo si está libre ese día." };
+  }
+  return {
+    text: "No entendí bien 🤔 Pregúntame algo como \"¿qué finca está libre el 25 de diciembre?\" o \"¿Finca La Serrana está libre el 20/12/2026?\".",
+    chips: ["¿Qué finca está libre mañana?","¿Finca La Serrana libre el 25 de diciembre?","Fincas libres hoy"],
+  };
+}
+
 function fincaFilteredBookings(){
   const fincaId = S.calendar.filterFinca;
   return (!fincaId || fincaId==="todas") ? FINCA_BOOKINGS : FINCA_BOOKINGS.filter(function(b){ return b.fincaId===fincaId; });
@@ -2538,6 +2619,7 @@ function bindGestion(){
   if(gestionExitBtn){ gestionExitBtn.addEventListener("click", function(){ navigate("home"); }); }
   const gestionToAdmin=document.getElementById("gestionToAdmin");
   if(gestionToAdmin){ gestionToAdmin.addEventListener("click", function(){ navigate(S.admin.authed ? "admin" : "admin-login"); }); }
+  bindCalChatWidget();
 
   /* ---- Calendario de reservas ---- */
   const calPrev=document.getElementById("calPrev"), calNext=document.getElementById("calNext");
@@ -2711,7 +2793,7 @@ function renderChatWidget(){
   if(!c.open && !c.tooltipDismissed && c.showTooltip){
     tooltip = '<div class="chat-tooltip" id="chatTooltip"><button type="button" id="chatTooltipClose" aria-label="Cerrar">'+icon('close')+'</button><p>¿Buscando algo especial? Pregúntame por fincas, parques o tours disponibles 👋</p></div>';
   }
-  return '<div id="chatRoot">' +
+  return '<div class="chat-root">' +
     tooltip +
     '<div class="chat-panel'+(c.open?' open':'')+'" id="chatPanel">' +
       '<div class="chat-head"><img src="photos/logo-mark-white.png" alt=""><div><b>Asistente El Viajero Inquieto</b><span>Responde leyendo el catálogo en vivo</span></div></div>' +
@@ -2771,6 +2853,60 @@ function bindChatWidget(){
     el.addEventListener("click", function(){ navigate("listing", {id: el.getAttribute("data-chatgo")}); });
   });
   chatScrollToBottom();
+}
+
+/* ---- Asistente de disponibilidad (widget flotante en Calendario) ---- */
+function renderCalChatWidget(){
+  const c = S.calChat;
+  if(!c.messages.length){
+    c.messages.push({who:"bot", text:"Hola, soy el asistente de disponibilidad. Pregúntame por una finca, una fecha, o ambas — por ejemplo:", chips:["¿Qué finca está libre mañana?","¿Finca La Serrana libre el 25 de diciembre?","Fincas libres hoy"]});
+  }
+  return '<div class="chat-root">' +
+    '<div class="chat-panel'+(c.open?' open':'')+'" id="calChatPanel">' +
+      '<div class="chat-head"><span class="cal-chat-head-icon">'+icon('calendar')+'</span><div><b>Asistente de disponibilidad</b><span>Lee las reservas guardadas — sin IA</span></div></div>' +
+      '<div class="chat-body" id="calChatBody">' + c.messages.map(chatBubble).join('') + '</div>' +
+      '<div class="chat-input-row"><input id="calChatInput" type="text" placeholder="Ej. ¿qué finca está libre el 20/12?" autocomplete="off">' +
+        '<button type="button" id="calChatSend">'+icon('send')+'</button></div>' +
+    '</div>' +
+    '<button type="button" class="chat-fab'+(c.open?' open':'')+'" id="calChatFab" aria-label="Abrir asistente de disponibilidad">' +
+      '<span class="icon-chat">'+icon('chat')+'</span><span class="icon-close">'+icon('close')+'</span>' +
+    '</button>' +
+  '</div>';
+}
+function calChatScrollToBottom(){
+  const body=document.getElementById("calChatBody");
+  if(body) body.scrollTop = body.scrollHeight;
+}
+function bindCalChatWidget(){
+  const fab=document.getElementById("calChatFab");
+  const input=document.getElementById("calChatInput");
+  const sendBtn=document.getElementById("calChatSend");
+  if(!fab) return;
+
+  function openChat(){ S.calChat.open=true; render(); setTimeout(function(){ const i=document.getElementById("calChatInput"); if(i) i.focus(); calChatScrollToBottom(); }, 30); }
+  function closeChat(){ S.calChat.open=false; render(); }
+  fab.addEventListener("click", function(){ S.calChat.open ? closeChat() : openChat(); });
+
+  function send(text){
+    const q=(text!==undefined?text:(input?input.value:"")).trim();
+    if(!q) return;
+    S.calChat.messages.push({who:"user", text:q});
+    const a=answerCalendarChat(q);
+    S.calChat.messages.push({who:"bot", text:a.text, chips:a.chips});
+    if(a.gotoDate){
+      const dt=new Date(a.gotoDate+"T00:00:00");
+      S.calendar.year=dt.getFullYear(); S.calendar.month=dt.getMonth(); S.calendar.selectedDate=a.gotoDate;
+    }
+    render();
+    const i=document.getElementById("calChatInput"); if(i) i.focus();
+    calChatScrollToBottom();
+  }
+  if(sendBtn){ sendBtn.addEventListener("click", function(){ send(); }); }
+  if(input){ input.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); send(); } }); }
+  document.querySelectorAll("#calChatBody [data-chatask]").forEach(function(el){
+    el.addEventListener("click", function(){ send(el.getAttribute("data-chatask")); });
+  });
+  calChatScrollToBottom();
 }
 
 /* ================= ICON BADGE STYLES (tone variants) ================= */
