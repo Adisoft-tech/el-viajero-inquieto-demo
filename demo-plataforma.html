@@ -618,6 +618,36 @@ td.wrap{white-space:normal;}
 .cal-avail-item span:first-child{font-size:13.5px;font-weight:600;}
 .cal-avail-sub{font-size:12.5px;color:var(--text-muted);margin-bottom:14px;}
 
+/* sortable / paginated bookings table */
+.cal-th-sort{cursor:pointer;user-select:none;white-space:nowrap;}
+.cal-th-sort:hover{color:var(--text);}
+.cal-th-sort.active{color:var(--accent);}
+.cal-th-arrow{margin-left:4px;font-size:10px;}
+.cal-pager{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap;}
+.cal-pager-count{font-size:12.5px;color:var(--text-muted);}
+.cal-pager-nav{display:flex;gap:8px;}
+.cal-pager-nav .icon-btn:disabled{opacity:.35;cursor:not-allowed;}
+
+/* availability matrix (finca x día) */
+.avail-legend{display:flex;gap:16px;font-size:12px;color:var(--text-muted);}
+.avail-legend-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
+.avail-legend-dot.free{background:var(--ok-bg);border:1px solid var(--ok-fg);}
+.avail-legend-dot.occupied{background:var(--bad-fg);}
+.avail-scroll{overflow-x:auto;padding-bottom:6px;}
+.avail-grid{display:flex;flex-direction:column;gap:3px;min-width:max-content;}
+.avail-row{display:flex;align-items:center;gap:3px;}
+.avail-row-label{width:150px;flex:none;font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:sticky;left:0;background:var(--surface);padding-right:8px;z-index:1;}
+.avail-row-cells{display:flex;gap:3px;}
+.avail-cell{width:22px;height:22px;flex:none;border-radius:5px;border:none;padding:0;box-sizing:border-box;}
+.avail-daynum{background:transparent;color:var(--text-muted);font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:default;}
+.avail-daynum.today{color:var(--accent);}
+.avail-day{background:var(--ok-bg);cursor:pointer;}
+.avail-day.occupied{background:var(--bad-fg);}
+.avail-day.today{box-shadow:0 0 0 2px var(--accent) inset;}
+.avail-day.selected{box-shadow:0 0 0 2px var(--text) inset;}
+.avail-day:hover{filter:brightness(0.93);}
+@media (max-width:640px){ .avail-row-label{width:110px;font-size:11px;} .avail-cell{width:18px;height:18px;} }
+
 /* booking form additions */
 .cal-form-subhead{grid-column:1/-1;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-top:6px;padding-top:14px;border-top:1px solid var(--border);}
 .cal-readonly{background:var(--bg-alt) !important;cursor:not-allowed;color:var(--text-muted);}
@@ -1001,7 +1031,7 @@ const S = {
   booking:{listingId:null, step:1, checkin:"", checkout:"", date:"", guests:2, name:"", email:"", phone:"", payMethod:"card"},
   admin:{authed:false, tab:"resumen", editing:null},
   gestion:{authed:false, tab:"calendario"},
-  calendar:{year:2026, month:8, selectedDate:null, formOpen:false, filterFinca:"todas", filterFrom:"", filterTo:""},
+  calendar:{year:2026, month:8, selectedDate:null, formOpen:false, filterFinca:"todas", filterFrom:"", filterTo:"", sortKey:"checkin", sortDir:"asc", page:1, pageSize:8},
   docs:{type:"cotizacion", counters:{cobro:1, pago:1, cotizacion:1}, items:[{desc:"", qty:1, price:0}]},
   chat:{open:false, messages:[], booted:false},
   detail:{forId:null, photoIndex:0, lightbox:false},
@@ -1664,7 +1694,7 @@ function importBookingsFromExcel(file){
     });
     if(imported){
       const dt = new Date(lastCheckin+"T00:00:00");
-      S.calendar.year=dt.getFullYear(); S.calendar.month=dt.getMonth();
+      S.calendar.year=dt.getFullYear(); S.calendar.month=dt.getMonth(); S.calendar.page=1;
       render();
     }
     if(skipped){
@@ -1788,14 +1818,82 @@ function calBookingForm(){
     '<button class="btn btn-accent" style="margin-top:16px;" id="calSaveBtn">Guardar reserva</button>' +
   '</div>';
 }
+const BOOKING_COLUMNS = [
+  {key:"finca", label:"Finca"}, {key:"guest", label:"Huésped"}, {key:"cedula", label:"Cédula"},
+  {key:"email", label:"Correo"}, {key:"checkin", label:"Llegada"}, {key:"checkout", label:"Salida"},
+  {key:"time", label:"Hora"}, {key:"guests", label:"Huéspedes"}, {key:"payMethod", label:"Pago"},
+  {key:"total", label:"Total"}, {key:"advance", label:"Abono"}, {key:"balance", label:"Saldo"},
+];
+function bookingSortValue(b, key){
+  if(key==="finca"){ const f=fincaById(b.fincaId); return f?f.name:b.fincaId; }
+  return b[key];
+}
+function sortedFilteredBookings(){
+  const c=S.calendar;
+  const key = c.sortKey||"checkin";
+  const dir = c.sortDir==="desc" ? -1 : 1;
+  return fincaFilteredBookings().slice().sort(function(a,b){
+    let av=bookingSortValue(a,key), bv=bookingSortValue(b,key);
+    if(typeof av==="string" || typeof bv==="string"){ av=String(av||"").toLowerCase(); bv=String(bv||"").toLowerCase(); }
+    else { av=av||0; bv=bv||0; }
+    if(av<bv) return -1*dir;
+    if(av>bv) return 1*dir;
+    return 0;
+  });
+}
 function upcomingBookingsTable(){
-  const rows = fincaFilteredBookings().slice().sort(function(a,b){ return a.checkin<b.checkin?-1:a.checkin>b.checkin?1:0; });
-  return '<div class="table-wrap"><table><thead><tr><th>Finca</th><th>Huésped</th><th>Cédula</th><th>Correo</th><th>Llegada</th><th>Salida</th><th>Hora</th><th>Huéspedes</th><th>Pago</th><th>Total</th><th>Abono</th><th>Saldo</th></tr></thead><tbody>' +
-    (rows.length ? rows.map(function(b){
-      const f=fincaById(b.fincaId);
-      return '<tr><td class="wrap">'+(f?f.name:b.fincaId)+'</td><td class="wrap">'+esc(b.guest)+'</td><td>'+esc(b.cedula||'—')+'</td><td class="wrap">'+esc(b.email||'—')+'</td><td>'+formatDateEs(b.checkin)+'</td><td>'+formatDateEs(b.checkout)+'</td><td>'+b.time+'</td><td class="tabular">'+b.guests+'</td><td>'+(b.payMethod||'—')+'</td><td class="tabular">'+cop(b.total||0)+'</td><td class="tabular">'+cop(b.advance||0)+'</td><td class="tabular">'+cop(b.balance||0)+'</td></tr>';
-    }).join('') : '<tr><td colspan="12"><p class="empty-note">No hay reservas para esta finca.</p></td></tr>') +
-  '</tbody></table></div>';
+  const c=S.calendar;
+  const all = sortedFilteredBookings();
+  const pageSize = c.pageSize||8;
+  const totalPages = Math.max(1, Math.ceil(all.length/pageSize));
+  if(c.page>totalPages) c.page=totalPages;
+  if(c.page<1) c.page=1;
+  const start=(c.page-1)*pageSize;
+  const rows = all.slice(start, start+pageSize);
+  const sortDir = c.sortDir||"asc";
+  const head = BOOKING_COLUMNS.map(function(col){
+    const active = (c.sortKey||"checkin")===col.key;
+    return '<th class="cal-th-sort'+(active?' active':'')+'" data-sortkey="'+col.key+'">'+col.label+(active?'<span class="cal-th-arrow">'+(sortDir==="asc"?'↑':'↓')+'</span>':'')+'</th>';
+  }).join('');
+  const body = rows.length ? rows.map(function(b){
+    const f=fincaById(b.fincaId);
+    return '<tr><td class="wrap">'+(f?f.name:b.fincaId)+'</td><td class="wrap">'+esc(b.guest)+'</td><td>'+esc(b.cedula||'—')+'</td><td class="wrap">'+esc(b.email||'—')+'</td><td>'+formatDateEs(b.checkin)+'</td><td>'+formatDateEs(b.checkout)+'</td><td>'+b.time+'</td><td class="tabular">'+b.guests+'</td><td>'+(b.payMethod||'—')+'</td><td class="tabular">'+cop(b.total||0)+'</td><td class="tabular">'+cop(b.advance||0)+'</td><td class="tabular">'+cop(b.balance||0)+'</td></tr>';
+  }).join('') : '<tr><td colspan="12"><p class="empty-note">No hay reservas para esta finca.</p></td></tr>';
+  const pager = '<div class="cal-pager">' +
+      '<span class="cal-pager-count">'+all.length+' reserva(s)'+(totalPages>1?' · página '+c.page+' de '+totalPages:'')+'</span>' +
+      (totalPages>1 ? ('<div class="cal-pager-nav"><button type="button" class="icon-btn" id="calPagePrev"'+(c.page<=1?' disabled':'')+'>'+icon('chevLeft')+'</button>' +
+        '<button type="button" class="icon-btn" id="calPageNext"'+(c.page>=totalPages?' disabled':'')+'>'+icon('chevRight')+'</button></div>') : '') +
+    '</div>';
+  return '<div class="table-wrap"><table><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table></div>' + pager;
+}
+function calAvailabilityMatrix(){
+  const c=S.calendar, y=c.year, m=c.month;
+  const daysThis = new Date(y,m+1,0).getDate();
+  const fincas = fincaListings();
+  const dayHeads = Array.from({length:daysThis}).map(function(_,i){
+    const iso = isoDate(y,m,i+1);
+    return '<div class="avail-cell avail-daynum'+(iso===DEMO_TODAY?' today':'')+'">'+(i+1)+'</div>';
+  }).join('');
+  const rows = fincas.map(function(f){
+    const cells = Array.from({length:daysThis}).map(function(_,i){
+      const iso = isoDate(y,m,i+1);
+      const booking = FINCA_BOOKINGS.find(function(b){ return b.fincaId===f.id && iso>=b.checkin && iso<b.checkout; });
+      const cls = "avail-cell avail-day"+(booking?" occupied":" free")+(iso===c.selectedDate?" selected":"")+(iso===DEMO_TODAY?" today":"");
+      const tip = esc(f.name)+' · '+formatDateEs(iso)+(booking?' · Reservada por '+esc(booking.guest):' · Disponible');
+      return '<button type="button" class="'+cls+'" data-caldate="'+iso+'" title="'+tip+'"></button>';
+    }).join('');
+    return '<div class="avail-row"><div class="avail-row-label">'+esc(f.name)+'</div><div class="avail-row-cells">'+cells+'</div></div>';
+  }).join('');
+  return '<div class="panel avail-panel" style="margin-top:24px;">' +
+    '<div class="panel-head"><h3>Mapa de disponibilidad — '+MONTHS_ES[m]+' '+y+'</h3>' +
+      '<div class="avail-legend"><span><span class="avail-legend-dot free"></span>Disponible</span><span><span class="avail-legend-dot occupied"></span>Reservada</span></div>' +
+    '</div>' +
+    '<p class="cal-avail-sub">Pasa el cursor o toca un día para ver el detalle · haz clic para abrirlo abajo.</p>' +
+    '<div class="avail-scroll"><div class="avail-grid">' +
+      '<div class="avail-row avail-row-head"><div class="avail-row-label"></div><div class="avail-row-cells">'+dayHeads+'</div></div>' +
+      rows +
+    '</div></div>' +
+  '</div>';
 }
 function adminCalendario(){
   const c=S.calendar;
@@ -1812,6 +1910,7 @@ function adminCalendario(){
       '<div class="cal-nav"><button id="calPrev" aria-label="Mes anterior">'+icon('chevLeft')+'</button><button id="calNext" aria-label="Mes siguiente">'+icon('chevRight')+'</button></div></div>' +
       calGrid() +
     '</div>' + calSidePanel() + '</div>' +
+    calAvailabilityMatrix() +
     '<div class="panel" style="margin-top:24px;"><div class="panel-head"><h3>Próximas reservas</h3></div>' + upcomingBookingsTable() + '</div>' +
   '</div>';
 }
@@ -2463,17 +2562,31 @@ function bindGestion(){
   if(calTemplateBtn){ calTemplateBtn.addEventListener("click", function(){ downloadExcelTemplate(); }); }
 
   const calFilterFinca=document.getElementById("calFilterFinca");
-  if(calFilterFinca){ calFilterFinca.addEventListener("change", function(){ S.calendar.filterFinca=calFilterFinca.value; render(); }); }
+  if(calFilterFinca){ calFilterFinca.addEventListener("change", function(){ S.calendar.filterFinca=calFilterFinca.value; S.calendar.page=1; render(); }); }
   const calFilterFrom=document.getElementById("calFilterFrom");
   if(calFilterFrom){ calFilterFrom.addEventListener("change", function(){
     S.calendar.filterFrom=calFilterFrom.value;
     if(S.calendar.filterTo && S.calendar.filterTo<S.calendar.filterFrom){ S.calendar.filterTo=""; }
+    S.calendar.page=1;
     render();
   }); }
   const calFilterTo=document.getElementById("calFilterTo");
-  if(calFilterTo){ calFilterTo.addEventListener("change", function(){ S.calendar.filterTo=calFilterTo.value; render(); }); }
+  if(calFilterTo){ calFilterTo.addEventListener("change", function(){ S.calendar.filterTo=calFilterTo.value; S.calendar.page=1; render(); }); }
   const calFilterClear=document.getElementById("calFilterClear");
-  if(calFilterClear){ calFilterClear.addEventListener("click", function(){ S.calendar.filterFinca="todas"; S.calendar.filterFrom=""; S.calendar.filterTo=""; render(); }); }
+  if(calFilterClear){ calFilterClear.addEventListener("click", function(){ S.calendar.filterFinca="todas"; S.calendar.filterFrom=""; S.calendar.filterTo=""; S.calendar.page=1; render(); }); }
+
+  document.querySelectorAll("[data-sortkey]").forEach(function(el){
+    el.addEventListener("click", function(){
+      const key=el.getAttribute("data-sortkey");
+      if(S.calendar.sortKey===key){ S.calendar.sortDir = S.calendar.sortDir==="asc"?"desc":"asc"; }
+      else { S.calendar.sortKey=key; S.calendar.sortDir="asc"; }
+      S.calendar.page=1;
+      render();
+    });
+  });
+  const calPagePrev=document.getElementById("calPagePrev"), calPageNext=document.getElementById("calPageNext");
+  if(calPagePrev){ calPagePrev.addEventListener("click", function(){ S.calendar.page=Math.max(1,S.calendar.page-1); render(); }); }
+  if(calPageNext){ calPageNext.addEventListener("click", function(){ S.calendar.page=S.calendar.page+1; render(); }); }
 
   const calCheckinInput=document.getElementById("calCheckin"), calCheckoutInput=document.getElementById("calCheckout");
   if(calCheckinInput && calCheckoutInput){
@@ -2516,7 +2629,7 @@ function bindGestion(){
     const id = FINCA_BOOKINGS.length ? Math.max.apply(null, FINCA_BOOKINGS.map(function(b){return b.id;}))+1 : 1;
     FINCA_BOOKINGS.push({ id:id, fincaId:fincaId, guest:guest, cedula:cedula, phone:phone, email:email, checkin:checkin, checkout:checkout, time:time, guests:guests, adults:adults, children:children, payMethod:payMethod, total:total, advance:advance, balance:balance });
     const dt=new Date(checkin+"T00:00:00");
-    S.calendar.year=dt.getFullYear(); S.calendar.month=dt.getMonth(); S.calendar.selectedDate=checkin; S.calendar.formOpen=false;
+    S.calendar.year=dt.getFullYear(); S.calendar.month=dt.getMonth(); S.calendar.selectedDate=checkin; S.calendar.formOpen=false; S.calendar.page=1;
     const f=fincaById(fincaId);
     toast("Reserva creada para "+(f?f.name:fincaId));
     render();
