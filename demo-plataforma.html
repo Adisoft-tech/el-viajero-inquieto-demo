@@ -449,12 +449,35 @@ td.wrap{white-space:normal;}
 /* ---------- chat widget ---------- */
 .chat-root{position:fixed;right:20px;bottom:20px;z-index:80;display:flex;flex-direction:column;align-items:flex-end;gap:14px;}
 @media (max-width:480px){ .chat-root{right:14px;bottom:14px;} }
-.chat-fab{width:58px;height:58px;border-radius:50%;background:var(--ink);color:var(--ivory);border:none;cursor:pointer;box-shadow:var(--shadow-lg);display:flex;align-items:center;justify-content:center;flex:none;transition:transform .15s ease;}
+.chat-fab{width:58px;height:58px;border-radius:50%;background:var(--ink);color:var(--ivory);border:none;cursor:pointer;box-shadow:var(--shadow-lg);display:flex;align-items:center;justify-content:center;flex:none;transition:transform .15s ease;position:relative;}
 .chat-fab:hover{transform:scale(1.05);}
 .chat-fab svg{width:26px;height:26px;}
+.chat-fab .icon-chat{display:flex;align-items:center;justify-content:center;}
 .chat-fab .icon-close{display:none;}
 .chat-fab.open .icon-chat{display:none;}
 .chat-fab.open .icon-close{display:block;}
+.chat-fab-logo{width:36px;height:36px;object-fit:contain;display:block;}
+
+/* bigger, animated FAB for the public site */
+.chat-fab-lg{width:84px;height:84px;box-shadow:var(--shadow-lg),0 0 0 6px rgba(247,245,239,0.5);}
+.chat-fab-lg:hover{transform:scale(1.08);}
+.chat-fab-lg svg{width:32px;height:32px;}
+.chat-fab-lg .chat-fab-logo{width:60px;height:60px;animation:chatCharBob 2.2s ease-in-out infinite;transform-origin:50% 85%;}
+.chat-fab-lg:hover .chat-fab-logo{animation-duration:.8s;}
+.chat-fab-lg::before{content:"";position:absolute;inset:-10px;border-radius:50%;background:var(--accent);opacity:.4;animation:chatPulseRing 2.6s ease-out infinite;pointer-events:none;}
+@keyframes chatCharBob{
+  0%,100%{ transform:translateY(0) rotate(-5deg) scale(1); }
+  50%{ transform:translateY(-6px) rotate(5deg) scale(1.05); }
+}
+@keyframes chatPulseRing{
+  0%{ transform:scale(0.85); opacity:.45; }
+  70%{ transform:scale(1.4); opacity:0; }
+  100%{ transform:scale(1.4); opacity:0; }
+}
+@media (prefers-reduced-motion: reduce){
+  .chat-fab-lg .chat-fab-logo{ animation:none; }
+  .chat-fab-lg::before{ animation:none; display:none; }
+}
 .chat-dot{position:absolute;top:2px;right:2px;width:12px;height:12px;border-radius:50%;background:var(--lagoon);border:2px solid var(--bg);}
 
 .chat-tooltip{position:absolute;bottom:70px;right:0;max-width:230px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-m) var(--radius-m) 4px var(--radius-m);box-shadow:var(--shadow-lg);padding:14px 16px;font-size:13.5px;line-height:1.4;animation:fadeIn .3s ease both;}
@@ -2801,8 +2824,8 @@ function renderChatWidget(){
       '<div class="chat-input-row"><input id="chatInput" type="text" placeholder="Ej. ¿qué finca hay cerca a Manizales?" autocomplete="off">' +
         '<button type="button" id="chatSend">'+icon('send')+'</button></div>' +
     '</div>' +
-    '<button type="button" class="chat-fab'+(c.open?' open':'')+'" id="chatFab" aria-label="Abrir chat de ayuda">' +
-      '<span class="icon-chat">'+icon('chat')+'</span><span class="icon-close">'+icon('close')+'</span>' +
+    '<button type="button" class="chat-fab chat-fab-lg'+(c.open?' open':'')+'" id="chatFab" aria-label="Abrir chat de ayuda">' +
+      '<span class="icon-chat"><img class="chat-fab-logo" src="photos/logo-mark-white.png" alt=""></span><span class="icon-close">'+icon('close')+'</span>' +
       (!c.open && !c.tooltipDismissed && !c.hasInteracted ? '<span class="chat-dot"></span>' : '') +
     '</button>' +
   '</div>';
@@ -2869,7 +2892,7 @@ function renderCalChatWidget(){
         '<button type="button" id="calChatSend">'+icon('send')+'</button></div>' +
     '</div>' +
     '<button type="button" class="chat-fab'+(c.open?' open':'')+'" id="calChatFab" aria-label="Abrir asistente de disponibilidad">' +
-      '<span class="icon-chat">'+icon('chat')+'</span><span class="icon-close">'+icon('close')+'</span>' +
+      '<span class="icon-chat"><img class="chat-fab-logo" src="photos/logo-mark-white.png" alt=""></span><span class="icon-close">'+icon('close')+'</span>' +
     '</button>' +
   '</div>';
 }
