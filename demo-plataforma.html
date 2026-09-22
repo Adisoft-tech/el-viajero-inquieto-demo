@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* ---------- tokens ---------- */
 :root{
@@ -597,6 +598,9 @@ td.wrap{white-space:normal;}
 .cal-empty{font-size:13px;color:var(--text-muted);}
 
 /* filters + availability check */
+.cal-import-hint{font-size:12.5px;color:var(--text-muted);margin:-14px 0 20px;line-height:1.6;}
+.cal-import-hint b{color:var(--text);font-weight:700;}
+.cal-import-template{color:var(--accent);text-decoration:underline;text-underline-offset:2px;cursor:pointer;font-weight:600;}
 .cal-filters{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:16px 18px;margin-bottom:22px;display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:12px;align-items:end;}
 @media (max-width:760px){ .cal-filters{grid-template-columns:1fr 1fr;} }
 .cal-filters .btn{white-space:nowrap;}
@@ -722,6 +726,7 @@ const ICONS = {
   calendar: svgWrap('<rect x="8" y="12" width="48" height="44" rx="4"/><line x1="8" y1="24" x2="56" y2="24"/><line x1="20" y1="6" x2="20" y2="18"/><line x1="44" y1="6" x2="44" y2="18"/><circle cx="20" cy="34" r="2.6" fill="currentColor"/><circle cx="32" cy="34" r="2.6" fill="currentColor"/><circle cx="44" cy="34" r="2.6" fill="currentColor"/><circle cx="20" cy="44" r="2.6" fill="currentColor"/><circle cx="32" cy="44" r="2.6" fill="currentColor"/>'),
   docFile: svgWrap('<path d="M16 6h22l10 10v42H16z"/><path d="M38 6v10h10"/><line x1="23" y1="30" x2="41" y2="30"/><line x1="23" y1="38" x2="41" y2="38"/><line x1="23" y1="46" x2="35" y2="46"/>'),
   download: svgWrap('<path d="M32 8v34"/><path d="M18 28l14 14 14-14"/><line x1="12" y1="52" x2="52" y2="52"/>'),
+  upload: svgWrap('<path d="M32 42V8"/><path d="M18 22l14-14 14 14"/><line x1="12" y1="52" x2="52" y2="52"/>'),
   close: svgWrap('<line x1="14" y1="14" x2="50" y2="50"/><line x1="50" y1="14" x2="14" y2="50"/>'),
   send: svgWrap('<line x1="8" y1="32" x2="54" y2="32"/><path d="M38 18l16 14-16 14"/>'),
   heart: svgWrap('<path d="M32 54S8 40 8 22a14 14 0 0 1 24-9 14 14 0 0 1 24 9c0 18-24 32-24 32Z"/>'),
@@ -1533,6 +1538,145 @@ function inventoryRow(l){
 function fincaListings(){ return LISTINGS.filter(function(l){ return l.cat==="alojamientos"; }); }
 function fincaById(id){ return LISTINGS.find(function(l){ return l.id===id; }); }
 function isoDate(y,m,d){ return y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0"); }
+
+/* ---- Importación de reservas desde Excel ---- */
+function normalizeHeader(s){
+  return normalizeText(s).replace(/\s+/g," ");
+}
+const EXCEL_FIELD_ALIASES = {
+  finca: ["finca","cabana","alojamiento","propiedad"],
+  guest: ["huesped","quien reservo","reservo","cliente","nombre","nombre completo","reservado por"],
+  checkin: ["fecha","fecha de llegada","fecha llegada","llegada","check-in","checkin","fecha reserva","fecha de reserva"],
+  checkout: ["fecha de salida","fecha salida","salida","check-out","checkout"],
+  guests: ["huespedes","numero de huespedes","numero de huesped","personas","numero de personas","cantidad de huespedes"],
+  total: ["valor a pagar","valor total","total","valor","precio"],
+  advance: ["abonado","abono","anticipo","valor abonado"],
+  cedula: ["cedula","identificacion","documento"],
+  phone: ["celular","telefono","whatsapp"],
+  email: ["correo","email","correo electronico"],
+  time: ["hora","hora de llegada"],
+  payMethod: ["forma de pago","metodo de pago","pago"],
+};
+function matchExcelColumns(headerKeys){
+  const map = {};
+  const normalizedKeys = headerKeys.map(function(k){ return {orig:k, norm:normalizeHeader(k)}; });
+  Object.keys(EXCEL_FIELD_ALIASES).forEach(function(field){
+    const found = normalizedKeys.find(function(k){ return EXCEL_FIELD_ALIASES[field].indexOf(k.norm)>-1; });
+    if(found) map[field] = found.orig;
+  });
+  return map;
+}
+function parseExcelDateValue(v){
+  if(v==null || v==="") return "";
+  if(v instanceof Date && !isNaN(v)){
+    return v.getFullYear()+"-"+String(v.getMonth()+1).padStart(2,"0")+"-"+String(v.getDate()).padStart(2,"0");
+  }
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m) return m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0");
+  const dt = new Date(s);
+  if(!isNaN(dt)) return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+  return "";
+}
+function parseExcelNumber(v){
+  if(v==null || v==="") return 0;
+  if(typeof v === "number") return Math.round(v);
+  const digits = String(v).replace(/[^0-9]/g,"");
+  return digits ? parseInt(digits,10) : 0;
+}
+function findFincaByName(name){
+  const norm = normalizeHeader(name);
+  if(!norm) return null;
+  const fincas = fincaListings();
+  let match = fincas.find(function(f){ return normalizeHeader(f.name)===norm; });
+  if(match) return match;
+  match = fincas.find(function(f){ const fn=normalizeHeader(f.name); return fn.indexOf(norm)>-1 || norm.indexOf(fn)>-1; });
+  return match || null;
+}
+function downloadExcelTemplate(){
+  if(!window.XLSX){ toast("No se pudo cargar el generador de Excel. Revisa tu conexión."); return; }
+  const rows = [
+    ["Finca","Huésped","Fecha","Huéspedes","Valor a pagar","Abonado"],
+    ["Finca La Serrana","María Pérez","2026-11-10",4,900000,300000],
+  ];
+  const sheet = XLSX.utils.aoa_to_sheet(rows);
+  sheet["!cols"] = [{wch:24},{wch:20},{wch:14},{wch:12},{wch:16},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, sheet, "Reservas");
+  XLSX.writeFile(wb, "Plantilla_Reservas_El_Viajero_Inquieto.xlsx");
+}
+function importBookingsFromExcel(file){
+  if(!window.XLSX){ toast("No se pudo cargar el lector de Excel. Revisa tu conexión."); return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    let workbook;
+    try{
+      workbook = XLSX.read(new Uint8Array(e.target.result), {type:"array", cellDates:true});
+    }catch(err){
+      toast("No se pudo leer el archivo. Verifica que sea un Excel válido.");
+      return;
+    }
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, {defval:""});
+    if(!rows.length){ toast("El archivo no tiene filas de datos."); return; }
+    const colMap = matchExcelColumns(Object.keys(rows[0]));
+    if(!colMap.finca || !colMap.guest || !colMap.checkin){
+      toast("No se encontraron las columnas Finca, Huésped y Fecha — revisa los encabezados del Excel.");
+      return;
+    }
+    let imported=0, skipped=0;
+    const skippedReasons=[];
+    let nextId = FINCA_BOOKINGS.length ? Math.max.apply(null, FINCA_BOOKINGS.map(function(b){return b.id;}))+1 : 1;
+    let lastCheckin="";
+    rows.forEach(function(row, idx){
+      const fincaName = row[colMap.finca];
+      const finca = findFincaByName(fincaName);
+      const guest = String(row[colMap.guest]||"").trim();
+      const checkin = parseExcelDateValue(row[colMap.checkin]);
+      if(!finca){ skipped++; skippedReasons.push("Fila "+(idx+2)+": finca \""+fincaName+"\" no coincide con el catálogo"); return; }
+      if(!guest){ skipped++; skippedReasons.push("Fila "+(idx+2)+": falta el nombre del huésped"); return; }
+      if(!checkin){ skipped++; skippedReasons.push("Fila "+(idx+2)+": fecha inválida"); return; }
+      let checkout = colMap.checkout ? parseExcelDateValue(row[colMap.checkout]) : "";
+      if(!checkout){
+        const dt = new Date(checkin+"T00:00:00");
+        dt.setDate(dt.getDate()+1);
+        checkout = dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+      }
+      const guests = colMap.guests ? (parseExcelNumber(row[colMap.guests])||1) : 1;
+      const total = colMap.total ? parseExcelNumber(row[colMap.total]) : 0;
+      const advance = colMap.advance ? parseExcelNumber(row[colMap.advance]) : 0;
+      const balance = Math.max(total-advance,0);
+      FINCA_BOOKINGS.push({
+        id: nextId++, fincaId: finca.id, guest: guest,
+        cedula: colMap.cedula ? String(row[colMap.cedula]||"").trim() : "",
+        phone: colMap.phone ? String(row[colMap.phone]||"").trim() : "",
+        email: colMap.email ? String(row[colMap.email]||"").trim() : "",
+        checkin: checkin, checkout: checkout,
+        time: colMap.time ? (String(row[colMap.time]||"").trim()||"15:00") : "15:00",
+        guests: guests,
+        payMethod: colMap.payMethod ? (String(row[colMap.payMethod]||"").trim()||"Transferencia") : "Transferencia",
+        total: total, advance: advance, balance: balance,
+      });
+      lastCheckin = checkin;
+      imported++;
+    });
+    if(imported){
+      const dt = new Date(lastCheckin+"T00:00:00");
+      S.calendar.year=dt.getFullYear(); S.calendar.month=dt.getMonth();
+      render();
+    }
+    if(skipped){
+      console.warn("Filas omitidas al importar reservas:", skippedReasons);
+      toast(imported+" reserva(s) importada(s), "+skipped+" fila(s) omitida(s) — revisa la consola para el detalle.");
+    } else {
+      toast(imported+" reserva(s) importada(s) correctamente.");
+    }
+  };
+  reader.onerror = function(){ toast("No se pudo leer el archivo."); };
+  reader.readAsArrayBuffer(file);
+}
 function fincaFilteredBookings(){
   const fincaId = S.calendar.filterFinca;
   return (!fincaId || fincaId==="todas") ? FINCA_BOOKINGS : FINCA_BOOKINGS.filter(function(b){ return b.fincaId===fincaId; });
@@ -1656,7 +1800,12 @@ function upcomingBookingsTable(){
 function adminCalendario(){
   const c=S.calendar;
   return '<div class="fade-in"><div class="admin-head"><div><h1>Calendario de reservas</h1><p>Disponibilidad de las fincas y cabañas ya cargadas en el catálogo.</p></div>' +
-    '<button class="btn btn-primary btn-sm" id="calNewBtn">'+icon('plus')+' Nueva reserva</button></div>' +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">' +
+      '<button class="btn btn-ghost btn-sm" id="calImportBtn">'+icon('upload')+' Importar Excel</button>' +
+      '<input type="file" id="calImportInput" accept=".xlsx,.xls,.csv" style="display:none;">' +
+      '<button class="btn btn-primary btn-sm" id="calNewBtn">'+icon('plus')+' Nueva reserva</button>' +
+    '</div></div>' +
+    '<p class="cal-import-hint">Importa reservas desde Excel — columnas esperadas: <b>Finca</b>, <b>Huésped</b>, <b>Fecha</b>, <b>Huéspedes</b>, <b>Valor a pagar</b>, <b>Abonado</b>. <span class="cal-import-template" id="calTemplateBtn">Descargar plantilla</span></p>' +
     calFilterBar() +
     (c.formOpen ? calBookingForm() : '') +
     '<div class="cal-wrap"><div class="panel"><div class="cal-head"><h3>'+MONTHS_ES[c.month]+' '+c.year+'</h3>' +
@@ -2302,6 +2451,16 @@ function bindGestion(){
   if(calNewBtn){ calNewBtn.addEventListener("click", function(){ S.calendar.formOpen=true; render(); }); }
   const calFormClose=document.getElementById("calFormClose");
   if(calFormClose){ calFormClose.addEventListener("click", function(){ S.calendar.formOpen=false; render(); }); }
+
+  const calImportBtn=document.getElementById("calImportBtn"), calImportInput=document.getElementById("calImportInput");
+  if(calImportBtn && calImportInput){ calImportBtn.addEventListener("click", function(){ calImportInput.click(); }); }
+  if(calImportInput){ calImportInput.addEventListener("change", function(){
+    const file = calImportInput.files && calImportInput.files[0];
+    if(file) importBookingsFromExcel(file);
+    calImportInput.value = "";
+  }); }
+  const calTemplateBtn=document.getElementById("calTemplateBtn");
+  if(calTemplateBtn){ calTemplateBtn.addEventListener("click", function(){ downloadExcelTemplate(); }); }
 
   const calFilterFinca=document.getElementById("calFilterFinca");
   if(calFilterFinca){ calFilterFinca.addEventListener("change", function(){ S.calendar.filterFinca=calFilterFinca.value; render(); }); }
