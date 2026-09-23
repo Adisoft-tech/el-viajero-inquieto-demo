@@ -1,4 +1,4 @@
-const CACHE_NAME = "vi-gestion-v1";
+const CACHE_NAME = "vi-gestion-v2";
 const APP_SHELL = [
   "./",
   "./demo-plataforma.html",
@@ -30,15 +30,12 @@ self.addEventListener("fetch", function(event){
   const req = event.request;
   if(req.method !== "GET") return;
   event.respondWith(
-    caches.match(req).then(function(cached){
-      const network = fetch(req).then(function(res){
-        if(res && res.ok){
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(function(cache){ cache.put(req, copy); });
-        }
-        return res;
-      }).catch(function(){ return cached; });
-      return cached || network;
-    })
+    fetch(req).then(function(res){
+      if(res && res.ok){
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then(function(cache){ cache.put(req, copy); });
+      }
+      return res;
+    }).catch(function(){ return caches.match(req); })
   );
 });

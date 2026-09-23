@@ -643,6 +643,15 @@ td.wrap{white-space:normal;}
 .cal-avail-item span:first-child{font-size:13.5px;font-weight:600;}
 .cal-avail-sub{font-size:12.5px;color:var(--text-muted);margin-bottom:14px;}
 
+/* gestión de fincas y cabañas */
+.finca-list{display:flex;flex-direction:column;gap:10px;}
+.finca-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;background:var(--surface-sunken);border:1px solid var(--border);border-radius:10px;}
+.finca-row-info b{font-size:14px;display:block;margin-bottom:2px;}
+.finca-row-info span{font-size:12.5px;color:var(--text-muted);}
+.finca-row-actions{display:flex;gap:6px;flex:none;}
+.finca-form{margin-top:18px;padding-top:18px;border-top:1px solid var(--border);}
+.finca-form h4{font-family:var(--font-display);font-size:17px;margin-bottom:14px;}
+
 /* sortable / paginated bookings table */
 .cal-th-sort{cursor:pointer;user-select:none;white-space:nowrap;}
 .cal-th-sort:hover{color:var(--text);}
@@ -1056,7 +1065,7 @@ const S = {
   booking:{listingId:null, step:1, checkin:"", checkout:"", date:"", guests:2, name:"", email:"", phone:"", payMethod:"card"},
   admin:{authed:false, tab:"resumen", editing:null},
   gestion:{authed:false, tab:"calendario"},
-  calendar:{year:2026, month:8, selectedDate:null, formOpen:false, filterFinca:"todas", filterFrom:"", filterTo:"", sortKey:"checkin", sortDir:"asc", page:1, pageSize:8},
+  calendar:{year:2026, month:8, selectedDate:null, formOpen:false, filterFinca:"todas", filterFrom:"", filterTo:"", sortKey:"checkin", sortDir:"asc", page:1, pageSize:8, fincaManagerOpen:false, editingFincaId:null},
   docs:{type:"cotizacion", counters:{cobro:1, pago:1, cotizacion:1}, items:[{desc:"", qty:1, price:0}]},
   chat:{open:false, messages:[], booted:false},
   calChat:{open:false, messages:[]},
@@ -1999,15 +2008,54 @@ function calAvailabilityMatrix(){
     '</div></div>' +
   '</div>';
 }
+function calFincaManager(){
+  const c=S.calendar;
+  const fincas = fincaListings();
+  const editing = c.editingFincaId;
+  const editingFinca = (editing && editing!=="new") ? fincaById(editing) : null;
+  const showForm = editing!==null;
+
+  const rows = fincas.map(function(f){
+    return '<div class="finca-row"><div class="finca-row-info"><b>'+esc(f.name)+'</b>' +
+      '<span>'+esc(f.town)+', '+esc(f.dept)+' · '+cop(f.price)+' / '+esc(f.unit)+' · hasta '+f.cap+' huéspedes</span></div>' +
+      '<div class="finca-row-actions"><button type="button" class="icon-btn" data-editfinca="'+f.id+'" aria-label="Editar">'+icon('edit')+'</button>' +
+      '<button type="button" class="icon-btn" data-deletefinca="'+f.id+'" aria-label="Eliminar">'+icon('trash')+'</button></div></div>';
+  }).join('');
+
+  const form = showForm ?
+    '<div class="finca-form"><h4>'+(editingFinca?'Editar finca':'Nueva finca')+'</h4>' +
+    '<div class="form-grid">' +
+      '<div class="field full"><label>Nombre</label><input id="ffName" value="'+esc(editingFinca?editingFinca.name:'')+'" placeholder="Nombre de la finca o cabaña"></div>' +
+      '<div class="field"><label>Pueblo</label><input id="ffTown" value="'+esc(editingFinca?editingFinca.town:'')+'" placeholder="Ej. Salento"></div>' +
+      '<div class="field"><label>Departamento</label><input id="ffDept" value="'+esc(editingFinca?editingFinca.dept:'')+'" placeholder="Ej. Quindío"></div>' +
+      '<div class="field"><label>Precio por noche</label><input id="ffPrice" type="number" min="0" step="10000" value="'+(editingFinca?editingFinca.price:'')+'"></div>' +
+      '<div class="field"><label>Capacidad (huéspedes)</label><input id="ffCap" type="number" min="1" value="'+(editingFinca?editingFinca.cap:4)+'"></div>' +
+      '<div class="field full"><label>Descripción</label><textarea id="ffDesc" rows="3" placeholder="Descripción breve para el catálogo">'+esc(editingFinca?editingFinca.desc:'')+'</textarea></div>' +
+    '</div>' +
+    '<div style="display:flex;gap:10px;margin-top:14px;">' +
+      '<button class="btn btn-accent" id="ffSaveBtn">'+(editingFinca?'Guardar cambios':'Agregar finca')+'</button>' +
+      '<button class="btn btn-ghost" id="ffCancelBtn">Cancelar</button>' +
+    '</div></div>' : '';
+
+  return '<div class="panel" style="margin-bottom:22px;">' +
+    '<div class="panel-head"><h3>Fincas y cabañas</h3>' +
+      (!showForm ? '<button class="btn btn-primary btn-sm" id="ffAddBtn">'+icon('plus')+' Agregar finca</button>' : '') +
+    '</div>' +
+    (fincas.length ? '<div class="finca-list">'+rows+'</div>' : '<p class="empty-note">Aún no hay fincas registradas.</p>') +
+    form +
+  '</div>';
+}
 function adminCalendario(){
   const c=S.calendar;
   return '<div class="fade-in"><div class="admin-head"><div><h1>Calendario de reservas</h1><p>Disponibilidad de las fincas y cabañas ya cargadas en el catálogo.</p></div>' +
     '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">' +
+      '<button class="btn btn-ghost btn-sm" id="calFincaManagerToggle">'+icon('inventory')+' '+(c.fincaManagerOpen?'Ocultar fincas':'Gestionar fincas')+'</button>' +
       '<button class="btn btn-ghost btn-sm" id="calImportBtn">'+icon('upload')+' Importar Excel</button>' +
       '<input type="file" id="calImportInput" accept=".xlsx,.xls,.csv" style="display:none;">' +
       '<button class="btn btn-primary btn-sm" id="calNewBtn">'+icon('plus')+' Nueva reserva</button>' +
     '</div></div>' +
     '<p class="cal-import-hint">Importa reservas desde Excel — columnas esperadas: <b>Finca</b>, <b>Huésped</b>, <b>Fecha</b>, <b>Huéspedes</b>, <b>Valor a pagar</b>, <b>Abonado</b>. <span class="cal-import-template" id="calTemplateBtn">Descargar plantilla</span></p>' +
+    (c.fincaManagerOpen ? calFincaManager() : '') +
     calFilterBar() +
     (c.formOpen ? calBookingForm() : '') +
     '<div class="cal-wrap"><div class="panel"><div class="cal-head"><h3>'+MONTHS_ES[c.month]+' '+c.year+'</h3>' +
@@ -2665,6 +2713,59 @@ function bindGestion(){
   }); }
   const calTemplateBtn=document.getElementById("calTemplateBtn");
   if(calTemplateBtn){ calTemplateBtn.addEventListener("click", function(){ downloadExcelTemplate(); }); }
+
+  /* ---- Gestión de fincas y cabañas ---- */
+  const calFincaManagerToggle=document.getElementById("calFincaManagerToggle");
+  if(calFincaManagerToggle){ calFincaManagerToggle.addEventListener("click", function(){
+    S.calendar.fincaManagerOpen=!S.calendar.fincaManagerOpen; S.calendar.editingFincaId=null; render();
+  }); }
+  const ffAddBtn=document.getElementById("ffAddBtn");
+  if(ffAddBtn){ ffAddBtn.addEventListener("click", function(){ S.calendar.editingFincaId="new"; render(); }); }
+  document.querySelectorAll("[data-editfinca]").forEach(function(el){
+    el.addEventListener("click", function(){ S.calendar.editingFincaId=el.getAttribute("data-editfinca"); render(); });
+  });
+  document.querySelectorAll("[data-deletefinca]").forEach(function(el){
+    el.addEventListener("click", function(){
+      const id=el.getAttribute("data-deletefinca");
+      const f=fincaById(id);
+      if(!f) return;
+      const hasBookings = FINCA_BOOKINGS.some(function(b){ return b.fincaId===id; });
+      const msg = hasBookings
+        ? ('"'+f.name+'" tiene reservas registradas en el calendario. ¿Eliminarla igual del catálogo? (acción de demo)')
+        : ('¿Eliminar "'+f.name+'" del catálogo? (acción de demo)');
+      if(confirm(msg)){
+        const idx=LISTINGS.indexOf(f); if(idx>-1) LISTINGS.splice(idx,1);
+        if(S.calendar.filterFinca===id) S.calendar.filterFinca="todas";
+        if(S.calendar.editingFincaId===id) S.calendar.editingFincaId=null;
+        render();
+        toast(f.name+" eliminada del catálogo");
+      }
+    });
+  });
+  const ffCancelBtn=document.getElementById("ffCancelBtn");
+  if(ffCancelBtn){ ffCancelBtn.addEventListener("click", function(){ S.calendar.editingFincaId=null; render(); }); }
+  const ffSaveBtn=document.getElementById("ffSaveBtn");
+  if(ffSaveBtn){ ffSaveBtn.addEventListener("click", function(){
+    const name=document.getElementById("ffName").value.trim();
+    const town=document.getElementById("ffTown").value.trim();
+    const dept=document.getElementById("ffDept").value.trim();
+    const price=parseInt(document.getElementById("ffPrice").value,10)||0;
+    const cap=parseInt(document.getElementById("ffCap").value,10)||1;
+    const desc=document.getElementById("ffDesc").value.trim();
+    if(!name){ toast("Escribe el nombre de la finca"); return; }
+    const editing=S.calendar.editingFincaId;
+    if(editing && editing!=="new"){
+      const f=fincaById(editing);
+      if(f){ f.name=name; f.town=town||f.town; f.dept=dept||f.dept; f.price=price; f.cap=cap; f.desc=desc||f.desc; }
+      toast("Finca actualizada");
+    } else {
+      const id="finca-"+Date.now();
+      LISTINGS.push({id:id, cat:"alojamientos", name:name, town:town||"Por definir", dept:dept||"Eje cafetero", icon:"valle", tone:"sage", unit:"noche", price:price, cap:cap, rating:5.0, reviews:0, tags:[], desc:desc||"Descripción pendiente por completar.", highlights:["Detalles por definir"]});
+      toast(name+" agregada al catálogo");
+    }
+    S.calendar.editingFincaId=null;
+    render();
+  }); }
 
   const calFilterFinca=document.getElementById("calFilterFinca");
   if(calFilterFinca){ calFilterFinca.addEventListener("change", function(){ S.calendar.filterFinca=calFilterFinca.value; S.calendar.page=1; render(); }); }
