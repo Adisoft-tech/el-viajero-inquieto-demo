@@ -713,7 +713,7 @@ td.wrap{white-space:normal;}
 .doc-preview-row{display:flex;justify-content:space-between;gap:14px;font-size:13px;padding:7px 0;border-bottom:1px solid #EDEBE3;}
 .doc-preview-row b{color:#5B685F;font-weight:600;}
 .doc-preview table{width:100%;min-width:0;table-layout:fixed;border-collapse:collapse;margin-top:14px;font-size:12.5px;}
-.doc-preview th{text-align:left;background:#8FA89A;color:#F7F5EF;padding:7px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:normal;word-wrap:break-word;}
+.doc-preview th{text-align:left;background:#8FA89A;color:#FFFFFF;padding:7px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:normal;word-wrap:break-word;}
 .doc-preview td{padding:7px 8px;border-bottom:1px solid #EDEBE3;word-wrap:break-word;white-space:normal;}
 .doc-preview th:first-child, .doc-preview td:first-child{width:42%;}
 .doc-preview th:nth-child(2), .doc-preview td:nth-child(2){width:14%;}
@@ -729,8 +729,8 @@ td.wrap{white-space:normal;}
 .doc-preview-objeto{font-size:12.5px;color:#1F2926;background:#F7F5EF;border:1px solid #EDEBE3;border-radius:8px;padding:10px 13px;margin-bottom:16px;}
 .doc-preview-objeto b{color:#5B685F;font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.06em;display:block;margin-bottom:3px;}
 /* Banner de total a pagar en color de marca, para que el monto sea lo primero que se ve */
-.doc-preview-total{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:16px;background:#8FA89A;color:#F7F5EF;border-radius:10px;padding:14px 18px;}
-.doc-preview-total span{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#C9D6D1;}
+.doc-preview-total{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:16px;background:#8FA89A;color:#FFFFFF;border-radius:10px;padding:14px 18px;}
+.doc-preview-total span{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#FFFFFF;}
 .doc-preview-total b{font-family:var(--font-display);font-size:22px;font-weight:700;}
 .doc-preview-words{margin-top:16px;font-size:12px;font-style:italic;color:#5B685F;}
 /* Vigencia como chip de color, más visible que una nota al pie */
@@ -2306,9 +2306,9 @@ function generateDocPDF(){
     const bannerH=16;
     doc.setFillColor(143,168,154);
     doc.roundedRect(marginX, y, pageW-marginX*2, bannerH, 2, 2, "F");
-    doc.setTextColor(201,214,209); doc.setFont("helvetica","bold"); doc.setFontSize(8.5);
+    doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(8.5);
     doc.text(label, marginX+8, y+6.5);
-    doc.setTextColor(247,245,239); doc.setFont("times","bold"); doc.setFontSize(15);
+    doc.setTextColor(255,255,255); doc.setFont("times","bold"); doc.setFontSize(15);
     doc.text(valueText, pageW-marginX-8, y+11.5, { align:"right" });
     y += bannerH+8;
   }
@@ -2326,7 +2326,7 @@ function generateDocPDF(){
     y += 5*objLines.length + 6;
   }
   doc.setFillColor(143,168,154); doc.rect(marginX,y,pageW-marginX*2,8,"F");
-  doc.setTextColor(247,245,239); doc.setFont("helvetica","bold"); doc.setFontSize(9);
+  doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(9);
   doc.text("Descripción", marginX+3, y+5.5);
   doc.text("Cant.", pageW-marginX-58, y+5.5);
   doc.text("Valor unit.", pageW-marginX-40, y+5.5);
