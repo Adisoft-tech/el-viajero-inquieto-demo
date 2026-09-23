@@ -740,9 +740,9 @@ td.wrap{white-space:normal;}
 .doc-preview-obs{margin-top:16px;font-size:12px;color:#5B685F;background:#FBF9F4;border-left:3px solid #8FA89A;padding:10px 13px;border-radius:0 8px 8px 0;line-height:1.5;}
 .doc-preview-obs b{display:block;color:#1F2926;font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.06em;margin-bottom:3px;}
 /* Tira de ilustraciones de marca + frase de cierre */
-.doc-illustration-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:14px;margin-top:22px;padding-top:16px;border-top:1px solid #EDEBE3;color:#B9C2B4;}
+.doc-illustration-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:14px;margin-top:22px;padding-top:16px;border-top:1px solid #EDEBE3;color:#96A192;}
 .doc-illustration{display:flex;}
-.doc-illustration svg{width:24px;height:24px;}
+.doc-illustration svg{width:28px;height:28px;}
 .doc-illustration-tagline{margin-top:10px;text-align:center;font-family:var(--font-display);font-style:italic;font-size:12.5px;color:#8A958E;letter-spacing:.01em;}
 /* Línea de firma del emisor, como en las cuentas de cobro/pago reales */
 .doc-preview-sign{margin-top:32px;text-align:center;}
@@ -2380,7 +2380,8 @@ function generateDocPDF(){
   doc.line(marginX, y, pageW-marginX, y);
   y += 6;
   (function drawIllustrationRow(){
-    const n = 10, r = 2.6;
+    const n = 10, r = 3.0;
+    doc.setDrawColor(150,161,146); doc.setLineWidth(0.28);
     const usableW = pageW - marginX*2;
     const slotW = usableW / n;
     const cy = y + r;
