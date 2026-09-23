@@ -602,8 +602,7 @@ td.wrap{white-space:normal;}
 .cal-day.today{border-color:var(--accent);border-width:2px;}
 .cal-day.selected{background:var(--accent-soft);border-color:var(--accent);}
 .cal-day-num{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;}
-.cal-chip{display:block;font-size:11.5px;font-weight:700;line-height:1.3;background:var(--sand);color:var(--ink);padding:3px 7px;border-radius:6px;white-space:normal;word-break:normal;overflow-wrap:break-word;width:100%;box-sizing:border-box;align-self:stretch;}
-:root[data-theme="dark"] .cal-chip{background:var(--accent-soft);color:var(--accent);}
+.cal-chip{display:block;font-size:11.5px;font-weight:700;line-height:1.3;background:var(--bad-bg);color:var(--bad-fg);padding:3px 7px;border-radius:6px;white-space:normal;word-break:normal;overflow-wrap:break-word;width:100%;box-sizing:border-box;align-self:stretch;}
 .cal-chip-more{font-size:10.5px;font-weight:700;color:var(--text-muted);padding:1px 7px;}
 @media (max-width:640px){
   .cal-day{min-height:80px;padding:6px;gap:3px;}
@@ -1804,7 +1803,7 @@ function answerCalendarChat(query){
     return { text: "Esa fecha no parece válida. Prueba con un formato como 25/12/2026 o \"25 de diciembre\".", chips:["¿Qué finca está libre mañana?","Fincas libres hoy"] };
   }
   if(finca && dateIso){
-    const occ = FINCA_BOOKINGS.find(function(b){ return b.fincaId===finca.id && dateIso>=b.checkin && dateIso<b.checkout; });
+    const occ = FINCA_BOOKINGS.find(function(b){ return b.fincaId===finca.id && dateIso>=b.checkin && dateIso<=b.checkout; });
     return {
       text: occ
         ? (finca.name+" está reservada el "+formatDateEs(dateIso)+" — huésped "+occ.guest+" ("+formatDateEs(occ.checkin)+" → "+formatDateEs(occ.checkout)+").")
@@ -1816,7 +1815,7 @@ function answerCalendarChat(query){
     const fincas = fincaListings();
     const free=[], occupied=[];
     fincas.forEach(function(f){
-      const occ = FINCA_BOOKINGS.find(function(b){ return b.fincaId===f.id && dateIso>=b.checkin && dateIso<b.checkout; });
+      const occ = FINCA_BOOKINGS.find(function(b){ return b.fincaId===f.id && dateIso>=b.checkin && dateIso<=b.checkout; });
       (occ?occupied:free).push(f.name);
     });
     let text = "El "+formatDateEs(dateIso)+": ";
@@ -1840,7 +1839,7 @@ function fincaFilteredBookings(){
   const fincaId = S.calendar.filterFinca;
   return (!fincaId || fincaId==="todas") ? FINCA_BOOKINGS : FINCA_BOOKINGS.filter(function(b){ return b.fincaId===fincaId; });
 }
-function bookingsOnDate(iso){ return fincaFilteredBookings().filter(function(b){ return iso>=b.checkin && iso<b.checkout; }); }
+function bookingsOnDate(iso){ return fincaFilteredBookings().filter(function(b){ return iso>=b.checkin && iso<=b.checkout; }); }
 function rangesOverlap(fromA,toA,fromB,toB){ return fromA<toB && fromB<toA; }
 function formatDateEs(iso){
   if(!iso) return "—";
@@ -2006,7 +2005,7 @@ function calAvailabilityMatrix(){
   const rows = fincas.map(function(f){
     const cells = Array.from({length:daysThis}).map(function(_,i){
       const iso = isoDate(y,m,i+1);
-      const booking = FINCA_BOOKINGS.find(function(b){ return b.fincaId===f.id && iso>=b.checkin && iso<b.checkout; });
+      const booking = FINCA_BOOKINGS.find(function(b){ return b.fincaId===f.id && iso>=b.checkin && iso<=b.checkout; });
       const cls = "avail-cell avail-day"+(booking?" occupied":" free")+(iso===c.selectedDate?" selected":"")+(iso===DEMO_TODAY?" today":"");
       const tip = esc(f.name)+' · '+formatDateEs(iso)+(booking?' · Reservada por '+esc(booking.guest):' · Disponible');
       return '<button type="button" class="'+cls+'" data-caldate="'+iso+'" title="'+tip+'"></button>';
