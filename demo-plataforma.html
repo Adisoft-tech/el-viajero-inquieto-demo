@@ -2380,24 +2380,98 @@ function generateDocPDF(){
   doc.line(marginX, y, pageW-marginX, y);
   y += 6;
   (function drawIllustrationRow(){
-    const n = 10, r = 3.0;
-    doc.setDrawColor(150,161,146); doc.setLineWidth(0.28);
+    const n = 10, r = 3.6;
+    doc.setDrawColor(150,161,146); doc.setLineWidth(0.22); doc.setFillColor(150,161,146);
     const usableW = pageW - marginX*2;
     const slotW = usableW / n;
     const cy = y + r;
+
+    function arcPts(cx0, cy0, rx, ry, startDeg, endDeg, steps){
+      const pts = []; const s = startDeg*Math.PI/180, e = endDeg*Math.PI/180;
+      for(let i=0;i<=steps;i++){ const t = s + (e-s)*(i/steps); pts.push([cx0+rx*Math.cos(t), cy0+ry*Math.sin(t)]); }
+      return pts;
+    }
+    function sinePts(x0, x1, yBase, amp, cycles, steps){
+      const pts = [];
+      for(let i=0;i<=steps;i++){ const t = i/steps; pts.push([x0+(x1-x0)*t, yBase+amp*Math.sin(t*Math.PI*2*cycles)]); }
+      return pts;
+    }
+    function poly(pts, close){
+      if(pts.length<2) return;
+      const segs = [];
+      for(let i=1;i<pts.length;i++){ segs.push([pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]]); }
+      doc.lines(segs, pts[0][0], pts[0][1], [1,1], "S", !!close);
+    }
+    function dot(x0,y0,rr){ doc.circle(x0,y0,rr,"F"); }
+    function bez(x0,y0, dx1,dy1,dx2,dy2,dx3,dy3){ doc.lines([[dx1,dy1,dx2,dy2,dx3,dy3]], x0, y0, [1,1], "S", false); }
+
     for(let i=0;i<n;i++){
       const cx = marginX + slotW*i + slotW/2;
       switch(i){
-        case 0: doc.ellipse(cx-r*0.3, cy, r*0.9, r*0.5, "S"); doc.triangle(cx+r*0.5,cy-r*0.3, cx+r*1.1,cy, cx+r*0.5,cy+r*0.3, "S"); break;
-        case 1: doc.line(cx,cy+r, cx,cy-r*0.2); doc.triangle(cx-r*0.8,cy-r*0.8, cx,cy-r*0.2, cx+r*0.8,cy-r*0.8, "S"); break;
-        case 2: doc.triangle(cx-r*0.9,cy+r*0.7, cx-r*0.1,cy-r*0.9, cx+r*0.7,cy+r*0.7, "S"); doc.rect(cx+r*0.5,cy+r*0.1,r*0.4,r*0.6,"S"); break;
-        case 3: doc.ellipse(cx,cy,r*0.5,r*0.95,"S"); doc.line(cx,cy-r*0.9,cx,cy+r*0.9); break;
-        case 4: doc.circle(cx,cy,r*0.85,"S"); doc.line(cx-r*0.85,cy,cx+r*0.85,cy); doc.ellipse(cx,cy,r*0.35,r*0.85,"S"); break;
-        case 5: doc.rect(cx-r*0.85,cy-r*0.5,r*1.7,r*1.1,"S"); doc.rect(cx-r*0.25,cy-r*0.9,r*0.5,r*0.4,"S"); break;
-        case 6: doc.triangle(cx-r*0.9,cy, cx,cy-r*0.9, cx+r*0.9,cy, "S"); doc.line(cx,cy,cx,cy+r*0.9); doc.circle(cx+r*0.9,cy-r*0.9,r*0.3,"S"); break;
-        case 7: doc.line(cx-r*0.9,cy-r*0.3,cx+r*0.9,cy-r*0.3); doc.line(cx-r*0.9,cy+r*0.3,cx+r*0.9,cy+r*0.3); break;
-        case 8: doc.rect(cx-r*0.6,cy-r*0.5,r*1.2,r*0.9,"S"); doc.circle(cx+r*0.85,cy-r*0.1,r*0.3,"S"); break;
-        case 9: doc.triangle(cx-r*0.9,cy-r*0.1, cx,cy-r*0.9, cx+r*0.9,cy-r*0.1, "S"); doc.rect(cx-r*0.6,cy-r*0.1,r*1.2,r*0.9,"S"); break;
+        case 0: { /* ballena */
+          poly(arcPts(cx-r*0.1, cy, r*1.15, r*0.55, 165, 15, 14), false);
+          poly(arcPts(cx-r*0.1, cy+r*0.15, r*1.0, r*0.35, 20, 160, 10), false);
+          poly([[cx+r*0.9,cy-r*0.05],[cx+r*1.35,cy-r*0.35],[cx+r*1.25,cy+r*0.05],[cx+r*1.5,cy+r*0.15],[cx+r*0.95,cy+r*0.2]], true);
+          poly([[cx+r*0.55,cy-r*0.65],[cx+r*0.62,cy-r*1.05]], false);
+          poly([[cx+r*0.78,cy-r*0.6],[cx+r*0.88,cy-r*0.95]], false);
+          dot(cx-r*0.65, cy-r*0.15, r*0.08);
+          break; }
+        case 1: { /* costa caribe */
+          const topX = cx-r*0.1, topY = cy-r*0.3;
+          poly([[cx,cy+r*1.3],[topX,topY]], false);
+          bez(topX,topY, -r*0.3,-r*0.5, -r*0.8,-r*0.4, -r*1.05,r*0.05);
+          bez(topX,topY, r*0.35,-r*0.5, r*0.85,-r*0.35, r*1.05,r*0.1);
+          bez(topX,topY, -r*0.15,-r*0.5, r*0.15,-r*0.85, -r*0.05,-r*1.05);
+          poly(sinePts(cx-r*1.5, cx+r*1.5, cy+r*1.55, r*0.18, 1.2, 16), false);
+          break; }
+        case 2: { /* bogotá */
+          const peak = arcPts(cx-r*0.15, cy+r*0.75, r*1.05, r*1.1, 205, -25, 12);
+          poly([ [cx-r*1.05,cy+r*0.7], ...peak.slice(1) ], false);
+          poly([[cx-r*0.15,cy-r*0.35],[cx-r*0.15,cy-r*0.75]], false);
+          poly([[cx-r*0.32,cy-r*0.55],[cx+r*0.02,cy-r*0.55]], false);
+          doc.rect(cx+r*0.55, cy+r*0.15, r*0.45, r*0.6, "S");
+          doc.rect(cx+r*1.05, cy-r*0.15, r*0.4, r*0.9, "S");
+          break; }
+        case 3: { /* amazonas */
+          const top = arcPts(cx, cy, r*1.15, r*0.75, 200, 340, 12);
+          const bot = arcPts(cx, cy, r*1.15, r*0.75, 20, 160, 12);
+          poly([...top, ...bot], true);
+          poly([[cx-r*1.0,cy+r*0.35],[cx+r*1.0,cy-r*0.35]], false);
+          break; }
+        case 4: { /* internacional */
+          doc.circle(cx, cy, r*0.95, "S");
+          poly(arcPts(cx, cy, r*0.4, r*0.95, 90, 270, 12), false);
+          poly(arcPts(cx, cy, r*0.4, r*0.95, -90, 90, 12), false);
+          poly([[cx-r*0.95,cy],[cx+r*0.95,cy]], false);
+          break; }
+        case 5: { /* viaje */
+          doc.roundedRect(cx-r*0.95, cy-r*0.35, r*1.9, r*1.3, r*0.18, r*0.18, "S");
+          poly(arcPts(cx, cy-r*0.65, r*0.42, r*0.35, 200, -20, 8), false);
+          poly([[cx-r*0.95,cy+r*0.25],[cx+r*0.95,cy+r*0.25]], false);
+          break; }
+        case 6: { /* playa */
+          poly(arcPts(cx, cy+r*0.05, r*1.05, r*1.0, 195, 345, 12), false);
+          poly([[cx,cy],[cx,cy+r*1.15]], false);
+          poly(sinePts(cx-r*0.85, cx+r*0.85, cy+r*1.2, r*0.12, 1, 10), false);
+          doc.circle(cx+r*0.95, cy-r*0.95, r*0.28, "S");
+          break; }
+        case 7: { /* mar */
+          poly(sinePts(cx-r*1.1, cx+r*1.1, cy-r*0.45, r*0.28, 1.3, 16), false);
+          poly(sinePts(cx-r*1.1, cx+r*1.1, cy+r*0.05, r*0.28, 1.3, 16), false);
+          poly(sinePts(cx-r*1.1, cx+r*1.1, cy+r*0.55, r*0.28, 1.3, 16), false);
+          break; }
+        case 8: { /* café */
+          poly([[cx-r*0.65,cy-r*0.55],[cx-r*0.55,cy+r*0.65],[cx+r*0.4,cy+r*0.65],[cx+r*0.5,cy-r*0.55]], true);
+          poly(arcPts(cx+r*0.62, cy-r*0.05, r*0.28, r*0.38, -85, 95, 8), false);
+          poly(sinePts(cx-r*0.35, cx-r*0.1, cy-r*0.85, r*0.12, 1, 6), false);
+          poly(sinePts(cx+r*0.05, cx+r*0.3, cy-r*0.9, r*0.12, 1, 6), false);
+          break; }
+        case 9: { /* finca */
+          poly([[cx-r*1.0,cy+r*0.1],[cx,cy-r*0.85],[cx+r*1.0,cy+r*0.1]], false);
+          doc.rect(cx-r*0.75, cy+r*0.1, r*1.5, r*0.8, "S");
+          doc.rect(cx-r*0.2, cy+r*0.4, r*0.4, r*0.5, "S");
+          doc.circle(cx+r*1.35, cy-r*0.55, r*0.22, "S");
+          break; }
       }
     }
     y += r*2 + 6;
