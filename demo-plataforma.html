@@ -739,6 +739,11 @@ td.wrap{white-space:normal;}
 /* Observaciones: notas/términos libres cerca del final */
 .doc-preview-obs{margin-top:16px;font-size:12px;color:#5B685F;background:#FBF9F4;border-left:3px solid #8FA89A;padding:10px 13px;border-radius:0 8px 8px 0;line-height:1.5;}
 .doc-preview-obs b{display:block;color:#1F2926;font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.06em;margin-bottom:3px;}
+/* Tira de ilustraciones de marca + frase de cierre */
+.doc-illustration-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:14px;margin-top:22px;padding-top:16px;border-top:1px solid #EDEBE3;color:#B9C2B4;}
+.doc-illustration{display:flex;}
+.doc-illustration svg{width:24px;height:24px;}
+.doc-illustration-tagline{margin-top:10px;text-align:center;font-family:var(--font-display);font-style:italic;font-size:12.5px;color:#8A958E;letter-spacing:.01em;}
 /* Línea de firma del emisor, como en las cuentas de cobro/pago reales */
 .doc-preview-sign{margin-top:32px;text-align:center;}
 .doc-preview-sign .doc-preview-sign-line{width:220px;max-width:70%;margin:0 auto 8px;border-top:1px solid #1F2926;}
@@ -796,6 +801,15 @@ const ICONS = {
   heart: svgWrap('<path d="M32 54S8 40 8 22a14 14 0 0 1 24-9 14 14 0 0 1 24 9c0 18-24 32-24 32Z"/>'),
   chevLeft: svgWrap('<path d="M40 12 20 32l20 20"/>'),
   chevRight: svgWrap('<path d="M24 12l20 20-20 20"/>'),
+  whale: svgWrap('<path d="M8 36c10-16 30-20 40-10 4 4 2 10-4 10-4 0-6-3-8-6-4 6-14 10-22 8-3 6-6 2-6-2z"/><path d="M42 16c1-3 3-5 6-5"/><path d="M46 12c1-2 2-3 4-3"/><circle cx="18" cy="28" r="1.4" fill="currentColor"/>'),
+  caribbean: svgWrap('<path d="M20 50V26"/><path d="M20 26c-6-2-10-8-8-12 5 0 9 4 8 10"/><path d="M20 26c6-2 10-8 8-12-5 0-9 4-8 10"/><path d="M20 26c-2-6 0-10 4-13"/><path d="M4 52q8-6 16 0t16 0 16 0"/>'),
+  bogota: svgWrap('<path d="M8 48 24 24l6 8 6-10 20 26z"/><line x1="24" y1="14" x2="24" y2="24"/><line x1="19" y1="17" x2="29" y2="17"/><rect x="40" y="36" width="7" height="12"/><rect x="49" y="30" width="7" height="18"/>'),
+  amazon: svgWrap('<path d="M32 8c14 6 20 20 14 34-14 6-28 0-34-14C6 14 18 4 32 8Z"/><path d="M32 8c-4 14-4 26 0 34"/>'),
+  international: svgWrap('<circle cx="32" cy="32" r="20"/><ellipse cx="32" cy="32" rx="8" ry="20"/><line x1="12" y1="32" x2="52" y2="32"/><path d="M15 21q17 7 34 0M15 43q17-7 34 0"/>'),
+  trip: svgWrap('<rect x="12" y="22" width="40" height="30" rx="4"/><path d="M24 22v-6a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v6"/><line x1="12" y1="34" x2="52" y2="34"/><line x1="30" y1="22" x2="30" y2="52"/>'),
+  beach: svgWrap('<path d="M32 14v38"/><path d="M12 22c4-10 14-14 20-14s16 4 20 14z"/><circle cx="50" cy="10" r="5"/><path d="M18 52q14-6 28 0"/>'),
+  sea: svgWrap('<path d="M6 20q8-8 16 0t16 0 16 0 10-6"/><path d="M6 32q8-8 16 0t16 0 16 0 10-6"/><path d="M6 44q8-8 16 0t16 0 16 0 10-6"/>'),
+  farm: svgWrap('<path d="M10 54V30l22-16 22 16v24z"/><path d="M10 30h44"/><rect x="26" y="36" width="12" height="18"/><line x1="32" y1="36" x2="32" y2="54"/>'),
 };
 function icon(name, cls){ return '<span class="'+(cls||'')+'" aria-hidden="true">'+(ICONS[name]||'')+'</span>'; }
 function badge(iconName, tone){
@@ -895,6 +909,7 @@ const EMISOR = {
 };
 const DEMO_TODAY = "2026-09-21";
 const MONTHS_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const DOC_ILLUSTRATIONS = ["whale","caribbean","bogota","amazon","international","trip","beach","sea","cafe","farm"];
 const WEEKDAYS_ES = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const LOGO_IMG = new Image();
 LOGO_IMG.src = "photos/logo-mark-ink.png";
@@ -2163,6 +2178,8 @@ function docPreviewPanel(){
   }
 
   const obs = d.observaciones ? '<div class="doc-preview-obs"><b>Observaciones</b>'+esc(d.observaciones)+'</div>' : '';
+  const illustrations = '<div class="doc-illustration-row">' + DOC_ILLUSTRATIONS.map(function(k){ return '<span class="doc-illustration">'+icon(k)+'</span>'; }).join('') + '</div>' +
+    '<p class="doc-illustration-tagline">viajando lento, profundo y con sentido</p>';
   const sign = type==="cotizacion" ? '' : '<div class="doc-preview-sign"><div class="doc-preview-sign-line"></div><b>'+esc(EMISOR.titular)+'</b><span>'+esc(EMISOR.identificacion)+'</span></div>';
   const tagline = type==="cotizacion" ? '<p class="doc-preview-tagline">Tu viaje te espera — este es el plan que armamos para ti.</p>' : '';
   const footInfo = type==="cotizacion" ? EMISOR.nombre : (EMISOR.direccion+' · '+EMISOR.telefono+' · '+EMISOR.correo);
@@ -2174,6 +2191,7 @@ function docPreviewPanel(){
     parties +
     body +
     obs +
+    illustrations +
     sign +
     '<div class="doc-preview-foot">'+footInfo+'</div>' +
   '</div></div>';
@@ -2355,6 +2373,37 @@ function generateDocPDF(){
     doc.text(obsLines, marginX, y);
     y += 5*obsLines.length + 6;
   }
+
+  /* Tira de pequeñas ilustraciones de marca (sin color) + frase de cierre */
+  y += 3;
+  doc.setDrawColor(185,194,180); doc.setLineWidth(0.25);
+  doc.line(marginX, y, pageW-marginX, y);
+  y += 6;
+  (function drawIllustrationRow(){
+    const n = 10, r = 2.6;
+    const usableW = pageW - marginX*2;
+    const slotW = usableW / n;
+    const cy = y + r;
+    for(let i=0;i<n;i++){
+      const cx = marginX + slotW*i + slotW/2;
+      switch(i){
+        case 0: doc.ellipse(cx-r*0.3, cy, r*0.9, r*0.5, "S"); doc.triangle(cx+r*0.5,cy-r*0.3, cx+r*1.1,cy, cx+r*0.5,cy+r*0.3, "S"); break;
+        case 1: doc.line(cx,cy+r, cx,cy-r*0.2); doc.triangle(cx-r*0.8,cy-r*0.8, cx,cy-r*0.2, cx+r*0.8,cy-r*0.8, "S"); break;
+        case 2: doc.triangle(cx-r*0.9,cy+r*0.7, cx-r*0.1,cy-r*0.9, cx+r*0.7,cy+r*0.7, "S"); doc.rect(cx+r*0.5,cy+r*0.1,r*0.4,r*0.6,"S"); break;
+        case 3: doc.ellipse(cx,cy,r*0.5,r*0.95,"S"); doc.line(cx,cy-r*0.9,cx,cy+r*0.9); break;
+        case 4: doc.circle(cx,cy,r*0.85,"S"); doc.line(cx-r*0.85,cy,cx+r*0.85,cy); doc.ellipse(cx,cy,r*0.35,r*0.85,"S"); break;
+        case 5: doc.rect(cx-r*0.85,cy-r*0.5,r*1.7,r*1.1,"S"); doc.rect(cx-r*0.25,cy-r*0.9,r*0.5,r*0.4,"S"); break;
+        case 6: doc.triangle(cx-r*0.9,cy, cx,cy-r*0.9, cx+r*0.9,cy, "S"); doc.line(cx,cy,cx,cy+r*0.9); doc.circle(cx+r*0.9,cy-r*0.9,r*0.3,"S"); break;
+        case 7: doc.line(cx-r*0.9,cy-r*0.3,cx+r*0.9,cy-r*0.3); doc.line(cx-r*0.9,cy+r*0.3,cx+r*0.9,cy+r*0.3); break;
+        case 8: doc.rect(cx-r*0.6,cy-r*0.5,r*1.2,r*0.9,"S"); doc.circle(cx+r*0.85,cy-r*0.1,r*0.3,"S"); break;
+        case 9: doc.triangle(cx-r*0.9,cy-r*0.1, cx,cy-r*0.9, cx+r*0.9,cy-r*0.1, "S"); doc.rect(cx-r*0.6,cy-r*0.1,r*1.2,r*0.9,"S"); break;
+      }
+    }
+    y += r*2 + 6;
+    doc.setFont("times","italic"); doc.setFontSize(9); doc.setTextColor(138,149,142);
+    doc.text("viajando lento, profundo y con sentido", pageW/2, y, { align:"center" });
+    y += 8;
+  })();
 
   /* Línea de firma del emisor, como en las cuentas de cobro/pago reales (la cotización no lleva firma formal) */
   if(type!=="cotizacion"){
