@@ -1,14 +1,13 @@
-const CACHE_NAME = "vi-gestion-v2";
+const CACHE_NAME = "vi-gestion-v3";
 const APP_SHELL = [
-  "./",
-  "./demo-plataforma.html",
-  "./manifest.webmanifest",
-  "./photos/icon-192.png",
-  "./photos/icon-512.png",
-  "./photos/icon-maskable-512.png",
-  "./photos/logo-mark-ink.png",
-  "./photos/logo-mark-white.png",
-  "./photos/logo-stacked-ink.png",
+  "/",
+  "/manifest.webmanifest",
+  "/photos/icon-192.png",
+  "/photos/icon-512.png",
+  "/photos/icon-maskable-512.png",
+  "/photos/logo-mark-ink.png",
+  "/photos/logo-mark-white.png",
+  "/photos/logo-stacked-ink.png",
 ];
 
 self.addEventListener("install", function(event){

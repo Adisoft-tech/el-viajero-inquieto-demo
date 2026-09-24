@@ -2,7 +2,7 @@
 
 Demo interactiva de una plataforma web y portal de reservas para **El Viajero Inquieto**, agencia de viajes del eje cafetero (Colombia). Proyecto realizado por [AdiSoft](https://github.com/Adisoft-tech).
 
-Es una aplicación de una sola página (HTML/CSS/JS vanilla, sin build ni dependencias) que simula el sitio público y el panel de administración de la agencia. No tiene backend real: todos los datos (catálogo, reservas, contenido) viven en memoria del navegador y algunos se persisten en `localStorage` (favoritos, si ya viste el aviso del chat).
+Es una aplicación **Next.js (App Router, React, TypeScript)** que simula el sitio público y el panel de administración de la agencia. No tiene backend real: todos los datos (catálogo, reservas, contenido) viven en memoria del navegador y algunos se persisten en `localStorage` (favoritos, si ya viste el aviso del chat).
 
 ## Contenido
 
@@ -16,20 +16,35 @@ Es una aplicación de una sola página (HTML/CSS/JS vanilla, sin build ni depend
 
 ## Cómo correrlo en local
 
-Requiere solo Node.js (sin instalar dependencias):
+Requiere Node.js 20+:
 
 ```bash
-node serve.js
+npm install
+npm run dev
 ```
 
-Luego abre [http://localhost:8743](http://localhost:8743).
+Luego abre [http://localhost:8743](http://localhost:8743). Para producción: `npm run build && npm start` (o despliega el repo en Vercel, que detecta Next.js automáticamente).
+
+## Rutas
+
+| Ruta | Contenido |
+| --- | --- |
+| `/` | Landing |
+| `/alojamientos`, `/parques`, `/tours` | Catálogo |
+| `/ficha/[id]` | Ficha con galería |
+| `/reservar/[id]` | Flujo de reserva |
+| `/nosotros`, `/experiencias`, `/contacto`, `/favoritos` | Páginas simples |
+| `/admin/login`, `/admin/{resumen,reservas,inventario,contenido}` | Panel administrativo |
+| `/gestion/login`, `/gestion/{calendario,documentos}` | Panel de gestión (inicio de la PWA) |
 
 ## Estructura
 
 ```
-demo-plataforma.html   # toda la app: HTML + CSS + JS
-photos/                 # fotografía real (Wikimedia Commons, CC) y logo de marca
-serve.js                # servidor estático mínimo para desarrollo local
+app/                # rutas (App Router): (site) público, admin/, gestion/
+components/         # componentes por área: site/, admin/, gestion/
+lib/                # datos semilla, estado global, formato, íconos, motores de chat, PDF
+public/photos/      # fotografía real (Wikimedia Commons, CC) y logo de marca
+public/sw.js        # service worker de la PWA
 ```
 
 ## Licencia de las fotos
