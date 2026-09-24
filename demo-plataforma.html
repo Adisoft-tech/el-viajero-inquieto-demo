@@ -387,6 +387,7 @@ img{max-width:100%;display:block;}
 .admin-exit{margin-top:auto;padding:11px 12px;font-size:13.5px;color:#9FB0AA;cursor:pointer;}
 @media (max-width:820px){ .admin-exit{margin-top:0;margin-left:auto;} }
 #adminMain{padding:30px 34px 60px;max-width:1240px;}
+#adminMain.admin-main-wide{max-width:none;}
 @media (max-width:640px){ #adminMain{padding:20px 18px 40px;} }
 .admin-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;gap:16px;flex-wrap:wrap;}
 .admin-head h1{font-size:28px;}
@@ -598,7 +599,8 @@ td.wrap{white-space:normal;}
 .cal-daylabel{text-align:center;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;padding-bottom:6px;}
 .cal-day{min-height:118px;border:1px solid var(--border);border-radius:10px;padding:8px;cursor:pointer;background:var(--surface);display:flex;flex-direction:column;gap:4px;min-width:0;}
 .cal-day:hover{border-color:var(--accent);}
-.cal-day.other-month{opacity:.35;}
+.cal-day.other-month{opacity:.6;}
+.cal-day.other-month .cal-day-num{color:var(--text-muted);}
 .cal-day.today{border-color:var(--accent);border-width:2px;}
 .cal-day.selected{background:var(--accent-soft);border-color:var(--accent);}
 .cal-day-num{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;}
@@ -1539,7 +1541,7 @@ function renderGestion(){
       '<div class="admin-nav-item" id="gestionToAdmin">'+icon('dash')+'<span>Ir a Panel administrativo</span></div>' +
       '<div class="admin-exit" id="gestionExitBtn">'+icon('logout')+' Salir al sitio</div>' +
     '</aside>' +
-    '<main id="adminMain">' +
+    '<main id="adminMain"'+(tab==="calendario"?' class="admin-main-wide"':'')+'>' +
       (tab==="calendario"?adminCalendario():adminDocumentos()) +
     '</main>' +
     (tab==="calendario" ? renderCalChatWidget() : '') +
@@ -1847,10 +1849,9 @@ function formatDateEs(iso){
   return d.toLocaleDateString("es-CO",{day:"numeric",month:"short",year:"numeric"});
 }
 function dayCell(dnum, otherMonth, iso){
-  if(otherMonth){ return '<div class="cal-day other-month"><div class="cal-day-num">'+dnum+'</div></div>'; }
   const c=S.calendar;
-  const bookings = bookingsOnDate(iso);
-  const cls = "cal-day"+(iso===DEMO_TODAY?" today":"")+(iso===c.selectedDate?" selected":"");
+  const bookings = iso ? bookingsOnDate(iso) : [];
+  const cls = "cal-day"+(otherMonth?" other-month":"")+(iso===DEMO_TODAY?" today":"")+(iso===c.selectedDate?" selected":"");
   const shown = bookings.slice(0,3).map(function(b){
     const f=fincaById(b.fincaId);
     const short = f ? f.name.replace(/^(Finca|Cabañas|Hacienda|Refugio)\s+/,"") : b.fincaId;
@@ -1864,12 +1865,14 @@ function calGrid(){
   const startWeekday = (new Date(y,m,1).getDay()+6)%7;
   const daysThis = new Date(y,m+1,0).getDate();
   const daysPrev = new Date(y,m,0).getDate();
+  const prevY = m===0?y-1:y, prevM = m===0?11:m-1;
+  const nextY = m===11?y+1:y, nextM = m===11?0:m+1;
   let cells = WEEKDAYS_ES.map(function(w){ return '<div class="cal-daylabel">'+w+'</div>'; }).join('');
-  for(let i=startWeekday-1;i>=0;i--){ cells += dayCell(daysPrev-i, true, null); }
+  for(let i=startWeekday-1;i>=0;i--){ const d=daysPrev-i; cells += dayCell(d, true, isoDate(prevY,prevM,d)); }
   for(let d=1; d<=daysThis; d++){ cells += dayCell(d, false, isoDate(y,m,d)); }
   const filled = startWeekday+daysThis;
   const trailing = (7-(filled%7))%7;
-  for(let d=1; d<=trailing; d++){ cells += dayCell(d, true, null); }
+  for(let d=1; d<=trailing; d++){ cells += dayCell(d, true, isoDate(nextY,nextM,d)); }
   return '<div class="cal-grid">'+cells+'</div>';
 }
 function calFilterBar(){
