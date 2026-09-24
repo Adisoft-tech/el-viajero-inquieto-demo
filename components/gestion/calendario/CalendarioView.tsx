@@ -51,6 +51,10 @@ export function CalendarioView() {
   function nextMonth() {
     if (month === 11) { setMonth(0); setYear(year + 1); } else setMonth(month + 1);
   }
+  /** Volver a hacer clic en el día ya seleccionado lo deselecciona y el calendario vuelve a ocupar todo el ancho. */
+  function toggleSelectedDate(iso: string) {
+    setSelectedDate((prev) => (prev === iso ? null : iso));
+  }
 
   /* ---- Reservas ---- */
   async function saveBooking(b: NewBooking) {
@@ -257,7 +261,7 @@ export function CalendarioView() {
                 <button id="calNext" aria-label="Mes siguiente" onClick={nextMonth}><Icon name="chevRight" /></button>
               </div>
             </div>
-            <CalendarGrid year={year} month={month} bookings={filteredBookings} selectedDate={selectedDate} fincaById={fincaById} onSelect={setSelectedDate} />
+            <CalendarGrid year={year} month={month} bookings={filteredBookings} selectedDate={selectedDate} fincaById={fincaById} onSelect={toggleSelectedDate} />
           </div>
           {hasSelection ? (
             filterFrom && filterTo
@@ -266,7 +270,7 @@ export function CalendarioView() {
           ) : null}
         </div>
 
-        <AvailabilityMatrix year={year} month={month} fincas={fincas} allBookings={fincaBookings} selectedDate={selectedDate} onSelect={setSelectedDate} />
+        <AvailabilityMatrix year={year} month={month} fincas={fincas} allBookings={fincaBookings} selectedDate={selectedDate} onSelect={setSelectedDate} onPrevMonth={prevMonth} onNextMonth={nextMonth} />
 
         <div className="panel" style={{ marginTop: 24 }}>
           <div className="panel-head"><h3>Próximas reservas</h3></div>
