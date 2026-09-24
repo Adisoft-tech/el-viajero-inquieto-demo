@@ -92,15 +92,6 @@ export const INITIAL_BOOKINGS: Booking[] = [
 
 export const WEEKLY: [string, number][] = [["Sem 1",5],["Sem 2",8],["Sem 3",11],["Sem 4",9],["Sem 5",13],["Sem 6",16]];
 
-export const INITIAL_FINCA_BOOKINGS: FincaBooking[] = [
-  {id:1, fincaId:"finca-serrana", guest:"Familia Gómez", cedula:"43.215.678", phone:"300 000 0000", email:"familiagomez@gmail.com", checkin:"2026-09-14", checkout:"2026-09-16", time:"15:00", guests:6, payMethod:"Transferencia", total:840000, advance:400000, balance:440000},
-  {id:2, fincaId:"refugio-cocora", guest:"James Whitfield", cedula:"PA-778341", phone:"+44 7000 000000", email:"jwhitfield@gmail.com", checkin:"2026-09-20", checkout:"2026-09-22", time:"14:00", guests:2, payMethod:"Contado", total:560000, advance:560000, balance:0},
-  {id:3, fincaId:"termales-otun", guest:"Camila Restrepo", cedula:"1.053.201.884", phone:"300 111 2222", email:"camila.restrepo@hotmail.com", checkin:"2026-09-25", checkout:"2026-09-27", time:"16:00", guests:5, payMethod:"Efectivo", total:780000, advance:300000, balance:480000},
-  {id:4, fincaId:"hacienda-buenavista", guest:"Familia Meyer", cedula:"DE-4471002", phone:"300 333 4444", email:"family.meyer@web.de", checkin:"2026-09-30", checkout:"2026-10-03", time:"13:00", guests:10, payMethod:"Transferencia", total:1950000, advance:975000, balance:975000},
-  {id:5, fincaId:"mirador-quindio", guest:"Andrés Molina", cedula:"1.098.765.432", phone:"300 555 6666", email:"andres.molina@gmail.com", checkin:"2026-10-09", checkout:"2026-10-11", time:"15:30", guests:4, payMethod:"Crédito", total:620000, advance:200000, balance:420000},
-  {id:6, fincaId:"cafe-bosque", guest:"Marta Londoño", cedula:"24.678.901", phone:"300 777 8888", email:"marta.londono@yahoo.com", checkin:"2026-10-16", checkout:"2026-10-18", time:"12:00", guests:3, payMethod:"Transferencia", total:720000, advance:720000, balance:0},
-];
-
 export const EMISOR = {
   nombre: "El Viajero Inquieto",
   titular: "Robin Julián Murillo Ramírez",

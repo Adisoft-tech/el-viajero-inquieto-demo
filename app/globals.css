@@ -374,6 +374,9 @@ img{max-width:100%;display:block;}
 .admin-nav-item.active{background:rgba(247,245,239,.1);color:#fff;}
 .admin-exit{margin-top:auto;padding:11px 12px;font-size:13.5px;color:#9FB0AA;cursor:pointer;}
 @media (max-width:820px){ .admin-exit{margin-top:0;margin-left:auto;} }
+.admin-logout{background:none;border:0;font:inherit;font-size:13.5px;text-align:left;}
+.admin-logout:hover{color:#fff;}
+.admin-logout + .admin-exit{margin:0;}
 #adminMain{padding:30px 34px 60px;max-width:1240px;}
 #adminMain.admin-main-wide{max-width:none;}
 @media (max-width:640px){ #adminMain{padding:20px 18px 40px;} }

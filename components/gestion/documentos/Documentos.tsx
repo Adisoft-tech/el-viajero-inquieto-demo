@@ -2,13 +2,15 @@
 
 // Port de adminDocumentos() / docTypeTab() / docForm() / docPreviewPanel() y de los handlers
 // de Documentos en bindGestion(). La vista previa se deriva del estado en cada tecla.
+// Cada descarga se guarda en Supabase con su consecutivo (ver emitirDocumento).
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { DEMO_TODAY, DOC_ILLUSTRATIONS, EMISOR } from "@/lib/data";
 import { cop, copWords } from "@/lib/format";
 import { Icon } from "@/lib/icons";
 import { useApp } from "@/lib/store";
 import { docCounter, docTypeLabelUpper, formatDateEs, generateDocPDF, type DocType } from "@/lib/pdf";
+import { emitirDocumento, getDocCounters, listDocumentos, type DocContent, type Documento } from "@/lib/actions/gestion";
 import { newItem, useDocsState, type DocsState } from "./DocsState";
 
 type Update = (fn: (d: DocsState) => DocsState) => void;
@@ -25,6 +27,19 @@ const TEXTAREA_STYLE: React.CSSProperties = {
   borderRadius: "var(--radius-s)", padding: "10px 12px", fontFamily: "var(--font-body)", fontSize: 14,
 };
 
+/** Consecutivo a mostrar; mientras no llega de la base no se inventa un número. */
+function counterLabel(d: DocsState): string {
+  return d.countersReady ? docCounter(d) : "····";
+}
+
+/** Contenido del formulario sin los datos internos del editor (ids de ítems, consecutivos). */
+function docContent(d: DocsState): DocContent {
+  const { counters: _counters, countersReady: _ready, items, ...rest } = d;
+  return { ...rest, items: items.map(({ desc, qty, price }) => ({ desc, qty, price })) };
+}
+
+const DOC_TYPE_LABEL: Record<DocType, string> = { cotizacion: "Cotización", cobro: "Cuenta de cobro", pago: "Cuenta de pago" };
+
 function DocTypeTab({ d, k, label, update }: { d: DocsState; k: DocType; label: string; update: Update }) {
   return (
     <button type="button" className={"doc-type-tab" + (d.type === k ? " active" : "")} data-doctype={k}
@@ -34,7 +49,7 @@ function DocTypeTab({ d, k, label, update }: { d: DocsState; k: DocType; label: 
 
 function DocForm({ d, update, onDownload, busy }: { d: DocsState; update: Update; onDownload: () => void; busy: boolean }) {
   const type = d.type;
-  const counter = docCounter(d);
+  const counter = counterLabel(d);
   const typeLabel = type === "cotizacion" ? "Cotización" : type === "cobro" ? "Cuenta de cobro" : "Cuenta de pago";
   const clienteLabel = type === "pago" ? "Beneficiario (a quién se paga)" : type === "cobro" ? "Cobrar a" : "Cliente / Razón social";
   const titleText = type === "cotizacion" ? typeLabel : (typeLabel + " No. " + counter);
@@ -107,7 +122,7 @@ function DocForm({ d, update, onDownload, busy }: { d: DocsState; update: Update
           style={TEXTAREA_STYLE} value={d.observaciones || ""} onChange={set("observaciones")} />
       </div>
       <button className="btn btn-accent btn-block" style={{ marginTop: 22 }} id="docDownloadBtn" onClick={onDownload} disabled={busy}>
-        <Icon name="download" /> Descargar PDF
+        <Icon name="download" /> {busy ? "Guardando…" : "Descargar PDF"}
       </button>
     </div>
   );
@@ -115,7 +130,7 @@ function DocForm({ d, update, onDownload, busy }: { d: DocsState; update: Update
 
 function DocPreview({ d }: { d: DocsState }) {
   const type = d.type;
-  const counter = docCounter(d);
+  const counter = counterLabel(d);
   const typeLabel = docTypeLabelUpper(type);
   const fecha = formatDateEs(d.fecha || DEMO_TODAY);
   const clienteTag = type === "pago" ? "Beneficiario" : type === "cobro" ? "Cobrar a" : "Cliente";
@@ -201,26 +216,110 @@ function DocPreview({ d }: { d: DocsState }) {
   );
 }
 
+function DocHistory({ docs, status, onRetry, onDownload, onUse }: {
+  docs: Documento[]; status: "loading" | "ready" | "error"; onRetry: () => void;
+  onDownload: (doc: Documento) => void; onUse: (doc: Documento) => void;
+}) {
+  return (
+    <div className="panel" style={{ marginTop: 24 }}>
+      <div className="panel-head"><h3>Documentos emitidos</h3></div>
+      {status === "loading" ? <p className="empty-note">Cargando documentos…</p>
+        : status === "error" ? (
+          <p className="empty-note">
+            No se pudieron cargar los documentos.{" "}
+            <button type="button" className="btn btn-ghost btn-sm" onClick={onRetry}>Reintentar</button>
+          </p>
+        ) : !docs.length ? <p className="empty-note">Aún no hay documentos emitidos. Se guardan aquí al descargar el PDF.</p>
+        : (
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Tipo</th><th>No.</th><th>Fecha</th><th>Cliente</th><th style={{ textAlign: "right" }}>Total</th><th></th></tr></thead>
+              <tbody>
+                {docs.map((doc) => (
+                  <tr key={doc.id}>
+                    <td>{DOC_TYPE_LABEL[doc.type]}</td>
+                    <td className="tabular">{String(doc.numero).padStart(4, "0")}</td>
+                    <td>{formatDateEs(doc.fecha)}</td>
+                    <td className="wrap">{doc.cliente || "—"}</td>
+                    <td className="tabular" style={{ textAlign: "right" }}>{cop(doc.total)}</td>
+                    <td style={{ whiteSpace: "nowrap", textAlign: "right" }}>
+                      <button type="button" className="icon-btn" aria-label="Descargar PDF" title="Descargar PDF" onClick={() => onDownload(doc)}><Icon name="download" /></button>
+                      <button type="button" className="icon-btn" aria-label="Usar como base" title="Usar como base para un documento nuevo" onClick={() => onUse(doc)}><Icon name="edit" /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+    </div>
+  );
+}
+
 export default function Documentos() {
-  const { toast } = useApp();
+  const { authed, toast } = useApp();
   const [d, update] = useDocsState();
   const [busy, setBusy] = useState(false);
+  const [docs, setDocs] = useState<Documento[]>([]);
+  const [docsStatus, setDocsStatus] = useState<"loading" | "ready" | "error">("loading");
+
+  const loadFromDb = useCallback(async () => {
+    setDocsStatus("loading");
+    try {
+      const [counters, list] = await Promise.all([authed(getDocCounters), authed(listDocumentos)]);
+      update((s) => ({ ...s, counters, countersReady: true }));
+      setDocs(list);
+      setDocsStatus("ready");
+    } catch (err) {
+      console.error("No se pudieron cargar los documentos:", err);
+      setDocsStatus("error");
+    }
+  }, [authed, update]);
+  useEffect(() => { void loadFromDb(); }, [loadFromDb]);
 
   async function onDownload() {
     if (busy) return;
     setBusy(true);
     try {
+      // Carga jsPDF antes de reservar el consecutivo para no gastar números si el generador no carga.
+      try { await import("jspdf"); } catch { toast("No se pudo cargar el generador de PDF. Revisa tu conexión."); return; }
       const snapshot = d;
-      const ok = await generateDocPDF(snapshot);
-      if (!ok) { toast("No se pudo cargar el generador de PDF. Revisa tu conexión."); return; }
       const type = snapshot.type;
+      let res;
+      try { res = await authed(emitirDocumento, docContent(snapshot), DEMO_TODAY); } catch (err) {
+        console.error(err);
+        toast("No se pudo guardar el documento. Revisa tu conexión e inténtalo de nuevo.");
+        return;
+      }
+      const { numero, counters } = res;
+      update((s) => ({ ...s, counters, countersReady: true }));
+      authed(listDocumentos).then(setDocs).catch((err) => console.error(err));
+      const ok = await generateDocPDF({ ...snapshot, counters: { ...snapshot.counters, [type]: numero } });
       const typeLabel = docTypeLabelUpper(type);
-      const next = snapshot.counters[type] + 1;
-      update((s) => ({ ...s, counters: { ...s.counters, [type]: s.counters[type] + 1 } }));
-      toast(type === "cotizacion" ? (typeLabel + " descargada") : (typeLabel + " descargada — próximo consecutivo No. " + String(next).padStart(4, "0")));
+      const numLabel = " No. " + String(numero).padStart(4, "0");
+      if (!ok) { toast(typeLabel + numLabel + " guardada, pero no se pudo generar el PDF — descárgala desde Documentos emitidos."); return; }
+      toast(typeLabel + numLabel + " guardada y descargada");
     } finally {
       setBusy(false);
     }
+  }
+
+  async function downloadSaved(doc: Documento) {
+    const ok = await generateDocPDF({ ...doc.data, counters: { cotizacion: doc.numero, cobro: doc.numero, pago: doc.numero } });
+    if (!ok) toast("No se pudo cargar el generador de PDF. Revisa tu conexión.");
+  }
+
+  function loadAsBase(doc: Documento) {
+    update((s) => ({
+      ...doc.data,
+      fecha: undefined,
+      validoHasta: undefined,
+      items: doc.data.items.length ? doc.data.items.map((it) => newItem(it)) : [newItem()],
+      counters: s.counters,
+      countersReady: s.countersReady,
+    }));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast("Datos cargados — al descargar se emite con un consecutivo nuevo");
   }
 
   return (
@@ -235,6 +334,8 @@ export default function Documentos() {
         <DocForm d={d} update={update} onDownload={onDownload} busy={busy} />
         <DocPreview d={d} />
       </div>
+      <DocHistory docs={docs} status={docsStatus} onRetry={() => void loadFromDb()}
+        onDownload={(doc) => void downloadSaved(doc)} onUse={loadAsBase} />
     </div>
   );
 }

@@ -34,10 +34,6 @@ export function bookingsOnDate(bookings: FincaBooking[], iso: string): FincaBook
   return bookings.filter((b) => iso >= b.checkin && iso <= b.checkout);
 }
 
-export function nextBookingId(bookings: FincaBooking[]): number {
-  return bookings.length ? Math.max(...bookings.map((b) => b.id)) + 1 : 1;
-}
-
 /* ---- Importación de reservas desde Excel ---- */
 export function normalizeHeader(s: unknown): string {
   return normalizeText(s).replace(/\s+/g, " ");
@@ -109,10 +105,8 @@ export interface ExcelImportResult {
   lastCheckin: string;
 }
 
-/** Convierte las filas de la primera hoja (sheet_to_json con defval:"") en reservas. */
-export function bookingsFromExcelRows(
-  rows: Record<string, unknown>[], fincas: Listing[], startId: number,
-): ExcelImportResult {
+/** Convierte las filas de la primera hoja (sheet_to_json con defval:"") en reservas (ids temporales; los asigna la base). */
+export function bookingsFromExcelRows(rows: Record<string, unknown>[], fincas: Listing[]): ExcelImportResult {
   const result: ExcelImportResult = { ok: true, imported: [], skipped: 0, skippedReasons: [], lastCheckin: "" };
   if (!rows.length) return { ...result, ok: false, error: "El archivo no tiene filas de datos." };
   const colMap = matchExcelColumns(Object.keys(rows[0]));
@@ -121,7 +115,7 @@ export function bookingsFromExcelRows(
   }
   const col = (row: Record<string, unknown>, f: ExcelField) => (colMap[f] ? row[colMap[f] as string] : undefined);
   const str = (row: Record<string, unknown>, f: ExcelField) => (colMap[f] ? String(col(row, f) || "").trim() : "");
-  let nextId = startId;
+  let nextId = 1;
   rows.forEach((row, idx) => {
     const fincaName = col(row, "finca");
     const finca = findFincaByName(fincas, fincaName);
@@ -136,6 +130,7 @@ export function bookingsFromExcelRows(
       dt.setDate(dt.getDate() + 1);
       checkout = dateToIso(dt);
     }
+    if (checkout <= checkin) { result.skipped++; result.skippedReasons.push("Fila " + (idx + 2) + ": la salida no es posterior a la llegada"); return; }
     const guests = colMap.guests ? (parseExcelNumber(col(row, "guests")) || 1) : 1;
     const total = colMap.total ? parseExcelNumber(col(row, "total")) : 0;
     const advance = colMap.advance ? parseExcelNumber(col(row, "advance")) : 0;

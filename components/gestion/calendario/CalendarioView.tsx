@@ -4,7 +4,8 @@ import { useRef, useState } from "react";
 import { MONTHS_ES, type Listing } from "@/lib/data";
 import { Icon } from "@/lib/icons";
 import { useApp } from "@/lib/store";
-import { bookingsFromExcelRows, fincaListings, nextBookingId } from "@/lib/calendar";
+import { bookingsFromExcelRows, fincaListings } from "@/lib/calendar";
+import { createFincaBooking, deleteFinca as deleteFincaDb, importFincaBookings, saveFinca as saveFincaDb } from "@/lib/actions/gestion";
 import { CalendarGrid } from "./CalendarGrid";
 import { AvailabilityPanel, DayDetailPanel } from "./SidePanels";
 import { BookingForm, type NewBooking } from "./BookingForm";
@@ -15,7 +16,7 @@ import { CalChatWidget } from "./CalChatWidget";
 
 /** Equivalente a adminCalendario() + la parte de calendario de bindGestion(). */
 export function CalendarioView() {
-  const { listings, setListings, fincaBookings, setFincaBookings, toast } = useApp();
+  const { listings, setListings, fincaBookings, setFincaBookings, fincaBookingsStatus, loadFincaBookings, authed, toast } = useApp();
 
   const [year, setYear] = useState(2026);
   const [month, setMonth] = useState(8);
@@ -52,9 +53,14 @@ export function CalendarioView() {
   }
 
   /* ---- Reservas ---- */
-  function saveBooking(b: NewBooking) {
-    const id = nextBookingId(fincaBookings);
-    setFincaBookings((prev) => [...prev, { ...b, id }]);
+  async function saveBooking(b: NewBooking) {
+    let saved;
+    try { saved = await authed(createFincaBooking, b); } catch (err) {
+      console.error(err);
+      toast("No se pudo guardar la reserva. Revisa tu conexión e inténtalo de nuevo.");
+      return;
+    }
+    setFincaBookings((prev) => [...prev, saved]);
     gotoMonthOf(b.checkin);
     setSelectedDate(b.checkin);
     setFormOpen(false);
@@ -92,15 +98,17 @@ export function CalendarioView() {
       toast("No se pudo leer el archivo. Verifica que sea un Excel válido.");
       return;
     }
-    const res = bookingsFromExcelRows(rows, fincas, nextBookingId(fincaBookings));
+    const res = bookingsFromExcelRows(rows, fincas);
     if (!res.ok) { toast(res.error || "No se pudo importar el archivo."); return; }
     const imported = res.imported.length;
     if (imported) {
-      setFincaBookings((prev) => {
-        // Reasigna ids por si el estado cambió mientras se leía el archivo.
-        let id = nextBookingId(prev);
-        return [...prev, ...res.imported.map((b) => ({ ...b, id: id++ }))];
-      });
+      let saved;
+      try { saved = await authed(importFincaBookings, res.imported); } catch (err) {
+        console.error(err);
+        toast("No se pudieron guardar las reservas importadas — no se guardó ninguna. Inténtalo de nuevo.");
+        return;
+      }
+      setFincaBookings((prev) => [...prev, ...saved]);
       gotoMonthOf(res.lastCheckin);
       setPage(1);
     }
@@ -113,35 +121,39 @@ export function CalendarioView() {
   }
 
   /* ---- Gestión de fincas y cabañas (actualiza el catálogo público) ---- */
-  function deleteFinca(id: string) {
+  async function deleteFinca(id: string) {
     const f = fincaById(id);
     if (!f) return;
     const hasBookings = fincaBookings.some((b) => b.fincaId === id);
     const msg = hasBookings
-      ? ("\"" + f.name + "\" tiene reservas registradas en el calendario. ¿Eliminarla igual del catálogo? (acción de demo)")
-      : ("¿Eliminar \"" + f.name + "\" del catálogo? (acción de demo)");
+      ? ("\"" + f.name + "\" tiene reservas registradas en el calendario. ¿Eliminarla igual del catálogo? Sus reservas quedan guardadas.")
+      : ("¿Eliminar \"" + f.name + "\" del catálogo?");
     if (!confirm(msg)) return;
+    try { await authed(deleteFincaDb, id); } catch (err) {
+      console.error(err);
+      toast("No se pudo eliminar la finca. Inténtalo de nuevo.");
+      return;
+    }
     setListings((prev) => prev.filter((l) => l.id !== id));
     if (filterFinca === id) setFilterFinca("todas");
     if (editingFincaId === id) setEditingFincaId(null);
     toast(f.name + " eliminada del catálogo");
   }
-  function saveFinca(v: FincaFormValues) {
+  async function saveFinca(v: FincaFormValues) {
     if (!v.name) { toast("Escribe el nombre de la finca"); return; }
-    const editing = editingFincaId;
-    if (editing && editing !== "new") {
-      setListings((prev) => prev.map((f) => f.id !== editing ? f : {
-        ...f, name: v.name, town: v.town || f.town, dept: v.dept || f.dept, price: v.price, cap: v.cap, desc: v.desc || f.desc,
-      }));
+    const editing = editingFincaId && editingFincaId !== "new" ? editingFincaId : null;
+    let saved: Listing;
+    try { saved = await authed(saveFincaDb, editing, v); } catch (err) {
+      console.error(err);
+      toast("No se pudo guardar la finca. Inténtalo de nuevo.");
+      return;
+    }
+    if (editing) {
+      // Conserva los campos que solo existen en memoria (p. ej. `active` desde Inventario).
+      setListings((prev) => prev.map((f) => f.id !== editing ? f : { ...f, ...saved }));
       toast("Finca actualizada");
     } else {
-      const id = "finca-" + Date.now();
-      const nueva: Listing = {
-        id, cat: "alojamientos", name: v.name, town: v.town || "Por definir", dept: v.dept || "Eje cafetero",
-        icon: "valle", tone: "sage", unit: "noche", price: v.price, cap: v.cap, rating: 5.0, reviews: 0, tags: [],
-        desc: v.desc || "Descripción pendiente por completar.", highlights: ["Detalles por definir"],
-      };
-      setListings((prev) => [...prev, nueva]);
+      setListings((prev) => [...prev, saved]);
       toast(v.name + " agregada al catálogo");
     }
     setEditingFincaId(null);
@@ -184,8 +196,8 @@ export function CalendarioView() {
         {fincaManagerOpen ? (
           <FincaManager
             fincas={fincas} editingId={editingFincaId}
-            onAdd={() => setEditingFincaId("new")} onEdit={setEditingFincaId} onDelete={deleteFinca}
-            onCancel={() => setEditingFincaId(null)} onSave={saveFinca}
+            onAdd={() => setEditingFincaId("new")} onEdit={setEditingFincaId} onDelete={(id) => void deleteFinca(id)}
+            onCancel={() => setEditingFincaId(null)} onSave={(v) => void saveFinca(v)}
           />
         ) : null}
 
@@ -214,6 +226,15 @@ export function CalendarioView() {
             setFilterFinca("todas"); setFilterFrom(""); setFilterTo(""); setPage(1);
           }}>Limpiar filtros</button>
         </div>
+
+        {fincaBookingsStatus === "loading" || fincaBookingsStatus === "idle" ? (
+          <p className="cal-select-hint">Cargando reservas…</p>
+        ) : fincaBookingsStatus === "error" ? (
+          <p className="cal-select-hint">
+            No se pudieron cargar las reservas.{" "}
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => void loadFincaBookings()}>Reintentar</button>
+          </p>
+        ) : null}
 
         {formOpen ? (
           <BookingForm

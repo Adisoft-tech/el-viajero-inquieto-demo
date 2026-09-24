@@ -15,14 +15,14 @@ const TABS = [
 ] as const;
 
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
-  const { adminAuthed, gestionAuthed } = useApp();
+  const { authStatus, adminAuthed, gestionAuthed, logout } = useApp();
   const pathname = usePathname();
   const router = useRouter();
   const tab = pathname.split("/")[2] || "resumen";
 
   useEffect(() => {
-    if (!adminAuthed) router.replace(ROUTES.adminLogin);
-  }, [adminAuthed, router]);
+    if (authStatus === "anon") router.replace(ROUTES.adminLogin);
+  }, [authStatus, router]);
   if (!adminAuthed) return null;
 
   return (
@@ -43,6 +43,9 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
         <Link href={gestionAuthed ? ROUTES.gestion : ROUTES.gestionLogin} className="admin-nav-item">
           <Icon name="calendar" /><span>Ir a Panel de gestión</span>
         </Link>
+        <button type="button" className="admin-exit admin-logout" onClick={() => void logout()}>
+          <Icon name="logout" /> Cerrar sesión
+        </button>
         <Link href={ROUTES.home} className="admin-exit"><Icon name="logout" /> Salir al sitio</Link>
       </aside>
       <main id="adminMain">{children}</main>
