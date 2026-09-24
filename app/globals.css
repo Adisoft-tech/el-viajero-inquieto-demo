@@ -686,10 +686,17 @@ td.wrap{white-space:normal;}
 .doc-type-tab.active{background:var(--ink);border-color:var(--ink);color:var(--ivory);}
 .doc-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:26px;align-items:start;}
 @media (max-width:1180px){ .doc-layout{grid-template-columns:minmax(0,1fr);} }
-.doc-items-row{display:grid;grid-template-columns:1fr 70px 120px 32px;gap:8px;margin-bottom:8px;align-items:center;}
+.doc-items-row{display:grid;grid-template-columns:1fr 84px 140px 42px;gap:8px;margin-bottom:8px;align-items:center;}
 @media (max-width:660px){ .doc-items-row{grid-template-columns:1fr 1fr;grid-template-areas:"desc desc" "qty price" "rm rm";} .doc-items-row :nth-child(1){grid-area:desc;} .doc-items-row :nth-child(2){grid-area:qty;} .doc-items-row :nth-child(3){grid-area:price;} .doc-items-row :nth-child(4){grid-area:rm;justify-self:end;} }
-.doc-items-row input{width:100%;}
-.doc-item-remove{width:30px;height:30px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.doc-items-row input{
+  width:100%;min-width:0;border:1px solid var(--border-strong);background:var(--surface-sunken);color:var(--text);
+  border-radius:var(--radius-s);padding:11px 12px;font-size:14.5px;font-family:var(--font-body);
+}
+.doc-items-row input:focus{outline:none;border-color:var(--accent);}
+.doc-items-row input[type=number]{text-align:right;font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield;}
+.doc-items-row input[type=number]::-webkit-inner-spin-button, .doc-items-row input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.doc-item-remove{width:42px;height:42px;border-radius:var(--radius-s);border:1px solid var(--border-strong);background:var(--surface);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s;}
+.doc-item-remove:hover{color:var(--text);border-color:var(--text-muted);}
 .doc-item-remove svg{width:13px;height:13px;}
 
 .doc-preview{position:sticky;top:96px;background:#FFFFFF;color:#1F2926;border:1px solid var(--border);border-radius:var(--radius-m);padding:34px 30px;box-shadow:var(--shadow-md);overflow:hidden;min-height:420px;}

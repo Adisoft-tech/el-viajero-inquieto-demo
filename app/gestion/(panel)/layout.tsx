@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { Icon } from "@/lib/icons";
 import { useApp } from "@/lib/store";
 import { ROUTES } from "@/lib/routes";
+import { GESTION_ONLY } from "@/lib/release";
 
 const TABS = [
   ["calendario", "calendar", "Calendario"],
@@ -41,13 +42,15 @@ export default function GestionPanelLayout({ children }: { children: React.React
             <Icon name={icon} /><span>{label}</span>
           </Link>
         ))}
-        <Link href={adminAuthed ? ROUTES.admin : ROUTES.adminLogin} className="admin-nav-item">
-          <Icon name="dash" /><span>Ir a Panel administrativo</span>
-        </Link>
+        {!GESTION_ONLY && (
+          <Link href={adminAuthed ? ROUTES.admin : ROUTES.adminLogin} className="admin-nav-item">
+            <Icon name="dash" /><span>Ir a Panel administrativo</span>
+          </Link>
+        )}
         <button type="button" className="admin-exit admin-logout" onClick={() => void logout()}>
           <Icon name="logout" /> Cerrar sesión
         </button>
-        <Link href={ROUTES.home} className="admin-exit"><Icon name="logout" /> Salir al sitio</Link>
+        {!GESTION_ONLY && <Link href={ROUTES.home} className="admin-exit"><Icon name="logout" /> Salir al sitio</Link>}
       </aside>
       <main id="adminMain" className={tab === "calendario" ? "admin-main-wide" : undefined}>
         {children}

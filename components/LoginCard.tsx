@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useApp } from "@/lib/store";
 import { ROUTES } from "@/lib/routes";
+import { GESTION_ONLY } from "@/lib/release";
 
 /**
  * Tarjeta de login compartida por el panel administrativo y el de gestión.
@@ -54,7 +55,7 @@ export function LoginCard({ title, subtitle, next }: { title: string; subtitle: 
             {busy ? "Ingresando…" : "Ingresar"}
           </button>
         </form>
-        <button className="btn btn-ghost btn-block" style={{ marginTop: 10 }} onClick={() => router.push(ROUTES.home)}>Volver al sitio</button>
+        {!GESTION_ONLY && <button className="btn btn-ghost btn-block" style={{ marginTop: 10 }} onClick={() => router.push(ROUTES.home)}>Volver al sitio</button>}
       </div>
     </div>
   );
