@@ -5,7 +5,11 @@ import { DEMO_TODAY, EMISOR } from "./data";
 import { cop, copWords } from "./format";
 
 export type DocType = "cotizacion" | "cobro" | "pago";
-export interface DocItem { desc: string; qty: number; price: number }
+export interface DocItem {
+  desc: string; qty: number; price: number;
+  /** Detalle opcional (solo cotización): a quién y por cuánto tiempo aplica el ítem. */
+  adults?: number; children?: number; nights?: number; days?: number;
+}
 export interface DocData {
   type: DocType;
   counters: Record<DocType, number>;
@@ -95,7 +99,7 @@ export async function generateDocPDF(d: DocData): Promise<boolean> {
   let y = 47;
   doc.setTextColor(62, 106, 111);
   doc.setFont("times", "bold"); doc.setFontSize(18);
-  doc.text(type === "cotizacion" ? typeLabel : (typeLabel + " No. " + counter), marginX, y);
+  doc.text(typeLabel + " No. " + counter, marginX, y);
   doc.setTextColor(91, 104, 95); doc.setFont("helvetica", "normal"); doc.setFontSize(10);
   doc.text("Fecha: " + formatDateEs(d.fecha || DEMO_TODAY), pageW - marginX, y, { align: "right" });
   y += 10;
@@ -201,6 +205,17 @@ export async function generateDocPDF(d: DocData): Promise<boolean> {
     doc.text(cop(it.price || 0), pageW - marginX - 40, y + 5);
     doc.text(cop(sub), pageW - marginX - 3, y + 5, { align: "right" });
     y += 6.2 * Math.max(1, descLines.length);
+    const detailParts: string[] = [];
+    if (it.adults) detailParts.push(it.adults + " adulto" + (it.adults === 1 ? "" : "s"));
+    if (it.children) detailParts.push(it.children + " niño" + (it.children === 1 ? "" : "s"));
+    if (it.nights) detailParts.push(it.nights + " noche" + (it.nights === 1 ? "" : "s"));
+    if (it.days) detailParts.push(it.days + " día" + (it.days === 1 ? "" : "s"));
+    if (type === "cotizacion" && detailParts.length) {
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(62, 106, 111);
+      doc.text(detailParts.join("   ·   "), marginX + 3, y + 1.5);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); doc.setTextColor(31, 41, 38);
+      y += 5;
+    }
     doc.setDrawColor(237, 235, 227); doc.line(marginX, y - 1, pageW - marginX, y - 1);
     y += 3;
   });
@@ -375,24 +390,44 @@ export async function generateDocPDF(d: DocData): Promise<boolean> {
     y += 8;
   })();
 
-  /* Línea de firma del emisor, como en las cuentas de cobro/pago reales (la cotización no lleva firma formal) */
-  if (type !== "cotizacion") {
-    y += 8;
-    const signW = 70, signX = pageW / 2 - signW / 2;
+  /* Línea(s) de firma: cuenta de cobro solo la del emisor; cuenta de pago suma la del beneficiario (la cotización no lleva firma formal) */
+  function signBlock(cx: number, signW: number, name: string, idLine: string) {
     doc.setDrawColor(31, 41, 38); doc.setLineWidth(0.3);
-    doc.line(signX, y, signX + signW, y);
-    y += 5;
+    doc.line(cx - signW / 2, y, cx + signW / 2, y);
     doc.setFont("times", "bold"); doc.setFontSize(10); doc.setTextColor(31, 41, 38);
-    doc.text(EMISOR.titular, pageW / 2, y, { align: "center" });
-    y += 4.5;
+    doc.text(name, cx, y + 5, { align: "center" });
     doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(91, 104, 95);
-    doc.text(EMISOR.identificacion, pageW / 2, y, { align: "center" });
+    doc.text(idLine, cx, y + 9.5, { align: "center" });
+  }
+  if (type === "cobro") {
+    y += 8;
+    signBlock(pageW / 2, 70, EMISOR.titular, EMISOR.identificacion);
+  } else if (type === "pago") {
+    y += 8;
+    const signW = 70, gap = 10;
+    signBlock(pageW / 2 - gap / 2 - signW / 2, signW, EMISOR.titular, EMISOR.identificacion);
+    signBlock(pageW / 2 + gap / 2 + signW / 2, signW, d.cliente || "Beneficiario", d.clienteId || "C.C. / NIT");
   }
 
-  const footText = EMISOR.nombre;
-  doc.setDrawColor(230, 230, 230); doc.line(marginX, pageH - 22, pageW - marginX, pageH - 22);
-  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(138, 149, 142);
-  doc.text(footText, pageW / 2, pageH - 16, { align: "center" });
+  if (type === "cotizacion") {
+    doc.setDrawColor(230, 230, 230); doc.line(marginX, pageH - 26, pageW - marginX, pageH - 26);
+    const nameText = EMISOR.nombre, rntText = "RNT. " + EMISOR.rnt, gap = 3;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(138, 149, 142);
+    const nameW = doc.getTextWidth(nameText);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+    const rntW = doc.getTextWidth(rntText);
+    const startX = pageW / 2 - (nameW + gap + rntW) / 2;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(138, 149, 142);
+    doc.text(nameText, startX, pageH - 19);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(31, 41, 38);
+    doc.text(rntText, startX + nameW + gap, pageH - 19);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(160, 169, 156);
+    doc.text("El Viajero Inquieto te recomienda siempre revisar que el RNT de tu agencia de viajes esté activo.", pageW / 2, pageH - 14, { align: "center" });
+  } else {
+    doc.setDrawColor(230, 230, 230); doc.line(marginX, pageH - 22, pageW - marginX, pageH - 22);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(138, 149, 142);
+    doc.text(EMISOR.nombre, pageW / 2, pageH - 16, { align: "center" });
+  }
 
   const safeClient = (d.cliente || "cliente").replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").slice(0, 30) || "cliente";
   const prefix = type === "cotizacion" ? "Cotizacion_" : type === "cobro" ? "CuentaDeCobro_" : "CuentaDePago_";

@@ -35,7 +35,7 @@ function counterLabel(d: DocsState): string {
 /** Contenido del formulario sin los datos internos del editor (ids de ítems, consecutivos). */
 function docContent(d: DocsState): DocContent {
   const { counters: _counters, countersReady: _ready, items, ...rest } = d;
-  return { ...rest, items: items.map(({ desc, qty, price }) => ({ desc, qty, price })) };
+  return { ...rest, items: items.map(({ desc, qty, price, adults, children, nights, days }) => ({ desc, qty, price, adults, children, nights, days })) };
 }
 
 const DOC_TYPE_LABEL: Record<DocType, string> = { cotizacion: "Cotización", cobro: "Cuenta de cobro", pago: "Cuenta de pago" };
@@ -52,14 +52,14 @@ function DocForm({ d, update, onDownload, busy }: { d: DocsState; update: Update
   const counter = counterLabel(d);
   const typeLabel = type === "cotizacion" ? "Cotización" : type === "cobro" ? "Cuenta de cobro" : "Cuenta de pago";
   const clienteLabel = type === "pago" ? "Beneficiario (a quién se paga)" : type === "cobro" ? "Cobrar a" : "Cliente / Razón social";
-  const titleText = type === "cotizacion" ? typeLabel : (typeLabel + " No. " + counter);
+  const titleText = typeLabel + " No. " + counter;
   const itemsLabel = type === "cotizacion" ? "Ítems de la cotización" : type === "cobro" ? "Ítems a cobrar" : "Ítems del pago";
 
   const set = (field: TextField) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const v = e.target.value;
     update((s) => ({ ...s, [field]: v }));
   };
-  const setItem = (idx: number, field: "desc" | "qty" | "price", raw: string) => {
+  const setItem = (idx: number, field: "desc" | "qty" | "price" | "adults" | "children" | "nights" | "days", raw: string) => {
     update((s) => ({
       ...s,
       items: s.items.map((it, i) => i !== idx ? it : field === "desc" ? { ...it, desc: raw } : { ...it, [field]: parseFloat(raw) || 0 }),
@@ -101,13 +101,26 @@ function DocForm({ d, update, onDownload, busy }: { d: DocsState; update: Update
 
       <div style={{ marginTop: 18 }}>
         <label style={ITEMS_LABEL_STYLE}>{itemsLabel}</label>
+        {type === "cotizacion" && (
+          <p className="doc-item-detail-hint">Detalle opcional por ítem — se muestra en la cotización para que el cliente vea a quién y por cuánto tiempo aplica cada uno.</p>
+        )}
         {d.items.map((it, i) => (
-          <div className="doc-items-row" key={it.id}>
-            <input placeholder="Descripción" value={it.desc} onChange={(e) => setItem(i, "desc", e.target.value)} />
-            {/* Numéricos sin controlar para que el usuario pueda vaciar el campo mientras escribe (el valor se lee con parseFloat||0 como en el original). */}
-            <input type="number" min={1} placeholder="Cant." defaultValue={it.qty} onChange={(e) => setItem(i, "qty", e.target.value)} />
-            <input type="number" min={0} step={1000} placeholder="Valor unit." defaultValue={it.price} onChange={(e) => setItem(i, "price", e.target.value)} />
-            <button type="button" className="doc-item-remove" aria-label="Quitar ítem" onClick={() => removeItem(i)}><Icon name="close" /></button>
+          <div key={it.id}>
+            <div className="doc-items-row">
+              <input placeholder="Descripción" value={it.desc} onChange={(e) => setItem(i, "desc", e.target.value)} />
+              {/* Numéricos sin controlar para que el usuario pueda vaciar el campo mientras escribe (el valor se lee con parseFloat||0 como en el original). */}
+              <input type="number" min={1} placeholder="Cant." defaultValue={it.qty} onChange={(e) => setItem(i, "qty", e.target.value)} />
+              <input type="number" min={0} step={1000} placeholder="Valor unit." defaultValue={it.price} onChange={(e) => setItem(i, "price", e.target.value)} />
+              <button type="button" className="doc-item-remove" aria-label="Quitar ítem" onClick={() => removeItem(i)}><Icon name="close" /></button>
+            </div>
+            {type === "cotizacion" && (
+              <div className="doc-item-detail-row">
+                <label>Adultos<input type="number" min={0} placeholder="0" defaultValue={it.adults || ""} onChange={(e) => setItem(i, "adults", e.target.value)} /></label>
+                <label>Niños<input type="number" min={0} placeholder="0" defaultValue={it.children || ""} onChange={(e) => setItem(i, "children", e.target.value)} /></label>
+                <label>Noches<input type="number" min={0} placeholder="0" defaultValue={it.nights || ""} onChange={(e) => setItem(i, "nights", e.target.value)} /></label>
+                <label>Días<input type="number" min={0} placeholder="0" defaultValue={it.days || ""} onChange={(e) => setItem(i, "days", e.target.value)} /></label>
+              </div>
+            )}
           </div>
         ))}
         <button type="button" className="btn btn-ghost btn-sm" id="docAddItem" style={{ marginTop: 6 }}
@@ -156,7 +169,17 @@ function DocPreview({ d }: { d: DocsState }) {
           const sub = (it.qty || 0) * (it.price || 0);
           return (
             <tr key={it.id}>
-              <td>{it.desc || "—"}</td>
+              <td>
+                {it.desc || "—"}
+                {type === "cotizacion" && (it.adults || it.children || it.nights || it.days) ? (
+                  <div className="doc-item-chips">
+                    {it.adults ? <span className="doc-item-chip">{it.adults} adulto{it.adults === 1 ? "" : "s"}</span> : null}
+                    {it.children ? <span className="doc-item-chip">{it.children} niño{it.children === 1 ? "" : "s"}</span> : null}
+                    {it.nights ? <span className="doc-item-chip">{it.nights} noche{it.nights === 1 ? "" : "s"}</span> : null}
+                    {it.days ? <span className="doc-item-chip">{it.days} día{it.days === 1 ? "" : "s"}</span> : null}
+                  </div>
+                ) : null}
+              </td>
               <td className="tabular" style={{ textAlign: "center" }}>{it.qty || 0}</td>
               <td className="tabular" style={{ textAlign: "right" }}>{cop(it.price || 0)}</td>
               <td className="tabular" style={{ textAlign: "right" }}>{cop(sub)}</td>
@@ -176,7 +199,7 @@ function DocPreview({ d }: { d: DocsState }) {
         <img src="/photos/logo-mark-ink.png" alt="" />
         <div><b>El Viajero Inquieto</b><span>Tu aliado al viajar</span></div>
       </div>
-      <div className="doc-preview-title"><h2>{type === "cotizacion" ? typeLabel : (typeLabel + " No. " + counter)}</h2><span>Fecha: {fecha}</span></div>
+      <div className="doc-preview-title"><h2>{typeLabel + " No. " + counter}</h2><span>Fecha: {fecha}</span></div>
       {type === "cotizacion" && <p className="doc-preview-tagline">Tu viaje te espera — este es el plan que armamos para ti.</p>}
       <div className="doc-preview-parties">
         <div className="doc-preview-party">
@@ -208,10 +231,23 @@ function DocPreview({ d }: { d: DocsState }) {
         {DOC_ILLUSTRATIONS.map((k) => <span key={k} className="doc-illustration"><Icon name={k} /></span>)}
       </div>
       <p className="doc-illustration-tagline">viajando lento, profundo y con sentido</p>
-      {type !== "cotizacion" && (
+      {type === "cobro" && (
         <div className="doc-preview-sign"><div className="doc-preview-sign-line"></div><b>{EMISOR.titular}</b><span>{EMISOR.identificacion}</span></div>
       )}
-      <div className="doc-preview-foot">{footInfo}</div>
+      {type === "pago" && (
+        <div className="doc-preview-sign-pair">
+          <div className="doc-preview-sign"><div className="doc-preview-sign-line"></div><b>{EMISOR.titular}</b><span>{EMISOR.identificacion}</span></div>
+          <div className="doc-preview-sign"><div className="doc-preview-sign-line"></div><b>{d.cliente || "Beneficiario"}</b><span>{d.clienteId || "C.C. / NIT"}</span></div>
+        </div>
+      )}
+      <div className="doc-preview-foot">
+        {type === "cotizacion" ? (
+          <>
+            <p className="doc-preview-foot-main">{EMISOR.nombre} <b>RNT. {EMISOR.rnt}</b></p>
+            <p className="doc-preview-foot-note">El Viajero Inquieto te recomienda siempre revisar que el RNT de tu agencia de viajes esté activo.</p>
+          </>
+        ) : footInfo}
+      </div>
     </div></div>
   );
 }

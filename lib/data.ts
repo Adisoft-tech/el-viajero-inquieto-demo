@@ -100,6 +100,7 @@ export const EMISOR = {
   ciudad: "Manizales, Caldas",
   telefono: "314 873 4314",
   correo: "elviajeroinquieto11@gmail.com",
+  rnt: "222679",
 };
 export const DEMO_TODAY = "2026-09-21";
 export const MONTHS_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
