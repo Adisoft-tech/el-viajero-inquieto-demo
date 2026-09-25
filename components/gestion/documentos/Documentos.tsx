@@ -190,8 +190,6 @@ function DocPreview({ d }: { d: DocsState }) {
     </table>
   );
 
-  const footInfo = EMISOR.nombre;
-
   return (
     <div className="doc-preview"><div className="doc-preview-inner">
       <div className="doc-preview-head">
@@ -241,12 +239,8 @@ function DocPreview({ d }: { d: DocsState }) {
         </div>
       )}
       <div className="doc-preview-foot">
-        {type === "cotizacion" ? (
-          <>
-            <p className="doc-preview-foot-main">{EMISOR.nombre} <b>RNT. {EMISOR.rnt}</b></p>
-            <p className="doc-preview-foot-note">El Viajero Inquieto te recomienda siempre revisar que el RNT de tu agencia de viajes esté activo.</p>
-          </>
-        ) : footInfo}
+        <p className="doc-preview-foot-main">{EMISOR.nombre} <b>RNT. {EMISOR.rnt}</b></p>
+        <p className="doc-preview-foot-note">El Viajero Inquieto te recomienda siempre revisar que el RNT de tu agencia de viajes esté activo.</p>
       </div>
     </div></div>
   );

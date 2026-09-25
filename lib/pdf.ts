@@ -409,25 +409,19 @@ export async function generateDocPDF(d: DocData): Promise<boolean> {
     signBlock(pageW / 2 + gap / 2 + signW / 2, signW, d.cliente || "Beneficiario", d.clienteId || "C.C. / NIT");
   }
 
-  if (type === "cotizacion") {
-    doc.setDrawColor(230, 230, 230); doc.line(marginX, pageH - 26, pageW - marginX, pageH - 26);
-    const nameText = EMISOR.nombre, rntText = "RNT. " + EMISOR.rnt, gap = 3;
-    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(138, 149, 142);
-    const nameW = doc.getTextWidth(nameText);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
-    const rntW = doc.getTextWidth(rntText);
-    const startX = pageW / 2 - (nameW + gap + rntW) / 2;
-    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(138, 149, 142);
-    doc.text(nameText, startX, pageH - 19);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(31, 41, 38);
-    doc.text(rntText, startX + nameW + gap, pageH - 19);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(160, 169, 156);
-    doc.text("El Viajero Inquieto te recomienda siempre revisar que el RNT de tu agencia de viajes esté activo.", pageW / 2, pageH - 14, { align: "center" });
-  } else {
-    doc.setDrawColor(230, 230, 230); doc.line(marginX, pageH - 22, pageW - marginX, pageH - 22);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(138, 149, 142);
-    doc.text(EMISOR.nombre, pageW / 2, pageH - 16, { align: "center" });
-  }
+  doc.setDrawColor(230, 230, 230); doc.line(marginX, pageH - 26, pageW - marginX, pageH - 26);
+  const nameText = EMISOR.nombre, rntText = "RNT. " + EMISOR.rnt, footGap = 3;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(138, 149, 142);
+  const nameW = doc.getTextWidth(nameText);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+  const rntW = doc.getTextWidth(rntText);
+  const startX = pageW / 2 - (nameW + footGap + rntW) / 2;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(138, 149, 142);
+  doc.text(nameText, startX, pageH - 19);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(31, 41, 38);
+  doc.text(rntText, startX + nameW + footGap, pageH - 19);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(160, 169, 156);
+  doc.text("El Viajero Inquieto te recomienda siempre revisar que el RNT de tu agencia de viajes esté activo.", pageW / 2, pageH - 14, { align: "center" });
 
   const safeClient = (d.cliente || "cliente").replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").slice(0, 30) || "cliente";
   const prefix = type === "cotizacion" ? "Cotizacion_" : type === "cobro" ? "CuentaDeCobro_" : "CuentaDePago_";
