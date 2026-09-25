@@ -167,7 +167,7 @@ function DocPreview({ d }: { d: DocsState }) {
     </table>
   );
 
-  const footInfo = type === "cotizacion" ? EMISOR.nombre : (EMISOR.direccion + " · " + EMISOR.telefono + " · " + EMISOR.correo);
+  const footInfo = EMISOR.nombre;
 
   return (
     <div className="doc-preview"><div className="doc-preview-inner">

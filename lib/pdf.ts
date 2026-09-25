@@ -389,7 +389,7 @@ export async function generateDocPDF(d: DocData): Promise<boolean> {
     doc.text(EMISOR.identificacion, pageW / 2, y, { align: "center" });
   }
 
-  const footText = type === "cotizacion" ? EMISOR.nombre : (EMISOR.direccion + "  ·  " + EMISOR.telefono + "  ·  " + EMISOR.correo);
+  const footText = EMISOR.nombre;
   doc.setDrawColor(230, 230, 230); doc.line(marginX, pageH - 22, pageW - marginX, pageH - 22);
   doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(138, 149, 142);
   doc.text(footText, pageW / 2, pageH - 16, { align: "center" });
