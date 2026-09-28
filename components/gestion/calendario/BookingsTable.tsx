@@ -4,6 +4,7 @@ import type { FincaBooking, Listing } from "@/lib/data";
 import { BOOKING_COLUMNS, formatDateEs, sortBookings } from "@/lib/calendar";
 import { Icon } from "@/lib/icons";
 import { cop } from "@/lib/format";
+import { generateBookingVoucherPDF } from "@/lib/pdf";
 
 /** Equivalente a upcomingBookingsTable(): tabla ordenable y paginada. `bookings` ya viene filtrado por finca. */
 export function BookingsTable({ bookings, fincaById, sortKey, sortDir, page, pageSize, onSort, onPage }: {
@@ -32,6 +33,7 @@ export function BookingsTable({ bookings, fincaById, sortKey, sortDir, page, pag
                   </th>
                 );
               })}
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -49,9 +51,13 @@ export function BookingsTable({ bookings, fincaById, sortKey, sortDir, page, pag
                 <td className="tabular">{cop(b.total || 0)}</td>
                 <td className="tabular">{cop(b.advance || 0)}</td>
                 <td className="tabular">{cop(b.balance || 0)}</td>
+                <td style={{ whiteSpace: "nowrap", textAlign: "right" }}>
+                  <button type="button" className="icon-btn" aria-label="Descargar comprobante de reserva" title="Descargar comprobante de reserva"
+                    onClick={() => void generateBookingVoucherPDF(b, fincaById(b.fincaId))}><Icon name="download" /></button>
+                </td>
               </tr>
             )) : (
-              <tr><td colSpan={12}><p className="empty-note">No hay reservas para esta finca.</p></td></tr>
+              <tr><td colSpan={13}><p className="empty-note">No hay reservas para esta finca.</p></td></tr>
             )}
           </tbody>
         </table>

@@ -3,6 +3,8 @@
 import type { FincaBooking, Listing } from "@/lib/data";
 import { bookingsOnDate, formatDateEs, rangesOverlap } from "@/lib/calendar";
 import { cop } from "@/lib/format";
+import { Icon } from "@/lib/icons";
+import { generateBookingVoucherPDF } from "@/lib/pdf";
 
 /** Equivalente a calAvailabilityPanel(): usa todas las reservas (sin filtro de finca). */
 export function AvailabilityPanel({ fincas, allBookings, from, to }: {
@@ -52,7 +54,11 @@ export function DayDetailPanel({ date, bookings, fincaById }: {
           : (b.guests + " huésped(es)");
         return (
           <div key={b.id} className="cal-booking-item">
-            <b>{f ? f.name : b.fincaId}</b>
+            <div className="cal-booking-item-head">
+              <b>{f ? f.name : b.fincaId}</b>
+              <button type="button" className="icon-btn" aria-label="Descargar comprobante de reserva" title="Descargar comprobante de reserva"
+                onClick={() => void generateBookingVoucherPDF(b, f)}><Icon name="download" /></button>
+            </div>
             <span>{b.guest} · {guestsLabel} · {b.phone || ""}</span>
             <span>Llegada {formatDateEs(b.checkin)} · {b.time}h  →  Salida {formatDateEs(b.checkout)}</span>
             <span>C.C./Pasaporte {b.cedula || "—"} · {b.email || "—"}</span>
