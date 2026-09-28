@@ -28,6 +28,39 @@ export interface DocData {
   observaciones?: string;
 }
 
+/* ---------- Itinerarios ---------- */
+export type ActivityCategoryKey = "comida" | "transporte" | "aventura" | "alojamiento" | "cultura" | "descanso";
+export interface ItinerarioActivity {
+  time: string; category: ActivityCategoryKey; title: string; desc?: string; place?: string;
+}
+export interface ItinerarioDay { title?: string; activities: ItinerarioActivity[] }
+export interface ItinerarioData {
+  numero?: number;
+  cliente?: string;
+  destino?: string;
+  fechaInicio?: string;
+  dias: ItinerarioDay[];
+  notas?: string;
+}
+export const ACTIVITY_CATEGORIES: {
+  key: ActivityCategoryKey; label: string; icon: string; chipBg: [number, number, number]; chipFg: [number, number, number];
+}[] = [
+  { key: "comida", label: "Comida", icon: "cafe", chipBg: [246, 236, 217], chipFg: [138, 95, 30] },
+  { key: "transporte", label: "Transporte", icon: "car", chipBg: [227, 233, 242], chipFg: [62, 90, 133] },
+  { key: "aventura", label: "Aventura", icon: "valle", chipBg: [228, 238, 227], chipFg: [62, 107, 74] },
+  { key: "alojamiento", label: "Alojamiento", icon: "farm", chipBg: [240, 222, 212], chipFg: [156, 90, 62] },
+  { key: "cultura", label: "Cultura", icon: "bogota", chipBg: [234, 225, 240], chipFg: [107, 74, 138] },
+  { key: "descanso", label: "Descanso", icon: "termal", chipBg: [223, 233, 234], chipFg: [62, 106, 111] },
+];
+export function categoryInfo(key: string) {
+  return ACTIVITY_CATEGORIES.find((c) => c.key === key) || ACTIVITY_CATEGORIES[2];
+}
+function addDaysIso(iso: string, n: number): string {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
 export function formatDateEs(iso?: string): string {
   if (!iso) return "—";
   const d = new Date(iso + "T00:00:00");
@@ -531,5 +564,161 @@ export async function generateBookingVoucherPDF(booking: FincaBooking, finca: Li
 
   const safeGuest = (booking.guest || "huesped").replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").slice(0, 30) || "huesped";
   doc.save("Comprobante_Reserva_" + String(booking.id).padStart(4, "0") + "_" + safeGuest + ".pdf");
+  return true;
+}
+
+/** Itinerario día a día, con membrete liviano (sin RNT ni datos legales — no es un documento contable). */
+export async function generateItinerarioPDF(data: ItinerarioData): Promise<boolean> {
+  let mod: typeof import("jspdf");
+  try {
+    mod = await import("jspdf");
+  } catch {
+    return false;
+  }
+  const { jsPDF, GState } = mod;
+  const LOGO_IMG = await loadLogo();
+
+  const doc = new jsPDF({ unit: "mm", format: "letter" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const marginX = 20;
+  const contentX = marginX + 28;
+  const contentW = pageW - marginX - contentX;
+
+  drawBrandHeader(doc, LOGO_IMG, GState, marginX, pageW, pageH);
+  let y = 47;
+
+  let prevDotY: number | null = null;
+  function ensureSpace(needed: number) {
+    if (y + needed > pageH - 26) {
+      doc.addPage();
+      drawBrandHeader(doc, LOGO_IMG, GState, marginX, pageW, pageH);
+      y = 43;
+      prevDotY = null;
+    }
+  }
+
+  doc.setTextColor(62, 106, 111); doc.setFont("times", "bold"); doc.setFontSize(20);
+  doc.text("ITINERARIO", marginX, y);
+  if (data.numero) {
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(91, 104, 95);
+    doc.text("No. " + String(data.numero).padStart(4, "0"), pageW - marginX, y, { align: "right" });
+  }
+  y += 8;
+  doc.setDrawColor(233, 225, 210); doc.setLineWidth(0.3);
+  doc.line(marginX, y, pageW - marginX, y);
+  y += 10;
+
+  const totalDays = data.dias.length;
+  const duracionLabel = totalDays + (totalDays === 1 ? " día" : " días")
+    + (data.fechaInicio ? "  ·  " + formatDateEs(data.fechaInicio) + (totalDays > 1 ? " – " + formatDateEs(addDaysIso(data.fechaInicio, totalDays - 1)) : "") : "");
+  const colGap = 10;
+  const colW = (pageW - marginX * 2 - colGap * 2) / 3;
+  function infoCol(x: number, label: string, value: string): number {
+    doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(138, 149, 142);
+    doc.text(label.toUpperCase(), x, y);
+    doc.setFont("times", "bold"); doc.setFontSize(11.5); doc.setTextColor(31, 41, 38);
+    const lines: string[] = doc.splitTextToSize(value || "—", colW);
+    doc.text(lines, x, y + 5.5);
+    return 5.5 + 4.6 * lines.length;
+  }
+  const h1 = infoCol(marginX, "Preparado para", data.cliente || "—");
+  const h2 = infoCol(marginX + colW + colGap, "Destino", data.destino || "—");
+  const h3 = infoCol(marginX + (colW + colGap) * 2, "Duración", duracionLabel);
+  y += Math.max(h1, h2, h3) + 8;
+  doc.setDrawColor(233, 225, 210); doc.line(marginX, y, pageW - marginX, y);
+  y += 10;
+
+  data.dias.forEach((day, di) => {
+    ensureSpace(24);
+    const dayDate = data.fechaInicio ? addDaysIso(data.fechaInicio, di) : null;
+    const bandH = 11;
+    doc.setFillColor(143, 168, 154);
+    doc.roundedRect(marginX, y, pageW - marginX * 2, bandH, 2, 2, "F");
+    doc.setTextColor(255, 255, 255); doc.setFont("times", "bold"); doc.setFontSize(12.5);
+    doc.text("DÍA " + (di + 1), marginX + 7, y + 7.3);
+    if (dayDate) {
+      doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+      doc.text(formatDateEs(dayDate), pageW - marginX - 7, y + 7.3, { align: "right" });
+    }
+    y += bandH + 5;
+    prevDotY = null;
+    if (day.title) {
+      ensureSpace(9);
+      doc.setFont("times", "italic"); doc.setFontSize(11.5); doc.setTextColor(95, 143, 149);
+      const dayTitleLines: string[] = doc.splitTextToSize(day.title, pageW - marginX * 2);
+      doc.text(dayTitleLines, marginX, y + 4);
+      y += 5 * dayTitleLines.length + 4;
+    }
+
+    const sorted = day.activities.slice().sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+    if (!sorted.length) {
+      doc.setFont("helvetica", "italic"); doc.setFontSize(9.5); doc.setTextColor(138, 149, 142);
+      doc.text("Sin actividades agregadas.", contentX, y + 3);
+      y += 10;
+    }
+    sorted.forEach((act) => {
+      ensureSpace(26);
+      const rowTop = y;
+      const dotY = rowTop + 2.2;
+      if (prevDotY !== null) {
+        doc.setDrawColor(210, 216, 206); doc.setLineWidth(0.5);
+        doc.line(marginX + 20, prevDotY + 1.6, marginX + 20, dotY - 1.6);
+      }
+      doc.setFillColor(62, 106, 111); doc.circle(marginX + 20, dotY, 1.5, "F");
+      prevDotY = dotY;
+
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(31, 41, 38);
+      doc.text(act.time || "—", marginX, rowTop + 3.6);
+
+      const cat = categoryInfo(act.category);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7);
+      const chipLabel = cat.label.toUpperCase();
+      const chipW = doc.getTextWidth(chipLabel) + 8, chipH = 5.2;
+      doc.setFillColor(cat.chipBg[0], cat.chipBg[1], cat.chipBg[2]);
+      doc.roundedRect(contentX, rowTop - 0.2, chipW, chipH, 2, 2, "F");
+      doc.setTextColor(cat.chipFg[0], cat.chipFg[1], cat.chipFg[2]);
+      doc.text(chipLabel, contentX + chipW / 2, rowTop + 3.4, { align: "center" });
+      y = rowTop + 8.5;
+
+      doc.setFont("times", "bold"); doc.setFontSize(12); doc.setTextColor(31, 41, 38);
+      const titleLines: string[] = doc.splitTextToSize(act.title || "—", contentW);
+      doc.text(titleLines, contentX, y);
+      y += 4.8 * titleLines.length + 1;
+
+      const metaParts: string[] = [];
+      if (act.place) metaParts.push(act.place);
+      if (act.desc) metaParts.push(act.desc);
+      if (metaParts.length) {
+        doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(91, 104, 95);
+        const metaLines: string[] = doc.splitTextToSize(metaParts.join("  ·  "), contentW);
+        doc.text(metaLines, contentX, y + 3.2);
+        y += 4.3 * metaLines.length + 3;
+      }
+      y += 5;
+    });
+    y += 5;
+  });
+
+  if (data.notas) {
+    ensureSpace(20);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(138, 149, 142);
+    doc.text("RECOMENDACIONES", marginX, y);
+    y += 5;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(91, 104, 95);
+    const notasLines: string[] = doc.splitTextToSize(data.notas, pageW - marginX * 2);
+    doc.text(notasLines, marginX, y);
+    y += 5 * notasLines.length + 6;
+  }
+
+  ensureSpace(48);
+  y = drawIllustrationRow(doc, marginX, pageW, y);
+  ensureSpace(14);
+  doc.setDrawColor(230, 230, 230); doc.line(marginX, pageH - 18, pageW - marginX, pageH - 18);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(138, 149, 142);
+  doc.text(EMISOR.telefono + "  ·  " + EMISOR.correo, pageW / 2, pageH - 12, { align: "center" });
+
+  const safeClient = (data.cliente || "viajero").replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").slice(0, 30) || "viajero";
+  doc.save("Itinerario_" + String(data.numero || 0).padStart(4, "0") + "_" + safeClient + ".pdf");
   return true;
 }

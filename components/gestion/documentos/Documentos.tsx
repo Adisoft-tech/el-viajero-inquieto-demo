@@ -12,6 +12,7 @@ import { useApp } from "@/lib/store";
 import { docCounter, docTypeLabelUpper, formatDateEs, generateDocPDF, type DocType } from "@/lib/pdf";
 import { emitirDocumento, getDocCounters, listDocumentos, type DocContent, type Documento } from "@/lib/actions/gestion";
 import { newItem, useDocsState, type DocsState } from "./DocsState";
+import Itinerarios from "./Itinerarios";
 
 type Update = (fn: (d: DocsState) => DocsState) => void;
 type TextField =
@@ -40,10 +41,9 @@ function docContent(d: DocsState): DocContent {
 
 const DOC_TYPE_LABEL: Record<DocType, string> = { cotizacion: "Cotización", cobro: "Cuenta de cobro", pago: "Cuenta de pago" };
 
-function DocTypeTab({ d, k, label, update }: { d: DocsState; k: DocType; label: string; update: Update }) {
+function DocTypeTab({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
   return (
-    <button type="button" className={"doc-type-tab" + (d.type === k ? " active" : "")} data-doctype={k}
-      onClick={() => update((s) => ({ ...s, type: k }))}>{label}</button>
+    <button type="button" className={"doc-type-tab" + (active ? " active" : "")} onClick={onClick}>{label}</button>
   );
 }
 
@@ -288,6 +288,7 @@ function DocHistory({ docs, status, onRetry, onDownload, onUse }: {
 
 export default function Documentos() {
   const { authed, toast } = useApp();
+  const [section, setSection] = useState<DocType | "itinerarios">("cotizacion");
   const [d, update] = useDocsState();
   const [busy, setBusy] = useState(false);
   const [docs, setDocs] = useState<Documento[]>([]);
@@ -356,16 +357,23 @@ export default function Documentos() {
     <div className="fade-in">
       <div className="admin-head"><div><h1>Documentos</h1><p>Genera cuentas de cobro, cuentas de pago y cotizaciones con el membrete de El Viajero Inquieto.</p></div></div>
       <div className="doc-type-tabs">
-        <DocTypeTab d={d} k="cotizacion" label="Cotización" update={update} />
-        <DocTypeTab d={d} k="cobro" label="Cuenta de cobro" update={update} />
-        <DocTypeTab d={d} k="pago" label="Cuenta de pago" update={update} />
+        <DocTypeTab active={section === "cotizacion"} label="Cotización" onClick={() => { setSection("cotizacion"); update((s) => ({ ...s, type: "cotizacion" })); }} />
+        <DocTypeTab active={section === "cobro"} label="Cuenta de cobro" onClick={() => { setSection("cobro"); update((s) => ({ ...s, type: "cobro" })); }} />
+        <DocTypeTab active={section === "pago"} label="Cuenta de pago" onClick={() => { setSection("pago"); update((s) => ({ ...s, type: "pago" })); }} />
+        <DocTypeTab active={section === "itinerarios"} label="Itinerarios" onClick={() => setSection("itinerarios")} />
       </div>
-      <div className="doc-layout">
-        <DocForm d={d} update={update} onDownload={onDownload} busy={busy} />
-        <DocPreview d={d} />
-      </div>
-      <DocHistory docs={docs} status={docsStatus} onRetry={() => void loadFromDb()}
-        onDownload={(doc) => void downloadSaved(doc)} onUse={loadAsBase} />
+      {section === "itinerarios" ? (
+        <Itinerarios />
+      ) : (
+        <>
+          <div className="doc-layout">
+            <DocForm d={d} update={update} onDownload={onDownload} busy={busy} />
+            <DocPreview d={d} />
+          </div>
+          <DocHistory docs={docs} status={docsStatus} onRetry={() => void loadFromDb()}
+            onDownload={(doc) => void downloadSaved(doc)} onUse={loadAsBase} />
+        </>
+      )}
     </div>
   );
 }

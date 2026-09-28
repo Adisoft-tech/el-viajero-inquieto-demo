@@ -8,6 +8,7 @@ import { requireSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { FincaBooking, Listing } from "@/lib/data";
 import type { DocData, DocType } from "@/lib/pdf";
+import { ACTIVITY_CATEGORIES, type ActivityCategoryKey, type ItinerarioActivity, type ItinerarioData, type ItinerarioDay } from "@/lib/pdf";
 
 /* ---- Validación ---- */
 const DOC_TYPES: readonly DocType[] = ["cotizacion", "cobro", "pago"];
@@ -202,4 +203,59 @@ export async function listDocumentos(token: string, limit = 30): Promise<Documen
   return db()<Documento[]>`
     select id::int, type, numero, fecha::text, cliente, total::float8, created_at::text as "createdAt", data
     from documentos order by created_at desc, id desc limit ${Math.min(int(limit, 1), 200)}`;
+}
+
+/* ---- Itinerarios ---- */
+// Documento estructuralmente distinto (día a día, sin ítems/total), por eso vive aparte
+// de emitirDocumento — reutiliza las mismas tablas (documentos.type = 'itinerario').
+const CATEGORY_KEYS: readonly ActivityCategoryKey[] = ACTIVITY_CATEGORIES.map((c) => c.key);
+function categoryKey(v: unknown): ActivityCategoryKey {
+  return CATEGORY_KEYS.includes(v as ActivityCategoryKey) ? (v as ActivityCategoryKey) : "aventura";
+}
+
+export interface ItinerarioDoc { id: number; numero: number; fecha: string; cliente: string; createdAt: string; data: ItinerarioData }
+
+function itinerarioContent(d: ItinerarioData): ItinerarioData {
+  const dias: ItinerarioDay[] = (Array.isArray(d.dias) ? d.dias : []).slice(0, 30).map((day) => ({
+    title: text(day?.title, 200) || undefined,
+    activities: (Array.isArray(day?.activities) ? day.activities : []).slice(0, 40).map((a): ItinerarioActivity => ({
+      time: text(a?.time, 10), category: categoryKey(a?.category), title: text(a?.title, 200),
+      desc: text(a?.desc, 500) || undefined, place: text(a?.place, 200) || undefined,
+    })),
+  }));
+  const out: ItinerarioData = { dias };
+  const cliente = text(d.cliente, 300); if (cliente) out.cliente = cliente;
+  const destino = text(d.destino, 300); if (destino) out.destino = destino;
+  const notas = text(d.notas, 2000); if (notas) out.notas = notas;
+  if (d.fechaInicio) out.fechaInicio = isoDate(d.fechaInicio);
+  return out;
+}
+
+/** Próximo consecutivo de itinerario (el que se asignará en la siguiente emisión). */
+export async function getItinerarioCounter(token: string): Promise<number> {
+  await requireSession(token);
+  const [row] = await db()<{ next: number }[]>`select last_number + 1 as next from doc_counters where type = 'itinerario'`;
+  return row?.next ?? 1;
+}
+
+export async function emitirItinerario(token: string, d: ItinerarioData, fechaPorDefecto: string): Promise<{ numero: number; nextCounter: number }> {
+  await requireSession(token);
+  const content = itinerarioContent(d);
+  const fecha = content.fechaInicio || isoDate(fechaPorDefecto);
+  const numero = await db().begin(async (tx) => {
+    const [c] = await tx<{ last_number: number }[]>`
+      update doc_counters set last_number = last_number + 1 where type = 'itinerario' returning last_number`;
+    await tx`
+      insert into documentos (type, numero, fecha, cliente, total, data)
+      values ('itinerario', ${c.last_number}, ${fecha}, ${content.cliente || ""}, 0, ${tx.json(JSON.parse(JSON.stringify(content)))})`;
+    return c.last_number;
+  });
+  return { numero, nextCounter: numero + 1 };
+}
+
+export async function listItinerarios(token: string, limit = 30): Promise<ItinerarioDoc[]> {
+  await requireSession(token);
+  return db()<ItinerarioDoc[]>`
+    select id::int, numero, fecha::text, cliente, created_at::text as "createdAt", data
+    from documentos where type = 'itinerario' order by created_at desc, id desc limit ${Math.min(int(limit, 1), 200)}`;
 }
