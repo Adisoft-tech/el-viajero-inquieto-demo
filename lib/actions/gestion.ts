@@ -213,7 +213,7 @@ function categoryKey(v: unknown): ActivityCategoryKey {
   return CATEGORY_KEYS.includes(v as ActivityCategoryKey) ? (v as ActivityCategoryKey) : "aventura";
 }
 
-export interface ItinerarioDoc { id: number; numero: number; fecha: string; cliente: string; createdAt: string; data: ItinerarioData }
+export interface ItinerarioDoc { id: number; numero: number; fecha: string; createdAt: string; data: ItinerarioData }
 
 function itinerarioContent(d: ItinerarioData): ItinerarioData {
   const dias: ItinerarioDay[] = (Array.isArray(d.dias) ? d.dias : []).slice(0, 30).map((day) => ({
@@ -224,21 +224,14 @@ function itinerarioContent(d: ItinerarioData): ItinerarioData {
     })),
   }));
   const out: ItinerarioData = { dias };
-  const cliente = text(d.cliente, 300); if (cliente) out.cliente = cliente;
   const destino = text(d.destino, 300); if (destino) out.destino = destino;
   const notas = text(d.notas, 2000); if (notas) out.notas = notas;
   if (d.fechaInicio) out.fechaInicio = isoDate(d.fechaInicio);
   return out;
 }
 
-/** Próximo consecutivo de itinerario (el que se asignará en la siguiente emisión). */
-export async function getItinerarioCounter(token: string): Promise<number> {
-  await requireSession(token);
-  const [row] = await db()<{ next: number }[]>`select last_number + 1 as next from doc_counters where type = 'itinerario'`;
-  return row?.next ?? 1;
-}
-
-export async function emitirItinerario(token: string, d: ItinerarioData, fechaPorDefecto: string): Promise<{ numero: number; nextCounter: number }> {
+/** El itinerario no se numera de cara al viajero; el consecutivo solo identifica la fila internamente. */
+export async function emitirItinerario(token: string, d: ItinerarioData, fechaPorDefecto: string): Promise<{ numero: number }> {
   await requireSession(token);
   const content = itinerarioContent(d);
   const fecha = content.fechaInicio || isoDate(fechaPorDefecto);
@@ -247,15 +240,15 @@ export async function emitirItinerario(token: string, d: ItinerarioData, fechaPo
       update doc_counters set last_number = last_number + 1 where type = 'itinerario' returning last_number`;
     await tx`
       insert into documentos (type, numero, fecha, cliente, total, data)
-      values ('itinerario', ${c.last_number}, ${fecha}, ${content.cliente || ""}, 0, ${tx.json(JSON.parse(JSON.stringify(content)))})`;
+      values ('itinerario', ${c.last_number}, ${fecha}, '', 0, ${tx.json(JSON.parse(JSON.stringify(content)))})`;
     return c.last_number;
   });
-  return { numero, nextCounter: numero + 1 };
+  return { numero };
 }
 
 export async function listItinerarios(token: string, limit = 30): Promise<ItinerarioDoc[]> {
   await requireSession(token);
   return db()<ItinerarioDoc[]>`
-    select id::int, numero, fecha::text, cliente, created_at::text as "createdAt", data
+    select id::int, numero, fecha::text, created_at::text as "createdAt", data
     from documentos where type = 'itinerario' order by created_at desc, id desc limit ${Math.min(int(limit, 1), 200)}`;
 }

@@ -35,8 +35,6 @@ export interface ItinerarioActivity {
 }
 export interface ItinerarioDay { title?: string; activities: ItinerarioActivity[] }
 export interface ItinerarioData {
-  numero?: number;
-  cliente?: string;
   destino?: string;
   fechaInicio?: string;
   dias: ItinerarioDay[];
@@ -600,10 +598,6 @@ export async function generateItinerarioPDF(data: ItinerarioData): Promise<boole
 
   doc.setTextColor(62, 106, 111); doc.setFont("times", "bold"); doc.setFontSize(20);
   doc.text("ITINERARIO", marginX, y);
-  if (data.numero) {
-    doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(91, 104, 95);
-    doc.text("No. " + String(data.numero).padStart(4, "0"), pageW - marginX, y, { align: "right" });
-  }
   y += 8;
   doc.setDrawColor(233, 225, 210); doc.setLineWidth(0.3);
   doc.line(marginX, y, pageW - marginX, y);
@@ -612,8 +606,8 @@ export async function generateItinerarioPDF(data: ItinerarioData): Promise<boole
   const totalDays = data.dias.length;
   const duracionLabel = totalDays + (totalDays === 1 ? " día" : " días")
     + (data.fechaInicio ? "  ·  " + formatDateEs(data.fechaInicio) + (totalDays > 1 ? " – " + formatDateEs(addDaysIso(data.fechaInicio, totalDays - 1)) : "") : "");
-  const colGap = 10;
-  const colW = (pageW - marginX * 2 - colGap * 2) / 3;
+  const colGap = 14;
+  const colW = (pageW - marginX * 2 - colGap) / 2;
   function infoCol(x: number, label: string, value: string): number {
     doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(138, 149, 142);
     doc.text(label.toUpperCase(), x, y);
@@ -622,10 +616,9 @@ export async function generateItinerarioPDF(data: ItinerarioData): Promise<boole
     doc.text(lines, x, y + 5.5);
     return 5.5 + 4.6 * lines.length;
   }
-  const h1 = infoCol(marginX, "Preparado para", data.cliente || "—");
-  const h2 = infoCol(marginX + colW + colGap, "Destino", data.destino || "—");
-  const h3 = infoCol(marginX + (colW + colGap) * 2, "Duración", duracionLabel);
-  y += Math.max(h1, h2, h3) + 8;
+  const h1 = infoCol(marginX, "Destino", data.destino || "—");
+  const h2 = infoCol(marginX + colW + colGap, "Duración", duracionLabel);
+  y += Math.max(h1, h2) + 8;
   doc.setDrawColor(233, 225, 210); doc.line(marginX, y, pageW - marginX, y);
   y += 10;
 
@@ -651,13 +644,12 @@ export async function generateItinerarioPDF(data: ItinerarioData): Promise<boole
       y += 5 * dayTitleLines.length + 4;
     }
 
-    const sorted = day.activities.slice().sort((a, b) => (a.time || "").localeCompare(b.time || ""));
-    if (!sorted.length) {
+    if (!day.activities.length) {
       doc.setFont("helvetica", "italic"); doc.setFontSize(9.5); doc.setTextColor(138, 149, 142);
       doc.text("Sin actividades agregadas.", contentX, y + 3);
       y += 10;
     }
-    sorted.forEach((act) => {
+    day.activities.forEach((act) => {
       ensureSpace(26);
       const rowTop = y;
       const dotY = rowTop + 2.2;
@@ -718,7 +710,7 @@ export async function generateItinerarioPDF(data: ItinerarioData): Promise<boole
   doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(138, 149, 142);
   doc.text(EMISOR.telefono + "  ·  " + EMISOR.correo, pageW / 2, pageH - 12, { align: "center" });
 
-  const safeClient = (data.cliente || "viajero").replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").slice(0, 30) || "viajero";
-  doc.save("Itinerario_" + String(data.numero || 0).padStart(4, "0") + "_" + safeClient + ".pdf");
+  const safeDestino = (data.destino || "viaje").replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").slice(0, 30) || "viaje";
+  doc.save("Itinerario_" + safeDestino + (data.fechaInicio ? "_" + data.fechaInicio : "") + ".pdf");
   return true;
 }

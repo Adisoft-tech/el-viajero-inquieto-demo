@@ -2,13 +2,15 @@
 
 // Documento "Itinerario": día a día, con horas y actividades — vive aparte de DocForm/DocPreview
 // porque su forma de datos (días → actividades) no tiene nada que ver con ítems/cantidades/totales.
+// No se numera de cara al viajero: el consecutivo interno solo sirve para identificar la fila
+// guardada (columna "No." en Itinerarios emitidos), no aparece en el documento en sí.
 
 import { useCallback, useEffect, useState } from "react";
-import { ACTIVITY_CATEGORIES, formatDateEs, generateItinerarioPDF, type ActivityCategoryKey } from "@/lib/pdf";
+import { ACTIVITY_CATEGORIES, formatDateEs, generateItinerarioPDF, type ActivityCategoryKey, type ItinerarioData } from "@/lib/pdf";
 import { Icon } from "@/lib/icons";
 import { useApp } from "@/lib/store";
-import { emitirItinerario, getItinerarioCounter, listItinerarios, type ItinerarioDoc } from "@/lib/actions/gestion";
-import { newActivity, newDay, useItinerarioState, type ActivityRow, type DayRow, type ItinerarioState } from "./ItinerarioState";
+import { emitirItinerario, listItinerarios, type ItinerarioDoc } from "@/lib/actions/gestion";
+import { newActivity, newDay, useItinerarioState, type ActivityRow, type ItinerarioState } from "./ItinerarioState";
 
 type Update = (fn: (s: ItinerarioState) => ItinerarioState) => void;
 
@@ -18,12 +20,8 @@ function addDaysIso(iso: string, n: number): string {
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
 
-function counterLabel(s: ItinerarioState): string {
-  return s.counterReady ? String(s.counter).padStart(4, "0") : "····";
-}
-
 function ItinerarioForm({ s, update, onDownload, busy }: { s: ItinerarioState; update: Update; onDownload: () => void; busy: boolean }) {
-  const set = (field: "cliente" | "destino" | "fechaInicio" | "notas") => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const set = (field: "destino" | "fechaInicio" | "notas") => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const v = e.target.value;
     update((st) => ({ ...st, [field]: v }));
   };
@@ -61,9 +59,8 @@ function ItinerarioForm({ s, update, onDownload, busy }: { s: ItinerarioState; u
 
   return (
     <div className="panel">
-      <div className="panel-head"><h3>Itinerario No. {counterLabel(s)}</h3></div>
+      <div className="panel-head"><h3>Itinerario</h3></div>
       <div className="form-grid">
-        <div className="field"><label>Cliente / Grupo</label><input placeholder="Nombre del viajero o grupo" value={s.cliente || ""} onChange={set("cliente")} /></div>
         <div className="field"><label>Destino</label><input placeholder="Ej. Eje cafetero" value={s.destino || ""} onChange={set("destino")} /></div>
         <div className="field"><label>Fecha de inicio</label><input type="date" value={s.fechaInicio || ""} onChange={set("fechaInicio")} /></div>
       </div>
@@ -142,9 +139,8 @@ function ItinerarioPreview({ s }: { s: ItinerarioState }) {
         <img src="/photos/logo-mark-ink.png" alt="" />
         <div><b>El Viajero Inquieto</b><span>Tu aliado al viajar</span></div>
       </div>
-      <div className="doc-preview-title"><h2>Itinerario No. {counterLabel(s)}</h2></div>
+      <div className="doc-preview-title"><h2>Itinerario</h2></div>
       <div className="itin-summary">
-        <div><span>Preparado para</span><b>{s.cliente || "—"}</b></div>
         <div><span>Destino</span><b>{s.destino || "—"}</b></div>
         <div><span>Duración</span><b>{duracion}</b></div>
       </div>
@@ -157,7 +153,7 @@ function ItinerarioPreview({ s }: { s: ItinerarioState }) {
           </div>
           {day.title && <p className="itin-day-title">{day.title}</p>}
           <div className="itin-timeline">
-            {day.activities.slice().sort((a, b) => (a.time || "").localeCompare(b.time || "")).map((act) => <ActivityPreview key={act.id} act={act} />)}
+            {day.activities.map((act) => <ActivityPreview key={act.id} act={act} />)}
           </div>
         </div>
       ))}
@@ -186,13 +182,11 @@ function ItinerarioHistory({ docs, status, onRetry, onDownload, onUse }: {
         : (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>No.</th><th>Fecha</th><th>Cliente</th><th>Destino</th><th>Días</th><th></th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Destino</th><th>Días</th><th></th></tr></thead>
               <tbody>
                 {docs.map((doc) => (
                   <tr key={doc.id}>
-                    <td className="tabular">{String(doc.numero).padStart(4, "0")}</td>
                     <td>{formatDateEs(doc.fecha)}</td>
-                    <td className="wrap">{doc.cliente || "—"}</td>
                     <td className="wrap">{doc.data.destino || "—"}</td>
                     <td className="tabular">{doc.data.dias.length}</td>
                     <td style={{ whiteSpace: "nowrap", textAlign: "right" }}>
@@ -219,15 +213,14 @@ export default function Itinerarios() {
   const loadFromDb = useCallback(async () => {
     setDocsStatus("loading");
     try {
-      const [counter, list] = await Promise.all([authed(getItinerarioCounter), authed(listItinerarios)]);
-      update((st) => ({ ...st, counter, counterReady: true }));
+      const list = await authed(listItinerarios);
       setDocs(list);
       setDocsStatus("ready");
     } catch (err) {
       console.error("No se pudieron cargar los itinerarios:", err);
       setDocsStatus("error");
     }
-  }, [authed, update]);
+  }, [authed]);
   useEffect(() => { void loadFromDb(); }, [loadFromDb]);
 
   async function onDownload() {
@@ -236,43 +229,39 @@ export default function Itinerarios() {
     try {
       try { await import("jspdf"); } catch { toast("No se pudo cargar el generador de PDF. Revisa tu conexión."); return; }
       const snapshot = s;
-      const content = {
-        cliente: snapshot.cliente, destino: snapshot.destino, fechaInicio: snapshot.fechaInicio, notas: snapshot.notas,
+      const content: ItinerarioData = {
+        destino: snapshot.destino, fechaInicio: snapshot.fechaInicio, notas: snapshot.notas,
         dias: snapshot.dias.map((d) => ({ title: d.title, activities: d.activities.map(({ id: _id, ...a }) => a) })),
       };
-      let res;
-      try { res = await authed(emitirItinerario, content, new Date().toISOString().slice(0, 10)); } catch (err) {
+      try { await authed(emitirItinerario, content, new Date().toISOString().slice(0, 10)); } catch (err) {
         console.error(err);
         toast("No se pudo guardar el itinerario. Revisa tu conexión e inténtalo de nuevo.");
         return;
       }
-      update((st) => ({ ...st, counter: res.nextCounter, counterReady: true }));
       authed(listItinerarios).then(setDocs).catch((err) => console.error(err));
-      const ok = await generateItinerarioPDF({ ...content, numero: res.numero });
-      const numLabel = "Itinerario No. " + String(res.numero).padStart(4, "0");
-      if (!ok) { toast(numLabel + " guardado, pero no se pudo generar el PDF — descárgalo desde Itinerarios emitidos."); return; }
-      toast(numLabel + " guardado y descargado");
+      const ok = await generateItinerarioPDF(content);
+      if (!ok) { toast("Itinerario guardado, pero no se pudo generar el PDF — descárgalo desde Itinerarios emitidos."); return; }
+      toast("Itinerario guardado y descargado");
     } finally {
       setBusy(false);
     }
   }
 
   async function downloadSaved(doc: ItinerarioDoc) {
-    const ok = await generateItinerarioPDF({ ...doc.data, numero: doc.numero });
+    const ok = await generateItinerarioPDF(doc.data);
     if (!ok) toast("No se pudo cargar el generador de PDF. Revisa tu conexión.");
   }
 
   function loadAsBase(doc: ItinerarioDoc) {
     update((st) => ({
       ...st,
-      cliente: doc.data.cliente, destino: doc.data.destino, fechaInicio: undefined, notas: doc.data.notas,
+      destino: doc.data.destino, fechaInicio: undefined, notas: doc.data.notas,
       dias: doc.data.dias.length
         ? doc.data.dias.map((d) => newDay({ title: d.title, activities: d.activities.map((a) => newActivity(a)) }))
         : [newDay()],
-      counter: st.counter, counterReady: st.counterReady,
     }));
     window.scrollTo({ top: 0, behavior: "smooth" });
-    toast("Datos cargados — al descargar se emite con un consecutivo nuevo");
+    toast("Datos cargados en el formulario");
   }
 
   return (

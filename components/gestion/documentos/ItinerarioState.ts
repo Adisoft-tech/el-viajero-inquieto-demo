@@ -4,18 +4,15 @@
 // módulo para que el borrador sobreviva a cambiar de pestaña dentro de Documentos.
 
 import { useCallback, useState } from "react";
-import type { ActivityCategoryKey, ItinerarioActivity } from "@/lib/pdf";
+import type { ItinerarioActivity } from "@/lib/pdf";
 
 export interface ActivityRow extends ItinerarioActivity { id: number }
 export interface DayRow { id: number; title?: string; activities: ActivityRow[] }
 export interface ItinerarioState {
-  cliente?: string;
   destino?: string;
   fechaInicio?: string;
   notas?: string;
   dias: DayRow[];
-  counter: number;
-  counterReady: boolean;
 }
 
 let nextActId = 1;
@@ -27,7 +24,7 @@ export function newDay(values?: Partial<Omit<DayRow, "id" | "activities">> & { a
   return { id: nextDayId++, activities: [newActivity()], ...values };
 }
 
-let saved: ItinerarioState = { dias: [newDay()], counter: 1, counterReady: false };
+let saved: ItinerarioState = { dias: [newDay()] };
 
 export function useItinerarioState(): [ItinerarioState, (fn: (s: ItinerarioState) => ItinerarioState) => void] {
   const [state, setState] = useState<ItinerarioState>(() => saved);
