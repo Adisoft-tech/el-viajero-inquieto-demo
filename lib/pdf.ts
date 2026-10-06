@@ -516,7 +516,9 @@ export async function generateDocPDF(rawD: DocData): Promise<boolean> {
   ensureSpace(48);
   y = drawIllustrationRow(doc, marginX, pageW, y);
 
-  /* Línea(s) de firma: cuenta de cobro solo la del emisor; cuenta de pago suma la del beneficiario (la cotización no lleva firma formal) */
+  /* Línea(s) de firma: cuenta de cobro solo la del emisor; cuenta de pago suma la del beneficiario (la cotización no lleva firma formal).
+     La firma y el footer se reservan juntos: si se chequearan por separado, el footer podía quedar
+     solo en una página nueva (o la firma sin el footer debajo), viéndose casi en blanco. */
   function signBlock(cx: number, signW: number, name: string, idLine: string) {
     doc.setDrawColor(31, 41, 38); doc.setLineWidth(0.3);
     doc.line(cx - signW / 2, y, cx + signW / 2, y);
@@ -525,17 +527,18 @@ export async function generateDocPDF(rawD: DocData): Promise<boolean> {
     doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(91, 104, 95);
     doc.text(idLine, cx, y + 9.5, { align: "center" });
   }
+  const signH = type === "cobro" || type === "pago" ? 30 : 0;
+  ensureSpace(signH + 32);
   if (type === "cobro") {
-    ensureSpace(22); y += 8;
+    y += 8;
     signBlock(pageW / 2, 70, EMISOR.titular, EMISOR.identificacion);
   } else if (type === "pago") {
-    ensureSpace(22); y += 8;
+    y += 8;
     const signW = 70, gap = 10;
     signBlock(pageW / 2 - gap / 2 - signW / 2, signW, EMISOR.titular, EMISOR.identificacion);
     signBlock(pageW / 2 + gap / 2 + signW / 2, signW, d.cliente || "Beneficiario", d.clienteId || "C.C. / NIT");
   }
 
-  ensureSpace(32);
   drawBrandFooter(doc, marginX, pageW, pageH);
 
   const safeClient = (d.cliente || "cliente").replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").slice(0, 30) || "cliente";
@@ -794,9 +797,10 @@ export async function generateItinerarioPDF(rawData: ItinerarioData): Promise<bo
     y += 5 * notasLines.length + 6;
   }
 
-  ensureSpace(48);
+  /* Ilustración + línea de contacto deben quedar juntas: si se reservan por separado, la
+     línea de contacto puede quedar sola en una página nueva, que se ve casi en blanco. */
+  ensureSpace(48 + 14);
   y = drawIllustrationRow(doc, marginX, pageW, y);
-  ensureSpace(14);
   doc.setDrawColor(230, 230, 230); doc.line(marginX, pageH - 18, pageW - marginX, pageH - 18);
   doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(138, 149, 142);
   doc.text(EMISOR.telefono + "  ·  " + EMISOR.correo, pageW / 2, pageH - 12, { align: "center" });
