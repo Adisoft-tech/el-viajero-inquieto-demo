@@ -73,6 +73,37 @@ export function docCounter(d: DocData): string {
   return String(d.counters[d.type]).padStart(4, "0");
 }
 
+/**
+ * Los PDF usan las fuentes base de jsPDF (Helvetica/Times con WinAnsiEncoding): soportan
+ * tildes, eñes y rayas como — o – sin problema, pero no emojis ni otros símbolos Unicode
+ * fuera de ese rango — esos se ven como texto corrupto ("Ø=Ú°", "!'", etc.). Se quitan antes
+ * de dibujar, incluso en texto ya guardado de antes de este arreglo.
+ */
+function stripUnsupportedGlyphs<T extends string | undefined>(s: T): T {
+  if (!s) return s;
+  return s
+    .replace(/\u{2192}/gu, "->").replace(/\u{2190}/gu, "<-").replace(/\u{2194}/gu, "<->") // flechas con equivalente en texto
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu, "") // emoji (emoticons, pictografías, transporte, símbolos suplementarios…)
+    .replace(/[\u{2190}-\u{21FF}]/gu, "") // el resto de las flechas, sin equivalente simple en texto
+    .replace(/[\u{2600}-\u{27BF}]/gu, "") // símbolos varios y dingbats (☀ ★ ✈ ✂ etc.)
+    .replace(/[\u{2B00}-\u{2BFF}]/gu, "") // flechas y símbolos varios adicionales (⭐ ➡ etc.)
+    .replace(/[\u{FE00}-\u{FE0F}]/gu, "") // selectores de variación (el modificador invisible detrás de ✈️)
+    .replace(/\u{200D}/gu, "") // zero-width joiner (emojis compuestos)
+    .split("\n").map((line) => line.replace(/[ \t]{2,}/g, " ").trim()).join("\n") as T;
+}
+function cleanDocData(d: DocData): DocData {
+  return {
+    ...d,
+    cliente: stripUnsupportedGlyphs(d.cliente),
+    clienteId: stripUnsupportedGlyphs(d.clienteId),
+    clienteDireccion: stripUnsupportedGlyphs(d.clienteDireccion),
+    clienteCiudad: stripUnsupportedGlyphs(d.clienteCiudad),
+    objeto: stripUnsupportedGlyphs(d.objeto),
+    observaciones: stripUnsupportedGlyphs(d.observaciones),
+    items: (d.items || []).map((it) => ({ ...it, desc: stripUnsupportedGlyphs(it.desc) })),
+  };
+}
+
 let logoPromise: Promise<HTMLImageElement | null> | null = null;
 /** Equivalente al LOGO_IMG precargado del original; resuelve null si no carga. */
 function loadLogo(): Promise<HTMLImageElement | null> {
@@ -321,7 +352,8 @@ function drawItemsTableHeader(doc: jsPDF, marginX: number, pageW: number, y: num
 }
 
 /** Genera y descarga el PDF. Devuelve false si no se pudo cargar el generador. No modifica `d`. */
-export async function generateDocPDF(d: DocData): Promise<boolean> {
+export async function generateDocPDF(rawD: DocData): Promise<boolean> {
+  const d = cleanDocData(rawD);
   const type = d.type;
   const counter = docCounter(d);
   const typeLabel = docTypeLabelUpper(type);
@@ -519,7 +551,15 @@ function nightsBetween(checkin: string, checkout: string): number {
 }
 
 /** Comprobante de una reserva del calendario, con el mismo membrete que cotizaciones/cuentas. */
-export async function generateBookingVoucherPDF(booking: FincaBooking, finca: Listing | undefined): Promise<boolean> {
+export async function generateBookingVoucherPDF(rawBooking: FincaBooking, finca: Listing | undefined): Promise<boolean> {
+  const booking: FincaBooking = {
+    ...rawBooking,
+    guest: stripUnsupportedGlyphs(rawBooking.guest) || "",
+    cedula: stripUnsupportedGlyphs(rawBooking.cedula) || "",
+    phone: stripUnsupportedGlyphs(rawBooking.phone) || "",
+    email: stripUnsupportedGlyphs(rawBooking.email) || "",
+    payMethod: stripUnsupportedGlyphs(rawBooking.payMethod) || "",
+  };
   let mod: typeof import("jspdf");
   try {
     mod = await import("jspdf");
@@ -603,7 +643,21 @@ export async function generateBookingVoucherPDF(booking: FincaBooking, finca: Li
 }
 
 /** Itinerario día a día, con membrete liviano (sin RNT ni datos legales — no es un documento contable). */
-export async function generateItinerarioPDF(data: ItinerarioData): Promise<boolean> {
+export async function generateItinerarioPDF(rawData: ItinerarioData): Promise<boolean> {
+  const data: ItinerarioData = {
+    ...rawData,
+    destino: stripUnsupportedGlyphs(rawData.destino),
+    notas: stripUnsupportedGlyphs(rawData.notas),
+    dias: rawData.dias.map((day) => ({
+      title: stripUnsupportedGlyphs(day.title),
+      activities: day.activities.map((a) => ({
+        ...a,
+        title: stripUnsupportedGlyphs(a.title) || "",
+        desc: stripUnsupportedGlyphs(a.desc),
+        place: stripUnsupportedGlyphs(a.place),
+      })),
+    })),
+  };
   let mod: typeof import("jspdf");
   try {
     mod = await import("jspdf");
