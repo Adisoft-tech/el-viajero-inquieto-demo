@@ -303,6 +303,23 @@ function drawBrandFooter(doc: jsPDF, marginX: number, pageW: number, pageH: numb
   doc.text("El Viajero Inquieto te recomienda siempre revisar que el RNT de tu agencia de viajes esté activo.", pageW / 2, pageH - 14, { align: "center" });
 }
 
+/**
+ * Encabezado de la tabla de ítems (barra verde + columnas). Las columnas de valores van
+ * alineadas a la derecha con suficiente separación entre sí para que montos grandes en
+ * pesos colombianos no se encimen. Devuelve la nueva Y y las posiciones X de cada columna.
+ */
+function drawItemsTableHeader(doc: jsPDF, marginX: number, pageW: number, y: number) {
+  const rightEdge = pageW - marginX;
+  const cols = { cant: rightEdge - 74, valorUnit: rightEdge - 50, subtotal: rightEdge - 3, descMaxW: rightEdge - 74 - 10 - (marginX + 3) };
+  doc.setFillColor(143, 168, 154); doc.rect(marginX, y, pageW - marginX * 2, 8, "F");
+  doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+  doc.text("Descripción", marginX + 3, y + 5.5);
+  doc.text("Cant.", cols.cant, y + 5.5, { align: "right" });
+  doc.text("Valor unit.", cols.valorUnit, y + 5.5, { align: "right" });
+  doc.text("Subtotal", cols.subtotal, y + 5.5, { align: "right" });
+  return { y: y + 8, cols };
+}
+
 /** Genera y descarga el PDF. Devuelve false si no se pudo cargar el generador. No modifica `d`. */
 export async function generateDocPDF(d: DocData): Promise<boolean> {
   const type = d.type;
@@ -324,6 +341,15 @@ export async function generateDocPDF(d: DocData): Promise<boolean> {
   drawBrandHeader(doc, LOGO_IMG, GState, marginX, pageW, pageH);
 
   let y = 47;
+  /** Si no cabe lo que sigue, pasa a una página nueva (con el membrete repetido) antes de dibujarlo. */
+  function ensureSpace(needed: number) {
+    if (y + needed > pageH - 30) {
+      doc.addPage();
+      drawBrandHeader(doc, LOGO_IMG, GState, marginX, pageW, pageH);
+      y = 43;
+    }
+  }
+
   doc.setTextColor(62, 106, 111);
   doc.setFont("times", "bold"); doc.setFontSize(18);
   doc.text(typeLabel + " No. " + counter, marginX, y);
@@ -365,6 +391,7 @@ export async function generateDocPDF(d: DocData): Promise<boolean> {
 
   function totalBanner(label: string, valueText: string) {
     const bannerH = 16;
+    ensureSpace(bannerH + 8);
     doc.setFillColor(143, 168, 154);
     doc.roundedRect(marginX, y, pageW - marginX * 2, bannerH, 2, 2, "F");
     doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(8.5);
@@ -386,28 +413,32 @@ export async function generateDocPDF(d: DocData): Promise<boolean> {
     doc.text(objLines, marginX, y);
     y += 5 * objLines.length + 6;
   }
-  doc.setFillColor(143, 168, 154); doc.rect(marginX, y, pageW - marginX * 2, 8, "F");
-  doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
-  doc.text("Descripción", marginX + 3, y + 5.5);
-  doc.text("Cant.", pageW - marginX - 58, y + 5.5);
-  doc.text("Valor unit.", pageW - marginX - 40, y + 5.5);
-  doc.text("Subtotal", pageW - marginX - 3, y + 5.5, { align: "right" });
-  y += 8;
+  let { y: tableY, cols } = drawItemsTableHeader(doc, marginX, pageW, y);
+  y = tableY;
   doc.setTextColor(31, 41, 38); doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
   let itemsTotal = 0;
   (d.items || []).forEach(function (it) {
     const sub = (it.qty || 0) * (it.price || 0); itemsTotal += sub;
-    const descLines: string[] = doc.splitTextToSize(it.desc || "—", pageW - marginX * 2 - 90);
-    doc.text(descLines, marginX + 3, y + 5);
-    doc.text(String(it.qty || 0), pageW - marginX - 58, y + 5);
-    doc.text(cop(it.price || 0), pageW - marginX - 40, y + 5);
-    doc.text(cop(sub), pageW - marginX - 3, y + 5, { align: "right" });
-    y += 6.2 * Math.max(1, descLines.length);
+    const descLines: string[] = doc.splitTextToSize(it.desc || "—", cols.descMaxW);
     const detailParts: string[] = [];
     if (it.adults) detailParts.push(it.adults + " adulto" + (it.adults === 1 ? "" : "s"));
     if (it.children) detailParts.push(it.children + " niño" + (it.children === 1 ? "" : "s"));
     if (it.nights) detailParts.push(it.nights + " noche" + (it.nights === 1 ? "" : "s"));
     if (it.days) detailParts.push(it.days + " día" + (it.days === 1 ? "" : "s"));
+    const rowH = 6.2 * Math.max(1, descLines.length) + (type === "cotizacion" && detailParts.length ? 5 : 0) + 4;
+    if (y + rowH > pageH - 30) {
+      doc.addPage();
+      drawBrandHeader(doc, LOGO_IMG, GState, marginX, pageW, pageH);
+      y = 43;
+      const redraw = drawItemsTableHeader(doc, marginX, pageW, y);
+      y = redraw.y; cols = redraw.cols;
+      doc.setTextColor(31, 41, 38); doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
+    }
+    doc.text(descLines, marginX + 3, y + 5);
+    doc.text(String(it.qty || 0), cols.cant, y + 5, { align: "right" });
+    doc.text(cop(it.price || 0), cols.valorUnit, y + 5, { align: "right" });
+    doc.text(cop(sub), cols.subtotal, y + 5, { align: "right" });
+    y += 6.2 * Math.max(1, descLines.length);
     if (type === "cotizacion" && detailParts.length) {
       doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(62, 106, 111);
       doc.text(detailParts.join("   ·   "), marginX + 3, y + 1.5);
@@ -421,6 +452,7 @@ export async function generateDocPDF(d: DocData): Promise<boolean> {
   totalBanner(type === "cotizacion" ? "VALOR DE TU VIAJE" : type === "pago" ? "VALOR PAGADO" : "VALOR A COBRAR", cop(itemsTotal));
   if (type === "cotizacion" && d.validoHasta) {
     const label = "Válida hasta el " + formatDateEs(d.validoHasta);
+    ensureSpace(14);
     doc.setFont("helvetica", "bold"); doc.setFontSize(8.5);
     const tw = doc.getTextWidth(label) + 10;
     doc.setDrawColor(143, 168, 154); doc.setFillColor(233, 225, 210); doc.setLineWidth(0.3);
@@ -432,20 +464,24 @@ export async function generateDocPDF(d: DocData): Promise<boolean> {
   if (type !== "cotizacion") {
     doc.setFont("helvetica", "italic"); doc.setFontSize(9.5); doc.setTextColor(91, 104, 95);
     const wordsLines: string[] = doc.splitTextToSize("Son: " + copWords(itemsTotal) + ".", pageW - marginX * 2);
+    ensureSpace(5 * wordsLines.length + 6);
     doc.text(wordsLines, marginX, y);
     y += 5 * wordsLines.length + 6;
   }
 
   if (d.observaciones) {
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    const obsLines: string[] = doc.splitTextToSize(d.observaciones, pageW - marginX * 2);
+    ensureSpace(5 + 5 * obsLines.length + 6);
     doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(138, 149, 142);
     doc.text("OBSERVACIONES", marginX, y);
     y += 5;
     doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(91, 104, 95);
-    const obsLines: string[] = doc.splitTextToSize(d.observaciones, pageW - marginX * 2);
     doc.text(obsLines, marginX, y);
     y += 5 * obsLines.length + 6;
   }
 
+  ensureSpace(48);
   y = drawIllustrationRow(doc, marginX, pageW, y);
 
   /* Línea(s) de firma: cuenta de cobro solo la del emisor; cuenta de pago suma la del beneficiario (la cotización no lleva firma formal) */
@@ -458,15 +494,16 @@ export async function generateDocPDF(d: DocData): Promise<boolean> {
     doc.text(idLine, cx, y + 9.5, { align: "center" });
   }
   if (type === "cobro") {
-    y += 8;
+    ensureSpace(22); y += 8;
     signBlock(pageW / 2, 70, EMISOR.titular, EMISOR.identificacion);
   } else if (type === "pago") {
-    y += 8;
+    ensureSpace(22); y += 8;
     const signW = 70, gap = 10;
     signBlock(pageW / 2 - gap / 2 - signW / 2, signW, EMISOR.titular, EMISOR.identificacion);
     signBlock(pageW / 2 + gap / 2 + signW / 2, signW, d.cliente || "Beneficiario", d.clienteId || "C.C. / NIT");
   }
 
+  ensureSpace(32);
   drawBrandFooter(doc, marginX, pageW, pageH);
 
   const safeClient = (d.cliente || "cliente").replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").slice(0, 30) || "cliente";
