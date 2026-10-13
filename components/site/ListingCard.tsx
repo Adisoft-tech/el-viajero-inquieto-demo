@@ -12,8 +12,12 @@ export function ListingCard({ l }: { l: Listing }) {
   const { isFavorite, toggleFavorite } = useApp();
   const photo = photoFor(l);
   const gallery = galleryFor(l);
+  function open() {
+    if (l.externalUrl) window.open(l.externalUrl, "_blank", "noopener,noreferrer");
+    else router.push(ROUTES.listing(l.id));
+  }
   return (
-    <div className="lcard reveal" data-listing={l.id} onClick={() => router.push(ROUTES.listing(l.id))}>
+    <div className="lcard reveal" data-listing={l.id} onClick={open}>
       <div className={"lcard-art tone-" + l.tone}>
         <span className="lcard-tag">{catLabel(l.cat)}</span>
         {gallery.length > 1 && <span className="lcard-photocount">{gallery.length} fotos</span>}

@@ -1,18 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { WEEKLY } from "@/lib/data";
 import { cop } from "@/lib/format";
 import { ROUTES } from "@/lib/routes";
-import { useApp } from "@/lib/store";
+import { useAdminBookings, type AdminStats } from "./adminData";
 import { ReservasTable } from "./ReservasTable";
 import { StatTile } from "./StatTile";
 
-function WeeklyChart() {
+function WeeklyChart({ weeks }: { weeks: AdminStats["weeks"] }) {
+  const max = Math.max(5, ...weeks.map((w) => w.count));
+  const top = Math.ceil(max / 5) * 5;
+  const grid = [0, top / 5, (top * 2) / 5, (top * 3) / 5, (top * 4) / 5, top].filter((g, i, a) => a.indexOf(g) === i && Number.isInteger(g));
   return (
-    <svg viewBox="0 0 320 140" width="100%" height="140" role="img" aria-label="Reservas por semana">
-      {[0, 5, 10, 15].map((g) => {
-        const y = 120 - (g / 15) * 100;
+    <svg viewBox="0 0 320 140" width="100%" height="140" role="img" aria-label="Llegadas por semana">
+      {grid.map((g) => {
+        const y = 120 - (g / top) * 100;
         return (
           <g key={"g" + g}>
             <line x1="28" y1={y} x2="312" y2={y} stroke="var(--border)" strokeWidth="1" />
@@ -20,14 +22,14 @@ function WeeklyChart() {
           </g>
         );
       })}
-      {WEEKLY.map((w, i) => {
+      {weeks.map((w, i) => {
         const bw = 32, gap = 16, x = 34 + i * (bw + gap);
-        const h = (w[1] / 15) * 100;
+        const h = (w.count / top) * 100;
         const y = 120 - h;
         return (
-          <g key={w[0]}>
-            <rect x={x} y={y} width={bw} height={h} rx="4" fill="var(--accent)" />
-            <text x={x + bw / 2} y={y - 6} fontSize="10" textAnchor="middle" fill="var(--text)" fontWeight="700">{w[1]}</text>
+          <g key={w.label + i}>
+            <rect x={x} y={y} width={bw} height={Math.max(h, 0)} rx="4" fill="var(--accent)" />
+            <text x={x + bw / 2} y={y - 6} fontSize="10" textAnchor="middle" fill="var(--text)" fontWeight="700">{w.count}</text>
           </g>
         );
       })}
@@ -36,25 +38,26 @@ function WeeklyChart() {
 }
 
 export function AdminResumen() {
-  const { bookings } = useApp();
+  const { rows, stats, status } = useAdminBookings();
   const router = useRouter();
+  const mes = new Date().toLocaleDateString("es-CO", { month: "long" });
   return (
     <div className="fade-in">
       <div className="admin-head">
-        <div><h1>Resumen</h1><p>Vista general de la operación de El Viajero Inquieto.</p></div>
-        <span className="badge badge-demo">Datos de demostración</span>
+        <div><h1>Resumen</h1><p>Vista general de la operación, con las reservas del panel de gestión y del sitio web.</p></div>
       </div>
+      {status === "error" && <p className="empty-note">No se pudieron cargar las reservas del panel de gestión; las cifras están incompletas.</p>}
       <div className="stat-grid">
-        <StatTile label="Reservas este mes" value="34" delta="+12% vs. mes anterior" />
-        <StatTile label="Ingresos este mes" value={cop(18240000)} delta="+9% vs. mes anterior" />
-        <StatTile label="Tasa de ocupación" value="68%" delta="+5 pts vs. mes anterior" />
-        <StatTile label="Próximo check-in" value="Mañana" delta="Familia Gómez · Finca La Serrana" />
+        <StatTile label={"Reservas en " + mes} value={String(stats.monthCount)} delta={rows.length + " en total"} />
+        <StatTile label={"Valor reservado en " + mes} value={cop(stats.monthRevenue)} delta={"Abonos " + cop(stats.monthAdvance) + " · Saldo " + cop(stats.monthBalance)} />
+        <StatTile label="Ocupación del mes" value={stats.occupancy + "%"} delta="Noches ocupadas sobre fincas activas" />
+        <StatTile label="Próximo check-in" value={stats.next ? stats.next.when : "—"} delta={stats.next ? stats.next.who : "Sin llegadas programadas"} />
       </div>
       <div className="panel">
-        <div className="panel-head"><h3>Reservas por semana</h3></div>
-        <WeeklyChart />
+        <div className="panel-head"><h3>Llegadas por semana</h3></div>
+        <WeeklyChart weeks={stats.weeks} />
         <div className="bar-chart-labels" style={{ paddingLeft: 28 }}>
-          {WEEKLY.map((w) => <span key={w[0]}>{w[0]}</span>)}
+          {stats.weeks.map((w, i) => <span key={w.label + i}>{w.label}</span>)}
         </div>
       </div>
       <div className="panel">
@@ -62,7 +65,7 @@ export function AdminResumen() {
           <h3>Reservas recientes</h3>
           <button className="btn btn-ghost btn-sm" onClick={() => router.push(ROUTES.adminTab("reservas"))}>Ver todas</button>
         </div>
-        <ReservasTable rows={bookings.slice(0, 5)} withActions={false} />
+        <ReservasTable rows={rows.slice(0, 5)} />
       </div>
     </div>
   );

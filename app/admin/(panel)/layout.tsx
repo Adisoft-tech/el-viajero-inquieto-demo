@@ -11,11 +11,12 @@ const TABS = [
   ["resumen", "dash", "Resumen"],
   ["reservas", "bookings", "Reservas"],
   ["inventario", "inventory", "Inventario"],
+  ["notiviajero", "docFile", "Notiviajero"],
   ["contenido", "content", "Contenido del sitio"],
 ] as const;
 
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
-  const { authStatus, adminAuthed, gestionAuthed, logout } = useApp();
+  const { authStatus, adminAuthed, gestionAuthed, fincaBookingsStatus, loadFincaBookings, logout } = useApp();
   const pathname = usePathname();
   const router = useRouter();
   const tab = pathname.split("/")[2] || "resumen";
@@ -23,6 +24,10 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
   useEffect(() => {
     if (authStatus === "anon") router.replace(ROUTES.adminLogin);
   }, [authStatus, router]);
+  // Las reservas del panel de gestión viven en la base: se cargan al entrar para que Resumen y Reservas las muestren.
+  useEffect(() => {
+    if (adminAuthed && fincaBookingsStatus === "idle") void loadFincaBookings();
+  }, [adminAuthed, fincaBookingsStatus, loadFincaBookings]);
   if (!adminAuthed) return null;
 
   return (

@@ -8,10 +8,11 @@ import { Icon } from "@/lib/icons";
 import { ROUTES } from "@/lib/routes";
 
 /** Fila editable del inventario: precio (se confirma al salir del campo o con Enter, como el evento "change"), visibilidad y acciones. */
-export function InventoryRow({ l, onToggle, onPrice, onRemove }: {
+export function InventoryRow({ l, onToggle, onPrice, onEdit, onRemove }: {
   l: Listing;
   onToggle: (l: Listing) => void;
   onPrice: (l: Listing, raw: string) => void;
+  onEdit: (l: Listing) => void;
   onRemove: (l: Listing) => void;
 }) {
   const router = useRouter();
@@ -37,8 +38,9 @@ export function InventoryRow({ l, onToggle, onPrice, onRemove }: {
       <td><div className={"switch" + (l.active === false ? "" : " on")} onClick={() => onToggle(l)} /></td>
       <td>
         <div className="row-actions">
-          <button className="icon-btn" onClick={() => router.push(ROUTES.listing(l.id))}><Icon name="eye" /></button>
-          <button className="icon-btn" onClick={() => onRemove(l)}><Icon name="trash" /></button>
+          <button className="icon-btn" aria-label="Editar" onClick={() => onEdit(l)}><Icon name="edit" /></button>
+          <button className="icon-btn" aria-label="Ver en el sitio" onClick={() => router.push(ROUTES.listing(l.id))}><Icon name="eye" /></button>
+          <button className="icon-btn" aria-label="Eliminar" onClick={() => onRemove(l)}><Icon name="trash" /></button>
         </div>
       </td>
     </tr>

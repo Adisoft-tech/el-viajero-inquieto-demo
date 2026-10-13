@@ -5,7 +5,7 @@ import { useApp } from "@/lib/store";
 import { ROUTES } from "@/lib/routes";
 
 export function SiteFooter() {
-  const { adminAuthed, gestionAuthed } = useApp();
+  const { adminAuthed, gestionAuthed, content } = useApp();
   return (
     <footer id="siteFooter">
       <div className="container">
@@ -19,7 +19,7 @@ export function SiteFooter() {
               <span className="brand-word" style={{ color: "#F7F5EF" }}>El Viajero Inquieto</span>
             </div>
             <p style={{ color: "#B9C7C2", fontSize: 13.5, maxWidth: "34ch" }}>
-              Turismo familiar, fincas y experiencias con raíz colombiana, en el eje cafetero y en el exterior.
+              {content.footerTagline}
             </p>
           </div>
           <div>
@@ -32,6 +32,7 @@ export function SiteFooter() {
             <h5>Agencia</h5>
             <Link href={ROUTES.nosotros} className="foot-link">Nosotros</Link>
             <Link href={ROUTES.experiencias} className="foot-link">Experiencias</Link>
+            <Link href={ROUTES.notiviajero} className="foot-link">Notiviajero</Link>
             <Link href={ROUTES.contacto} className="foot-link">Contacto</Link>
           </div>
         </div>

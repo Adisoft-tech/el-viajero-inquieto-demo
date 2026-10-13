@@ -35,18 +35,20 @@ function docType(v: unknown): DocType {
 interface FincaRow {
   id: string; name: string; town: string; dept: string; icon: string; tone: Listing["tone"];
   price: number; cap: number; rating: string; reviews: number; tags: string[]; description: string; highlights: string[];
+  active: boolean; photos: string[];
 }
 function toListing(r: FincaRow): Listing {
   return {
     id: r.id, cat: "alojamientos", name: r.name, town: r.town, dept: r.dept, icon: r.icon, tone: r.tone,
     unit: "noche", price: r.price, cap: r.cap, rating: Number(r.rating), reviews: r.reviews,
     tags: r.tags, desc: r.description, highlights: r.highlights,
+    active: r.active, ...(r.photos.length ? { photos: r.photos } : {}),
   };
 }
 
 export async function listFincas(): Promise<Listing[]> {
   const rows = await db()<FincaRow[]>`
-    select id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights
+    select id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos
     from fincas where deleted_at is null order by created_at, id`;
   return rows.map(toListing);
 }
@@ -67,12 +69,12 @@ export async function saveFinca(token: string, id: string | null, input: FincaIn
           name = ${name}, town = coalesce(nullif(${town}, ''), town), dept = coalesce(nullif(${dept}, ''), dept),
           price = ${price}, cap = ${cap}, description = coalesce(nullif(${desc}, ''), description), updated_at = now()
         where id = ${text(id, 120)} and deleted_at is null
-        returning id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights`
+        returning id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos`
     : await sql<FincaRow[]>`
         insert into fincas (id, name, town, dept, price, cap, rating, reviews, description, highlights)
         values (${"finca-" + Date.now()}, ${name}, ${town || "Por definir"}, ${dept || "Eje cafetero"}, ${price}, ${cap},
                 5.0, 0, ${desc || "Descripción pendiente por completar."}, ${["Detalles por definir"]})
-        returning id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights`;
+        returning id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos`;
   if (!rows.length) throw new Error("La finca no existe");
   return toListing(rows[0]);
 }
@@ -93,7 +95,7 @@ export interface FincaBookingInput {
 const BOOKING_COLUMNS_SQL = `
   id::int, finca_id as "fincaId", guest, cedula, phone, email, checkin::text, checkout::text,
   arrival_time as "time", guests, pay_method as "payMethod",
-  total::float8, advance::float8, balance::float8`;
+  total::float8, advance::float8, balance::float8, created_at::text as "createdAt"`;
 
 export async function listFincaBookings(token: string): Promise<FincaBooking[]> {
   await requireSession(token);

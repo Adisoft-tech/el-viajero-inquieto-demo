@@ -1,7 +1,7 @@
 // Motor del chat público (reglas locales, sin IA ni backend).
 // Todo lo que responde sale del catálogo/reseñas que se le pasan como parámetro.
 
-import { REVIEWS, type Category, type Listing } from "./data";
+import { INITIAL_CONTENT, REVIEWS, type Category, type Listing, type Review, type SiteContent } from "./data";
 import { catLabel, cop } from "./format";
 
 export interface ChatListingResult { id: string; name: string; town: string; dept: string; price: string; rating: number }
@@ -46,7 +46,10 @@ function chatFormatListing(l: Listing): ChatListingResult {
   return { id: l.id, name: l.name, town: l.town, dept: l.dept, price: cop(l.price) + " / " + l.unit, rating: l.rating };
 }
 
-const CHAT_INTENTS: { test: RegExp; reply: () => ChatAnswer }[] = [
+/** Contenido editable del sitio que el asistente cita en sus respuestas. */
+export interface ChatContext { content: SiteContent; reviews: Review[] }
+
+const CHAT_INTENTS: { test: RegExp; reply: (ctx: ChatContext) => ChatAnswer }[] = [
   { test: /^(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|hi|ola)\b/, reply: () => ({
     text: "¡Hola! Puedo ayudarte a encontrar fincas, parques o tours en el eje cafetero, contarte sobre pagos o ponerte en contacto con nosotros.",
     chips: ["Fincas cerca a Manizales", "Parques para niños", "Tours de un día", "¿Cómo pago?"],
@@ -59,16 +62,16 @@ const CHAT_INTENTS: { test: RegExp; reply: () => ChatAnswer }[] = [
     text: "El Viajero Inquieto es una agencia de viajes colombiana enfocada en turismo familiar y experiencias con raíz local: fincas, cabañas, parques y tours en el eje cafetero. Creamos viajes memorables conectando a los viajeros con la riqueza cultural, natural y humana de cada destino.",
     chips: ["Ver Nosotros"],
   }) },
-  { test: /contacto|telefono|teléfono|correo|email|whatsapp|hablar con alguien/, reply: () => ({
-    text: "Puedes escribirnos a hola@elviajeroinquieto.co o al +57 300 000 0000. Estamos en Manizales, Caldas.",
+  { test: /contacto|telefono|teléfono|correo|email|whatsapp|hablar con alguien/, reply: ({ content: c }) => ({
+    text: "Puedes escribirnos a " + c.contactEmail + " o al " + c.contactPhone + ". Estamos en " + c.contactCity + ".",
     chips: [],
   }) },
   { test: /pago|pagar|tarjeta|pse|nequi|wompi|cuotas/, reply: () => ({
-    text: "Aceptamos pago en línea con Wompi: tarjeta de crédito o débito, PSE y Nequi. El cobro se procesa de forma segura al confirmar tu reserva.",
+    text: "Las reservas se coordinan directamente con nuestro equipo por WhatsApp: ahí confirmamos fechas, disponibilidad y la forma de pago.",
     chips: [],
   }) },
-  { test: /opinion|opinión|reseñ|resen|comentarios|que dicen|qué dicen|calificacion|calificación/, reply: () => {
-    const txt = REVIEWS.slice(0, 2).map((r) => '"' + r.quote + '" — ' + r.name).join("  ·  ");
+  { test: /opinion|opinión|reseñ|resen|comentarios|que dicen|qué dicen|calificacion|calificación/, reply: ({ reviews }) => {
+    const txt = reviews.slice(0, 2).map((r) => '"' + r.quote + '" — ' + r.name).join("  ·  ");
     return { text: "Esto dicen algunos viajeros: " + txt, chips: ["Ver todas las experiencias"] };
   } },
   { test: /gracias|thank/, reply: () => ({
@@ -78,12 +81,12 @@ const CHAT_INTENTS: { test: RegExp; reply: () => ChatAnswer }[] = [
 ];
 
 /** Responde una pregunta buscando en `listings` (normalmente solo los visibles en el sitio). */
-export function answerChat(raw: string, listings: Listing[]): ChatAnswer {
+export function answerChat(raw: string, listings: Listing[], ctx: ChatContext = { content: INITIAL_CONTENT, reviews: REVIEWS }): ChatAnswer {
   const norm = normalizeText(raw);
   if (!norm) return { text: "Escribe tu pregunta, por ejemplo: \"¿qué finca hay cerca a Manizales?\"", chips: [] };
 
   for (const intent of CHAT_INTENTS) {
-    if (intent.test.test(norm)) return intent.reply();
+    if (intent.test.test(norm)) return intent.reply(ctx);
   }
 
   const townKeys = Array.from(new Set(listings.map((l) => normalizeText(l.town))));

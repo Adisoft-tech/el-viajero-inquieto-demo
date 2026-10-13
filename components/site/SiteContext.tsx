@@ -7,12 +7,11 @@ import { useApp } from "@/lib/store";
 import type { Listing } from "@/lib/data";
 
 export type CatalogSort = "recomendado" | "precio-asc" | "precio-desc" | "rating";
-export type PayMethod = "card" | "pse" | "nequi";
 
 export interface BookingDraft {
   listingId: string | null; step: number;
   checkin: string; checkout: string; date: string; guests: number;
-  name: string; email: string; phone: string; payMethod: PayMethod; lastCode?: string;
+  name: string; email: string; phone: string; observaciones: string;
 }
 
 interface SiteStore {
@@ -31,7 +30,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   const [catalogSort, setCatalogSort] = useState<CatalogSort>("recomendado");
   const [booking, setBooking] = useState<BookingDraft>({
     listingId: null, step: 1, checkin: "", checkout: "", date: "", guests: 2,
-    name: "", email: "", phone: "", payMethod: "card",
+    name: "", email: "", phone: "", observaciones: "",
   });
   const updateBooking = useCallback((patch: Partial<BookingDraft>) => setBooking((b) => ({ ...b, ...patch })), []);
   return (

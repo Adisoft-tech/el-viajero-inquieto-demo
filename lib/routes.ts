@@ -6,6 +6,8 @@ export const ROUTES = {
   tours: "/tours",
   experiencias: "/experiencias",
   nosotros: "/nosotros",
+  notiviajero: "/notiviajero",
+  post: (id: string) => `/notiviajero/${id}`,
   contacto: "/contacto",
   favoritos: "/favoritos",
   listing: (id: string) => `/ficha/${id}`,

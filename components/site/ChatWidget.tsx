@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { answerChat, type ChatListingResult } from "@/lib/chat-engine";
 import { Icon } from "@/lib/icons";
 import { ROUTES } from "@/lib/routes";
+import { useApp } from "@/lib/store";
 import { useVisibleListings } from "./SiteContext";
 
 interface ChatMsg { who: "bot" | "user"; text: string; chips?: string[]; listings?: ChatListingResult[] }
@@ -45,6 +46,7 @@ function ChatBubble({ msg, onAsk, onGo }: { msg: ChatMsg; onAsk: (q: string) => 
 export function ChatWidget() {
   const router = useRouter();
   const listings = useVisibleListings();
+  const { content, reviews } = useApp();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>([GREETING]);
   const [input, setInput] = useState("");
@@ -85,7 +87,7 @@ export function ChatWidget() {
   function send(text?: string) {
     const q = (text !== undefined ? text : input).trim();
     if (!q) return;
-    const a = answerChat(q, listings);
+    const a = answerChat(q, listings, { content, reviews });
     setMessages((m) => [...m, { who: "user", text: q }, { who: "bot", text: a.text, chips: a.chips, listings: a.listings }]);
     setInput("");
   }
@@ -107,7 +109,11 @@ export function ChatWidget() {
           <div><b>Asistente El Viajero Inquieto</b><span>Responde leyendo el catálogo en vivo</span></div>
         </div>
         <div className="chat-body" id="chatBody" ref={bodyRef}>
-          {messages.map((m, i) => <ChatBubble key={i} msg={m} onAsk={send} onGo={(id) => router.push(ROUTES.listing(id))} />)}
+          {messages.map((m, i) => <ChatBubble key={i} msg={m} onAsk={send} onGo={(id) => {
+            const l = listings.find((x) => x.id === id);
+            if (l?.externalUrl) window.open(l.externalUrl, "_blank", "noopener,noreferrer");
+            else router.push(ROUTES.listing(id));
+          }} />)}
         </div>
         <div className="chat-input-row">
           <input

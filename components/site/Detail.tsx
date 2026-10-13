@@ -40,6 +40,13 @@ export function Detail({ id }: { id: string }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [lightbox, n]);
 
+  // Si alguien llega directo a esta URL (en vez de la tarjeta del catálogo), igual lo mandamos
+  // a la página externa del aliado en vez de mostrar nuestro propio detalle.
+  useEffect(() => {
+    if (l?.externalUrl) window.location.replace(l.externalUrl);
+  }, [l]);
+  if (l?.externalUrl) return null;
+
   if (!l) return <NotFound />;
   const isStay = l.cat === "alojamientos";
   const activeSrc = gallery[photoIndex] || gallery[0];

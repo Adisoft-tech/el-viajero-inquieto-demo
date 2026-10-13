@@ -6,16 +6,34 @@ import { cop } from "@/lib/format";
 import { Icon } from "@/lib/icons";
 import { useApp } from "@/lib/store";
 import { ROUTES } from "@/lib/routes";
+import { whatsappUrl } from "@/lib/whatsapp";
 import { NotFound } from "./Detail";
-import { useSite, useVisibleListing, type PayMethod } from "./SiteContext";
+import { useSite, useVisibleListing, type BookingDraft } from "./SiteContext";
+import { WhatsAppIcon } from "./WhatsAppIcon";
+import type { Listing } from "@/lib/data";
 
-const STEPS = ["Fechas", "Datos", "Pago", "Confirmación"];
-const PAY_LABEL: Record<PayMethod, string> = { card: "Tarjeta", pse: "PSE", nequi: "Nequi" };
+const STEPS = ["Fechas", "Datos", "Reservar"];
+
+/** Arma el mensaje de WhatsApp con toda la info que la persona llenó en el flujo. */
+function buildWhatsAppMessage(l: Listing, isStay: boolean, b: BookingDraft, intro: string): string {
+  const lines = [
+    intro,
+    "",
+    "Finca/Experiencia: " + l.name,
+    isStay ? "Fechas: " + (b.checkin || "—") + " → " + (b.checkout || "—") : "Fecha: " + (b.date || "—"),
+    "Huéspedes: " + b.guests,
+  ];
+  if (b.name) lines.push("Nombre: " + b.name);
+  if (b.email) lines.push("Correo: " + b.email);
+  if (b.phone) lines.push("Teléfono: " + b.phone);
+  if (b.observaciones) lines.push("Observaciones: " + b.observaciones);
+  return lines.join("\n");
+}
 
 export function BookingFlow({ id }: { id: string }) {
   const router = useRouter();
   const l = useVisibleListing(id);
-  const { setBookings } = useApp();
+  const { setBookings, content } = useApp();
   const { booking: b, updateBooking } = useSite();
 
   // Si se entra directo por URL a otro listado, el flujo arranca en el paso 1
@@ -27,30 +45,23 @@ export function BookingFlow({ id }: { id: string }) {
   if (!l) return <NotFound />;
   const step = sameListing ? b.step : 1;
   const isStay = l.cat === "alojamientos";
-  const subtotal = l.price * b.guests;
-  const fee = Math.round(subtotal * 0.05);
-  const total = subtotal + fee;
+  const total = Math.round(l.price * b.guests);
 
   function next() {
-    if (!l) return;
-    if (step === 3) {
-      const code = "VJI-" + Math.floor(2000 + Math.random() * 7999);
-      setBookings((prev) => [{
-        code, guest: b.name || "Viajero Demo", listing: l.name,
-        dates: isStay ? (b.checkin || "—") + " → " + (b.checkout || "—") : (b.date || "—"),
-        guests: b.guests, total: Math.round(l.price * b.guests * 1.05), pay: "pagado", status: "confirmada",
-      }, ...prev]);
-      updateBooking({ lastCode: code, step: 4 });
-    } else {
-      updateBooking({ step: step + 1 });
-    }
+    updateBooking({ step: step + 1 });
   }
 
-  const payOpt = (icon: string, val: PayMethod, label: string) => (
-    <div className={"pay-opt" + (b.payMethod === val ? " selected" : "")} onClick={() => updateBooking({ payMethod: val })}>
-      <Icon name={icon} /><span>{label}</span>
-    </div>
-  );
+  function sendToWhatsApp() {
+    if (!l) return;
+    setBookings((prev) => [{
+      code: "VJI-" + Math.floor(2000 + Math.random() * 7999),
+      guest: b.name || "Viajero Demo", listing: l.name,
+      dates: isStay ? (b.checkin || "—") + " → " + (b.checkout || "—") : (b.date || "—"),
+      guests: b.guests, total, pay: "pendiente", status: "solicitud por whatsapp", createdAt: new Date().toISOString(),
+    }, ...prev]);
+    window.open(whatsappUrl(buildWhatsAppMessage(l, isStay, b, content.whatsappMessage), content.whatsappNumber), "_blank", "noopener,noreferrer");
+    updateBooking({ step: 4 });
+  }
 
   let body: React.ReactNode;
   if (step === 1) {
@@ -75,46 +86,42 @@ export function BookingFlow({ id }: { id: string }) {
     </>);
   } else if (step === 2) {
     body = (<>
-      <h2>Tus datos</h2><p className="flow-sub">Los usaremos para confirmar la reserva y enviarte el comprobante.</p>
+      <h2>Tus datos</h2><p className="flow-sub">Los usaremos para escribirte por WhatsApp y confirmar la reserva.</p>
       <div className="form-grid">
         <div className="field full"><label>Nombre completo</label><input id="fName" placeholder="Como aparece en tu documento" value={b.name} onChange={(e) => updateBooking({ name: e.target.value })} /></div>
         <div className="field"><label>Correo electrónico</label><input id="fEmail" type="email" placeholder="tucorreo@email.com" value={b.email} onChange={(e) => updateBooking({ email: e.target.value })} /></div>
         <div className="field"><label>Teléfono</label><input id="fPhone" placeholder="+57 300 000 0000" value={b.phone} onChange={(e) => updateBooking({ phone: e.target.value })} /></div>
+        <div className="field full"><label>Observaciones</label><textarea id="fObservaciones" rows={3} placeholder="Algo que debamos saber: hora de llegada, ocasión especial, restricciones…" value={b.observaciones} onChange={(e) => updateBooking({ observaciones: e.target.value })} /></div>
       </div>
     </>);
   } else if (step === 3) {
     body = (<>
-      <h2>Método de pago</h2><p className="flow-sub">Elige cómo quieres pagar. El cobro lo procesa Wompi de forma segura.</p>
-      <div className="pay-methods">
-        {payOpt("card", "card", "Tarjeta")}{payOpt("bank", "pse", "PSE")}{payOpt("phone", "nequi", "Nequi")}
+      <h2>Confirma tu reserva</h2><p className="flow-sub">Revisa los datos y envíalos por WhatsApp a nuestro equipo para coordinar el pago y los detalles finales.</p>
+      <div className="confirm-grid">
+        <div className="row"><span>Experiencia</span><b>{l.name}</b></div>
+        <div className="row"><span>{isStay ? "Fechas" : "Fecha"}</span><b>{isStay ? (b.checkin || "—") + " → " + (b.checkout || "—") : (b.date || "—")}</b></div>
+        <div className="row"><span>Huéspedes</span><b>{b.guests}</b></div>
+        {b.observaciones && <div className="row"><span>Observaciones</span><b>{b.observaciones}</b></div>}
+        <div className="row"><span>Valor estimado</span><b className="tabular">{cop(total)}</b></div>
       </div>
-      {b.payMethod === "card" ? (
-        <div className="form-grid">
-          <div className="field full"><label>Número de tarjeta</label><input id="fCard" placeholder="4111 1111 1111 1111" /></div>
-          <div className="field"><label>Vencimiento</label><input id="fExp" placeholder="MM/AA" /></div>
-          <div className="field"><label>CVV</label><input id="fCvv" placeholder="123" /></div>
-        </div>
-      ) : (
-        <p style={{ fontSize: 13.5, color: "var(--text-muted)" }}>Serás redirigido a tu entidad financiera para confirmar el pago de forma segura (simulado en esta demo).</p>
-      )}
-      <div className="wompi-badge"><span className="wompi-dot"></span>Pago procesado por <b>Wompi</b> · conexión cifrada</div>
+      <p style={{ fontSize: 13.5, color: "var(--text-muted)", marginTop: 14 }}>No se procesa ningún pago en esta página — el valor es una referencia y se confirma directamente con nuestro equipo por WhatsApp.</p>
     </>);
   } else {
     body = (
       <div className="confirm-hero">
         <div className="confirm-check"><Icon name="check" /></div>
-        <p className="eyebrow">Reserva confirmada</p>
-        <div className="confirm-code">{b.lastCode || "VJI-0000"}</div>
-        <p style={{ color: "var(--text-muted)", marginTop: 8 }}>Enviamos el comprobante a {b.email || "tu correo"}</p>
-        <div className="confirm-grid">
+        <p className="eyebrow">Te enviamos a WhatsApp</p>
+        <p style={{ color: "var(--text-muted)", marginTop: 8, maxWidth: "40ch", marginInline: "auto", textAlign: "center" }}>Si no se abrió automáticamente, escríbenos tú mismo — ya tenemos tus datos listos para coordinar la reserva.</p>
+        <div className="confirm-grid" style={{ marginTop: 20 }}>
           <div className="row"><span>Experiencia</span><b>{l.name}</b></div>
           <div className="row"><span>{isStay ? "Fechas" : "Fecha"}</span><b>{isStay ? (b.checkin || "—") + " → " + (b.checkout || "—") : (b.date || "—")}</b></div>
           <div className="row"><span>Huéspedes</span><b>{b.guests}</b></div>
-          <div className="row"><span>Método de pago</span><b>{PAY_LABEL[b.payMethod]}</b></div>
-          <div className="row"><span>Total pagado</span><b className="tabular">{cop(total)}</b></div>
         </div>
-        <div className="flow-actions" style={{ justifyContent: "center" }}>
-          <button className="btn btn-primary" onClick={() => router.push(ROUTES.home)}>Volver al inicio</button>
+        <div className="flow-actions" style={{ justifyContent: "center", gap: 12 }}>
+          <a className="btn btn-accent" href={whatsappUrl(buildWhatsAppMessage(l, isStay, b, content.whatsappMessage), content.whatsappNumber)} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 9 }}>
+            <WhatsAppIcon /> Abrir WhatsApp
+          </a>
+          <button className="btn btn-ghost" onClick={() => router.push(ROUTES.home)}>Volver al inicio</button>
         </div>
       </div>
     );
@@ -137,7 +144,13 @@ export function BookingFlow({ id }: { id: string }) {
         {step < 4 && (
           <div className="flow-actions">
             {step > 1 ? <button className="btn btn-ghost" id="stepBack" onClick={() => updateBooking({ step: Math.max(1, step - 1) })}>Atrás</button> : <span></span>}
-            <button className="btn btn-accent" id="stepNext" onClick={next}>{step === 3 ? "Pagar " + cop(total) : "Continuar"}</button>
+            {step === 3 ? (
+              <button className="btn btn-accent" id="stepNext" onClick={sendToWhatsApp} style={{ display: "inline-flex", alignItems: "center", gap: 9 }}>
+                <WhatsAppIcon /> Reservar por WhatsApp
+              </button>
+            ) : (
+              <button className="btn btn-accent" id="stepNext" onClick={next}>Continuar</button>
+            )}
           </div>
         )}
       </div>

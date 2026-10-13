@@ -7,10 +7,11 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import {
-  INITIAL_BOOKINGS, INITIAL_CONTENT, INITIAL_LISTINGS,
-  type Booking, type FincaBooking, type Listing, type SiteContent,
+  INITIAL_BOOKINGS, INITIAL_CONTENT, INITIAL_LISTINGS, REVIEWS,
+  type Booking, type FincaBooking, type Listing, type Review, type SiteContent,
 } from "./data";
 import { listFincaBookings, listFincas } from "./actions/gestion";
+import { getSiteConfig } from "./actions/cms";
 import { getSession, login as loginAction, logout as logoutAction, type SessionUser } from "./actions/auth";
 
 export type LoadStatus = "idle" | "loading" | "ready" | "error";
@@ -35,6 +36,8 @@ interface AppStore {
   byId: (id: string) => Listing | undefined;
   content: SiteContent;
   setContent: Dispatch<SetStateAction<SiteContent>>;
+  reviews: Review[];
+  setReviews: Dispatch<SetStateAction<Review[]>>;
   bookings: Booking[];
   setBookings: Dispatch<SetStateAction<Booking[]>>;
   fincaBookings: FincaBooking[];
@@ -66,6 +69,7 @@ const Ctx = createContext<AppStore | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
   const [content, setContent] = useState<SiteContent>(INITIAL_CONTENT);
+  const [reviews, setReviews] = useState<Review[]>(REVIEWS);
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
   const [fincaBookings, setFincaBookings] = useState<FincaBooking[]>([]);
   const [fincaBookingsStatus, setFincaBookingsStatus] = useState<LoadStatus>("idle");
@@ -85,6 +89,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     listFincas()
       .then((fincas) => setListings((prev) => [...fincas, ...prev.filter((l) => l.cat !== "alojamientos")]))
       .catch((err) => console.error("No se pudieron cargar las fincas:", err));
+  }, []);
+
+  // Textos, reseñas y catálogo de parques/tours que el administrador editó (si no hay nada guardado, quedan los originales).
+  useEffect(() => {
+    getSiteConfig()
+      .then(({ content: c, reviews: r, catalog }) => {
+        if (c) setContent({ ...INITIAL_CONTENT, ...c });
+        if (r) setReviews(r);
+        if (catalog) setListings((prev) => [...prev.filter((l) => l.cat === "alojamientos"), ...catalog]);
+      })
+      .catch((err) => console.error("No se pudo cargar el contenido del sitio:", err));
   }, []);
 
   const endSession = useCallback(() => {
@@ -178,7 +193,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value: AppStore = {
-    listings, setListings, byId, content, setContent, bookings, setBookings,
+    listings, setListings, byId, content, setContent, reviews, setReviews, bookings, setBookings,
     fincaBookings, setFincaBookings, fincaBookingsStatus, loadFincaBookings, favorites, isFavorite, toggleFavorite,
     authStatus, user, adminAuthed: authStatus === "authed", gestionAuthed: authStatus === "authed", login, logout, authed, toast,
   };
