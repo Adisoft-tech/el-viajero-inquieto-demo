@@ -6,7 +6,7 @@ import { ROUTES } from "@/lib/routes";
 import { CrumbLink } from "./Crumb";
 import { ListingCard } from "./ListingCard";
 import { ReviewCard } from "./ReviewCard";
-import { useVisibleListings } from "./SiteContext";
+import { useContent, useI18n, useVisibleListings } from "./SiteContext";
 import { WhatsAppIcon } from "./WhatsAppIcon";
 import { whatsappUrl } from "@/lib/whatsapp";
 
@@ -15,7 +15,7 @@ const panelText = { color: "var(--text-muted)", fontSize: 14.5 } as const;
 
 /** Botones a WhatsApp, Facebook e Instagram de la agencia (enlaces editables desde Contenido del sitio). */
 function SocialLinks() {
-  const { content } = useApp();
+  const content = useContent();
   const wa = whatsappUrl(content.whatsappMessage, content.whatsappNumber);
   return (
     <div style={{ marginTop: 34, textAlign: "center" }}>
@@ -45,10 +45,11 @@ function Paragraphs({ text }: { text: string }) {
 
 export function Nosotros() {
   const router = useRouter();
-  const { content: c } = useApp();
+  const c = useContent();
+  const { t } = useI18n();
   return (
     <section className="section" style={{ paddingTop: 40 }}><div className="container">
-      <div className="crumb"><CrumbLink href={ROUTES.home}>Inicio</CrumbLink> / <span>Nosotros</span></div>
+      <div className="crumb"><CrumbLink href={ROUTES.home}>{t("Inicio")}</CrumbLink> / <span>{t("Nosotros")}</span></div>
       <div>
         <p className="eyebrow">{c.nosEyebrow}</p>
         <div style={{ textAlign: "center", margin: "10px 0 34px" }}>
@@ -74,7 +75,7 @@ export function Nosotros() {
           <Paragraphs text={c.nosPurpose} />
         </div>
 
-        <button className="btn btn-primary" style={{ marginTop: 30 }} onClick={() => router.push(ROUTES.alojamientos)}>Explorar experiencias</button>
+        <button className="btn btn-primary" style={{ marginTop: 30 }} onClick={() => router.push(ROUTES.tours)}>{t("Explorar experiencias")}</button>
 
         <SocialLinks />
       </div>
@@ -83,11 +84,13 @@ export function Nosotros() {
 }
 
 export function Experiencias() {
-  const { content, reviews } = useApp();
+  const { reviews } = useApp();
+  const content = useContent();
+  const { t } = useI18n();
   return (
     <section className="section" style={{ paddingTop: 40 }}><div className="container">
-      <div className="crumb"><CrumbLink href={ROUTES.home}>Inicio</CrumbLink> / <span>Testimonios</span></div>
-      <div className="section-head"><div><p className="eyebrow">Testimonios</p><h2>{content.reviewsTitle}</h2></div></div>
+      <div className="crumb"><CrumbLink href={ROUTES.home}>{t("Inicio")}</CrumbLink> / <span>{t("Testimonios")}</span></div>
+      <div className="section-head"><div><p className="eyebrow">{t("Testimonios")}</p><h2>{content.reviewsTitle}</h2></div></div>
       <div className="review-row">{reviews.map((r, i) => <ReviewCard key={r.name + i} r={r} />)}</div>
     </div></section>
   );
@@ -95,15 +98,16 @@ export function Experiencias() {
 
 export function Contacto() {
   const router = useRouter();
-  const { content: c } = useApp();
+  const c = useContent();
+  const { t } = useI18n();
   return (
     <section className="section" style={{ paddingTop: 40 }}><div className="container">
-      <div className="crumb"><CrumbLink href={ROUTES.home}>Inicio</CrumbLink> / <span>Contacto</span></div>
+      <div className="crumb"><CrumbLink href={ROUTES.home}>{t("Inicio")}</CrumbLink> / <span>{t("Contacto")}</span></div>
       <div style={{ maxWidth: "60ch" }}>
         <p className="eyebrow">{c.contactEyebrow}</p>
         <h1 style={{ fontSize: "clamp(28px,4vw,40px)", marginTop: 10 }}>{c.contactTitle}</h1>
         <p className="detail-desc" style={{ marginTop: 16 }}>{c.contactEmail} · {c.contactPhone} · {c.contactCity}</p>
-        <button className="btn btn-primary" style={{ marginTop: 24 }} onClick={() => router.push(ROUTES.home)}>Volver al inicio</button>
+        <button className="btn btn-primary" style={{ marginTop: 24 }} onClick={() => router.push(ROUTES.home)}>{t("Volver al inicio")}</button>
 
         <SocialLinks />
       </div>
@@ -113,14 +117,15 @@ export function Contacto() {
 
 export function Favoritos() {
   const { isFavorite } = useApp();
+  const { t } = useI18n();
   const items = useVisibleListings().filter((l) => isFavorite(l.id));
   return (
     <section className="section" style={{ paddingTop: 40 }}><div className="container">
-      <div className="crumb"><CrumbLink href={ROUTES.home}>Inicio</CrumbLink> / <span>Favoritos</span></div>
-      <div className="section-head"><div><p className="eyebrow">Tu selección</p><h2>Favoritos guardados</h2><p>Se guardan en este navegador — perfectos para comparar antes de reservar.</p></div></div>
+      <div className="crumb"><CrumbLink href={ROUTES.home}>{t("Inicio")}</CrumbLink> / <span>{t("Favoritos")}</span></div>
+      <div className="section-head"><div><p className="eyebrow">{t("Tu selección")}</p><h2>{t("Favoritos guardados")}</h2><p>{t("Se guardan en este navegador — perfectos para comparar antes de reservar.")}</p></div></div>
       {items.length
         ? <div className="card-grid">{items.map((l) => <ListingCard key={l.id} l={l} />)}</div>
-        : <p className="empty-note">Aún no has guardado nada. Toca el corazón en cualquier finca, parque o tour para agregarlo aquí.</p>}
+        : <p className="empty-note">{t("Aún no has guardado nada. Toca el corazón en cualquier finca, parque o experiencia para agregarlo aquí.")}</p>}
     </div></section>
   );
 }

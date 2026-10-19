@@ -8,6 +8,7 @@ import { requireSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { INITIAL_CONTENT, type Listing, type Review, type SiteContent } from "@/lib/data";
 import { ICONS } from "@/lib/icon-data";
+import { TRANSLATABLE_KEYS } from "@/lib/i18n";
 
 function text(v: unknown, max = 500): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
@@ -32,13 +33,14 @@ function lightHtml(v: string): string {
 const HTML_FIELDS = new Set(["heroEyebrow", "heroTitle", "heroLede"]);
 
 /* ---- Lectura pública ---- */
-export interface SiteConfig { content: SiteContent | null; reviews: Review[] | null; catalog: Listing[] | null }
+export interface SiteConfig { content: SiteContent | null; contentEn: SiteContent | null; reviews: Review[] | null; catalog: Listing[] | null }
 
 export async function getSiteConfig(): Promise<SiteConfig> {
   const rows = await db()<{ key: string; value: unknown }[]>`select key, value from site_content`;
   const byKey = new Map(rows.map((r) => [r.key, r.value]));
   return {
     content: (byKey.get("content") as SiteContent | undefined) ?? null,
+    contentEn: (byKey.get("content_en") as SiteContent | undefined) ?? null,
     reviews: (byKey.get("reviews") as Review[] | undefined) ?? null,
     catalog: (byKey.get("catalog") as Listing[] | undefined) ?? null,
   };
@@ -65,6 +67,18 @@ export async function saveSiteContent(token: string, content: SiteContent): Prom
   clean.facebookUrl = url(clean.facebookUrl) || INITIAL_CONTENT.facebookUrl;
   clean.instagramUrl = url(clean.instagramUrl) || INITIAL_CONTENT.instagramUrl;
   await put("content", clean);
+  return clean;
+}
+
+/** Versión en inglés de los textos: solo las claves traducibles; un campo vacío usa la traducción por defecto. */
+export async function saveSiteContentEn(token: string, content: SiteContent): Promise<SiteContent> {
+  await requireSession(token);
+  const clean: SiteContent = {};
+  for (const key of TRANSLATABLE_KEYS) {
+    const v = text((content as Record<string, unknown>)?.[key], 5000);
+    if (v) clean[key] = HTML_FIELDS.has(key) ? lightHtml(v) : v;
+  }
+  await put("content_en", clean);
   return clean;
 }
 
@@ -103,6 +117,14 @@ function cleanListing(l: Listing, cat: Listing["cat"], id: string): Listing {
   if (photos.length) out.photos = photos;
   const schedule = text(l.schedule, 80);
   if (schedule) out.schedule = schedule;
+  const nameEn = text(l.nameEn, 160), descEn = text(l.descEn, 3000), durationEn = text(l.durationEn, 80), scheduleEn = text(l.scheduleEn, 80);
+  const highlightsEn = list(l.highlightsEn, 12, 200), tagsEn = list(l.tagsEn, 10, 80);
+  if (nameEn) out.nameEn = nameEn;
+  if (descEn) out.descEn = descEn;
+  if (highlightsEn.length) out.highlightsEn = highlightsEn;
+  if (tagsEn.length) out.tagsEn = tagsEn;
+  if (durationEn) out.durationEn = durationEn;
+  if (scheduleEn) out.scheduleEn = scheduleEn;
   const duration = text(l.duration, 80);
   if (duration) out.duration = duration;
   const ext = url(l.externalUrl);
@@ -131,8 +153,9 @@ interface FincaRow {
   id: string; name: string; town: string; dept: string; icon: string; tone: Listing["tone"];
   price: number; cap: number; rating: string; reviews: number; tags: string[]; description: string; highlights: string[];
   active: boolean; photos: string[];
+  name_en: string; description_en: string; highlights_en: string[]; tags_en: string[];
 }
-const FINCA_COLS = "id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos";
+const FINCA_COLS = "id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos, name_en, description_en, highlights_en, tags_en";
 
 function fincaToListing(r: FincaRow): Listing {
   return {
@@ -140,6 +163,8 @@ function fincaToListing(r: FincaRow): Listing {
     unit: "noche", price: r.price, cap: r.cap, rating: Number(r.rating), reviews: r.reviews,
     tags: r.tags, desc: r.description, highlights: r.highlights,
     active: r.active, ...(r.photos.length ? { photos: r.photos } : {}),
+    ...(r.name_en ? { nameEn: r.name_en } : {}), ...(r.description_en ? { descEn: r.description_en } : {}),
+    ...(r.highlights_en.length ? { highlightsEn: r.highlights_en } : {}), ...(r.tags_en.length ? { tagsEn: r.tags_en } : {}),
   };
 }
 
@@ -151,14 +176,18 @@ export async function saveFincaFull(token: string, id: string | null, input: Lis
   const rows = id
     ? await sql.unsafe<FincaRow[]>(
         `update fincas set name=$2, town=$3, dept=$4, icon=$5, tone=$6, price=$7, cap=$8, rating=$9, reviews=$10,
-           tags=$11, description=$12, highlights=$13, active=$14, photos=$15, updated_at=now()
+           tags=$11, description=$12, highlights=$13, active=$14, photos=$15,
+           name_en=$16, description_en=$17, highlights_en=$18, tags_en=$19, updated_at=now()
          where id=$1 and deleted_at is null returning ${FINCA_COLS}`,
-        [l.id, l.name, l.town, l.dept, l.icon, l.tone, l.price, l.cap, l.rating, l.reviews, l.tags, l.desc, l.highlights, l.active !== false, l.photos ?? []] as never,
+        [l.id, l.name, l.town, l.dept, l.icon, l.tone, l.price, l.cap, l.rating, l.reviews, l.tags, l.desc, l.highlights, l.active !== false, l.photos ?? [],
+         l.nameEn ?? "", l.descEn ?? "", l.highlightsEn ?? [], l.tagsEn ?? []] as never,
       )
     : await sql.unsafe<FincaRow[]>(
-        `insert into fincas (id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) returning ${FINCA_COLS}`,
-        [l.id, l.name, l.town, l.dept, l.icon, l.tone, l.price, l.cap, l.rating, l.reviews, l.tags, l.desc, l.highlights, l.active !== false, l.photos ?? []] as never,
+        `insert into fincas (id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos,
+           name_en, description_en, highlights_en, tags_en)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) returning ${FINCA_COLS}`,
+        [l.id, l.name, l.town, l.dept, l.icon, l.tone, l.price, l.cap, l.rating, l.reviews, l.tags, l.desc, l.highlights, l.active !== false, l.photos ?? [],
+         l.nameEn ?? "", l.descEn ?? "", l.highlightsEn ?? [], l.tagsEn ?? []] as never,
       );
   if (!rows.length) throw new Error("La finca no existe");
   return fincaToListing(rows[0]);

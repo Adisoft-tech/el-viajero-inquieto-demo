@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Category, Listing } from "@/lib/data";
 import { catLabel } from "@/lib/format";
 import { Icon } from "@/lib/icons";
+import { LISTING_EN } from "@/lib/i18n";
 import { Modal } from "./Modal";
 
 /** Íconos de ilustración disponibles para un listado sin foto. */
@@ -29,11 +30,14 @@ export function ListingEditor({ listing, cat, canChangeCat, onSave, onCancel }: 
     duration: listing?.duration ?? "", schedule: listing?.schedule ?? "", externalUrl: listing?.externalUrl ?? "",
     tags: (listing?.tags ?? []).join(", "), highlights: lines(listing?.highlights),
     desc: listing?.desc ?? "", photos: lines(listing?.photos), active: listing?.active !== false,
+    nameEn: listing?.nameEn ?? "", descEn: listing?.descEn ?? "", highlightsEn: lines(listing?.highlightsEn),
+    tagsEn: (listing?.tagsEn ?? []).join(", "), durationEn: listing?.durationEn ?? "", scheduleEn: listing?.scheduleEn ?? "",
   }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((p) => ({ ...p, [k]: v }));
   const stay = f.cat === "alojamientos";
+  const seed = listing ? LISTING_EN[listing.id] : undefined;
 
   async function submit() {
     if (!f.name.trim()) { setError("El nombre es obligatorio."); return; }
@@ -47,6 +51,9 @@ export function ListingEditor({ listing, cat, canChangeCat, onSave, onCancel }: 
         rating: Math.min(5, Math.max(0, parseFloat(f.rating) || 0)), reviews: parseInt(f.reviews, 10) || 0,
         tags: f.tags.split(",").map((t) => t.trim()).filter(Boolean), desc: f.desc.trim(), highlights: parseLines(f.highlights),
         photos: parseLines(f.photos), duration: f.duration.trim() || undefined, schedule: f.schedule.trim() || undefined,
+        nameEn: f.nameEn.trim() || undefined, descEn: f.descEn.trim() || undefined,
+        highlightsEn: parseLines(f.highlightsEn), tagsEn: f.tagsEn.split(",").map((t) => t.trim()).filter(Boolean),
+        durationEn: f.durationEn.trim() || undefined, scheduleEn: f.scheduleEn.trim() || undefined,
         externalUrl: f.externalUrl.trim() || undefined, active: f.active,
       } as Listing);
     } catch (err) {
@@ -93,6 +100,15 @@ export function ListingEditor({ listing, cat, canChangeCat, onSave, onCancel }: 
           <div className="field full"><label>Descripción</label><textarea id="leDesc" rows={4} value={f.desc} onChange={(e) => set("desc", e.target.value)} /></div>
           <div className="field full"><label>Puntos destacados (uno por línea)</label><textarea id="leHighlights" rows={4} value={f.highlights} onChange={(e) => set("highlights", e.target.value)} /></div>
           <div className="field full"><label>Fotos (un enlace por línea; la primera es la principal)</label><textarea id="lePhotos" rows={3} placeholder="https://…/foto.jpg" value={f.photos} onChange={(e) => set("photos", e.target.value)} /></div>
+          <div className="field full"><p className="cms-section-title" style={{ margin: "8px 0 0" }}>Versión en inglés (opcional)</p>
+            <p style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 4 }}>Lo que dejes vacío se muestra con la traducción por defecto{seed ? " (la que ves en gris)" : ""} o, si no hay, en español.</p>
+          </div>
+          <div className="field full"><label>Nombre en inglés</label><input id="leNameEn" placeholder={seed?.name ?? f.name} value={f.nameEn} onChange={(e) => set("nameEn", e.target.value)} /></div>
+          {!stay && <div className="field"><label>Duración en inglés</label><input id="leDurationEn" placeholder={seed?.duration ?? "Ej. Full day"} value={f.durationEn} onChange={(e) => set("durationEn", e.target.value)} /></div>}
+          {!stay && <div className="field"><label>Fecha del viaje en inglés</label><input id="leScheduleEn" placeholder="Ej. March 15–18, 2027" value={f.scheduleEn} onChange={(e) => set("scheduleEn", e.target.value)} /></div>}
+          <div className="field full"><label>Etiquetas en inglés (separadas por coma)</label><input id="leTagsEn" placeholder={seed?.tags.join(", ") ?? ""} value={f.tagsEn} onChange={(e) => set("tagsEn", e.target.value)} /></div>
+          <div className="field full"><label>Descripción en inglés</label><textarea id="leDescEn" rows={4} placeholder={seed?.desc ?? ""} value={f.descEn} onChange={(e) => set("descEn", e.target.value)} /></div>
+          <div className="field full"><label>Puntos destacados en inglés (uno por línea)</label><textarea id="leHighlightsEn" rows={4} placeholder={seed?.highlights.join("\n") ?? ""} value={f.highlightsEn} onChange={(e) => set("highlightsEn", e.target.value)} /></div>
           <label className="field full" style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer" }}>
             <input type="checkbox" style={{ width: "auto" }} checked={f.active} onChange={(e) => set("active", e.target.checked)} />
             <span style={{ fontSize: 14 }}>Visible en el sitio público</span>

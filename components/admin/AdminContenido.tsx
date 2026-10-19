@@ -4,7 +4,8 @@ import { useState } from "react";
 import { INITIAL_CONTENT, type Review, type SiteContent } from "@/lib/data";
 import { Icon } from "@/lib/icons";
 import { useApp } from "@/lib/store";
-import { saveReviews, saveSiteContent } from "@/lib/actions/cms";
+import { saveReviews, saveSiteContent, saveSiteContentEn } from "@/lib/actions/cms";
+import { contentFor, INITIAL_CONTENT_EN, TRANSLATABLE_KEYS, type Lang } from "@/lib/i18n";
 import { InventoryManager } from "./AdminInventario";
 
 type Kind = "text" | "area" | "url";
@@ -80,20 +81,32 @@ const TABS = [
 type Tab = (typeof TABS)[number][0];
 const SECTIONS: Partial<Record<Tab, Section[]>> = { inicio: INICIO, nosotros: NOSOTROS, contacto: CONTACTO };
 
-/** Formulario de textos de una pestaña. Se guarda todo el contenido junto; “Restaurar” solo rellena los originales. */
-function TextEditor({ sections }: { sections: Section[] }) {
-  const { content, setContent, authed, toast } = useApp();
-  const [form, setForm] = useState<SiteContent>(content);
+/**
+ * Formulario de textos de una pestaña, en español o en inglés. En español se guarda todo el contenido junto; en
+ * inglés solo los textos traducibles (lo que se deje vacío usa la traducción por defecto). “Restaurar” solo rellena.
+ */
+function TextEditor({ sections, lang }: { sections: Section[]; lang: Lang }) {
+  const { content, setContent, contentEn, setContentEn, authed, toast } = useApp();
+  const isEn = lang === "en";
+  const shown = isEn
+    ? sections.map((sec) => ({ ...sec, fields: sec.fields.filter((f) => TRANSLATABLE_KEYS.includes(f.key)) })).filter((sec) => sec.fields.length)
+    : sections;
+  const [form, setForm] = useState<SiteContent>(() => (isEn ? contentFor("en", content, contentEn) : content));
   const [busy, setBusy] = useState(false);
-  const keys = sections.flatMap((s) => s.fields.map((f) => f.key));
+  const keys = shown.flatMap((s) => s.fields.map((f) => f.key));
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   const save = async () => {
     setBusy(true);
     try {
-      const saved = await authed(saveSiteContent, { ...content, ...form });
-      setContent(saved); setForm(saved);
-      toast("Contenido guardado: ya se ve en el sitio");
+      if (isEn) {
+        const saved = await authed(saveSiteContentEn, Object.fromEntries(TRANSLATABLE_KEYS.map((k) => [k, form[k] ?? ""])));
+        setContentEn(saved); setForm(contentFor("en", content, saved));
+      } else {
+        const saved = await authed(saveSiteContent, { ...content, ...form });
+        setContent(saved); setForm(saved);
+      }
+      toast(isEn ? "Textos en inglés guardados: ya se ven en el sitio" : "Contenido guardado: ya se ve en el sitio");
     } catch (err) {
       console.error(err);
       toast("No se pudo guardar. Intenta de nuevo.");
@@ -102,13 +115,15 @@ function TextEditor({ sections }: { sections: Section[] }) {
   };
   const restore = () => {
     if (!confirm("¿Volver los textos de esta pestaña a los originales? Se aplicará al sitio cuando guardes.")) return;
-    setForm((p) => ({ ...p, ...Object.fromEntries(keys.map((k) => [k, INITIAL_CONTENT[k]])) }));
+    const defaults = isEn ? INITIAL_CONTENT_EN : INITIAL_CONTENT;
+    setForm((p) => ({ ...p, ...Object.fromEntries(keys.map((k) => [k, defaults[k]])) }));
   };
 
   return (
     <div className="cms-grid">
       <div className="panel" style={{ gridColumn: "1 / -1" }}>
-        {sections.map((sec) => (
+        {isEn && <p className="cms-hint" style={{ margin: "0 0 18px" }}>Estás editando la versión en inglés del sitio. Bajo cada campo ves el texto en español como referencia. El RNT, el teléfono y los enlaces se editan en la vista en español.</p>}
+        {shown.map((sec) => (
           <div key={sec.title}>
             <p className="cms-section-title">{sec.title}</p>
             <div className="form-grid">
@@ -118,15 +133,17 @@ function TextEditor({ sections }: { sections: Section[] }) {
                   {f.kind === "area"
                     ? <textarea id={"cms-" + f.key} rows={f.rows || 3} value={form[f.key] ?? ""} onChange={(e) => set(f.key, e.target.value)} />
                     : <input id={"cms-" + f.key} type={f.kind === "url" ? "url" : "text"} value={form[f.key] ?? ""} onChange={(e) => set(f.key, e.target.value)} />}
-                  {f.hint && <p className="cms-hint">{f.hint}</p>}
+                  {isEn
+                    ? <p className="cms-hint cms-hint-es">ES: {(content[f.key] || "").replace(/<[^>]+>/g, "").slice(0, 220)}{(content[f.key] || "").length > 220 ? "…" : ""}</p>
+                    : f.hint && <p className="cms-hint">{f.hint}</p>}
                 </div>
               ))}
             </div>
           </div>
         ))}
         <div className="cms-actions">
-          <button className="btn btn-primary" id="cmsSave" onClick={() => void save()} disabled={busy}>{busy ? "Guardando…" : "Guardar cambios"}</button>
-          <button className="btn btn-ghost" onClick={restore} disabled={busy}>Restaurar textos originales</button>
+          <button className="btn btn-primary" id="cmsSave" onClick={() => void save()} disabled={busy}>{busy ? "Guardando…" : isEn ? "Guardar textos en inglés" : "Guardar cambios"}</button>
+          <button className="btn btn-ghost" onClick={restore} disabled={busy}>{isEn ? "Restaurar traducción original" : "Restaurar textos originales"}</button>
         </div>
       </div>
     </div>
@@ -178,6 +195,7 @@ function ReviewsEditor() {
 
 export function AdminContenido() {
   const [tab, setTab] = useState<Tab>("inicio");
+  const [lang, setLang] = useState<Lang>("es");
   return (
     <div className="fade-in">
       <div className="admin-head"><div><h1>Contenido del sitio</h1><p>Edita, cambia o borra los textos, las reseñas y el catálogo de la plataforma. Los cambios se guardan y se ven en el sitio al instante.</p></div></div>
@@ -186,7 +204,16 @@ export function AdminContenido() {
           <button key={key} type="button" role="tab" aria-selected={tab === key} className={"cms-tab" + (tab === key ? " active" : "")} onClick={() => setTab(key)}>{label}</button>
         ))}
       </div>
-      {SECTIONS[tab] && <TextEditor key={tab} sections={SECTIONS[tab]!} />}
+      {SECTIONS[tab] && (
+        <>
+          <div className="cms-lang" role="group" aria-label="Idioma que estás editando">
+            <span>Idioma del texto:</span>
+            <button type="button" className={lang === "es" ? "active" : undefined} aria-pressed={lang === "es"} onClick={() => setLang("es")}>Español</button>
+            <button type="button" className={lang === "en" ? "active" : undefined} aria-pressed={lang === "en"} onClick={() => setLang("en")}>English</button>
+          </div>
+          <TextEditor key={tab + lang} sections={SECTIONS[tab]!} lang={lang} />
+        </>
+      )}
       {tab === "resenas" && <ReviewsEditor />}
       {tab === "catalogo" && <InventoryManager />}
     </div>

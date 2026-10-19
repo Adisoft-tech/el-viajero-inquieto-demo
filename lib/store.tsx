@@ -37,6 +37,9 @@ interface AppStore {
   byId: (id: string) => Listing | undefined;
   content: SiteContent;
   setContent: Dispatch<SetStateAction<SiteContent>>;
+  /** Versión en inglés de los textos editables (solo lo que el admin escribió; lo vacío usa la traducción por defecto). */
+  contentEn: SiteContent;
+  setContentEn: Dispatch<SetStateAction<SiteContent>>;
   reviews: Review[];
   setReviews: Dispatch<SetStateAction<Review[]>>;
   bookings: Booking[];
@@ -70,6 +73,7 @@ const Ctx = createContext<AppStore | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
   const [content, setContent] = useState<SiteContent>(INITIAL_CONTENT);
+  const [contentEn, setContentEn] = useState<SiteContent>({});
   const [reviews, setReviews] = useState<Review[]>(REVIEWS);
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
   const [fincaBookings, setFincaBookings] = useState<FincaBooking[]>([]);
@@ -95,8 +99,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Textos, reseñas y catálogo de parques/tours que el administrador editó (si no hay nada guardado, quedan los originales).
   useEffect(() => {
     getSiteConfig()
-      .then(({ content: c, reviews: r, catalog }) => {
+      .then(({ content: c, contentEn: cEn, reviews: r, catalog }) => {
         if (c) setContent({ ...INITIAL_CONTENT, ...c });
+        if (cEn) setContentEn(cEn);
         if (r) setReviews(r);
         if (catalog) setListings((prev) => [...prev.filter((l) => l.cat === "alojamientos"), ...catalog]);
       })
@@ -194,7 +199,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value: AppStore = {
-    listings, setListings, byId, content, setContent, reviews, setReviews, bookings, setBookings,
+    listings, setListings, byId, content, setContent, contentEn, setContentEn, reviews, setReviews, bookings, setBookings,
     fincaBookings, setFincaBookings, fincaBookingsStatus, loadFincaBookings, favorites, isFavorite, toggleFavorite,
     authStatus, user, adminAuthed: authStatus === "authed", gestionAuthed: authStatus === "authed", login, logout, authed, toast,
   };

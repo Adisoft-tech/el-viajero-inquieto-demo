@@ -952,3 +952,29 @@ button.nav-link{background:none;border:0;border-bottom:2px solid transparent;fon
 .trips-all{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:4px 0;font-family:inherit;font-size:14px;font-weight:700;color:var(--accent);cursor:pointer;}
 .trips-all svg{width:15px;height:15px;}
 @media (max-width:480px){ .trip-row{grid-template-columns:44px minmax(0,1fr);} .trip-thumb{width:44px;height:44px;} .trip-price{grid-column:2;align-items:flex-start;flex-direction:row;gap:6px;align-items:baseline;} }
+
+/* ---------- header: selector de idioma ---------- */
+.lang-switch{display:inline-flex;border:1px solid var(--border-strong);border-radius:100px;padding:3px;gap:2px;}
+.lang-switch button{background:none;border:0;border-radius:100px;padding:5px 10px 5px 7px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--text-muted);opacity:.55;filter:saturate(.6);transition:opacity .15s ease,filter .15s ease,background .15s ease;}
+.lang-switch button svg{width:22px;height:15px;border-radius:3px;box-shadow:0 0 0 1px rgba(31,41,38,.18);display:block;flex:none;}
+.lang-switch button.active{color:var(--text);}
+.lang-switch button.active{background:var(--accent-soft);opacity:1;filter:none;}
+.lang-switch button:not(.active):hover{opacity:.85;filter:none;}
+.lang-switch button:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+.cms-lang{display:flex;align-items:center;gap:6px;margin:-6px 0 18px;flex-wrap:wrap;}
+.cms-lang span{font-size:12.5px;color:var(--text-muted);margin-right:4px;}
+.cms-lang button{border:1px solid var(--border-strong);background:transparent;color:var(--text);border-radius:100px;padding:6px 14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;}
+.cms-lang button.active{background:var(--ink);color:var(--ivory);border-color:var(--ink);}
+.cms-hint-es{font-style:italic;}
+@media (max-width:480px){
+  .lang-switch{padding:2px;}
+  .lang-switch button{padding:4px 6px 4px 5px;gap:4px;font-size:11px;}
+  .lang-switch button svg{width:18px;height:12px;}
+  .nav-cta{gap:8px;}
+  .nav-fav{width:34px;height:34px;}
+  .nav-row{gap:12px;}
+  .brand{gap:8px;}
+  .brand-mark{width:34px;height:34px;}
+  .brand-word{font-size:16px;line-height:1.15;}
+  .brand-sub{font-size:8.5px;}
+}

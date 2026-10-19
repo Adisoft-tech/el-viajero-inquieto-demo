@@ -6,6 +6,7 @@ import type { BlogPost } from "@/lib/actions/blog";
 import { Icon } from "@/lib/icons";
 import { ROUTES } from "@/lib/routes";
 import { CrumbLink } from "./Crumb";
+import { useI18n } from "./SiteContext";
 
 export const POST_CATEGORIES = ["Blog", "Noticias", "Tips", "Destinos", "Guías"];
 
@@ -38,18 +39,19 @@ export function PostBody({ text }: { text: string }) {
 }
 
 export function Notiviajero({ posts }: { posts: Omit<BlogPost, "body">[] }) {
+  const { t, tx, fmtDate } = useI18n();
   const [cat, setCat] = useState("Todas");
   const cats = useMemo(() => ["Todas", ...Array.from(new Set(posts.map((p) => p.category)))], [posts]);
   const shown = cat === "Todas" ? posts : posts.filter((p) => p.category === cat);
   return (
     <section className="section" style={{ paddingTop: 40 }}><div className="container">
-      <div className="crumb"><CrumbLink href={ROUTES.home}>Inicio</CrumbLink> / <span>Notiviajero</span></div>
+      <div className="crumb"><CrumbLink href={ROUTES.home}>{t("Inicio")}</CrumbLink> / <span>Notiviajero</span></div>
       <div className="section-head">
-        <div><p className="eyebrow">Notiviajero</p><h2>Historias, noticias y tips para viajar mejor</h2><p>Lo que aprendemos en el camino: destinos, consejos y novedades del turismo en Colombia.</p></div>
+        <div><p className="eyebrow">Notiviajero</p><h2>{t("Historias, noticias y tips para viajar mejor")}</h2><p>{t("Lo que aprendemos en el camino: destinos, consejos y novedades del turismo en Colombia.")}</p></div>
       </div>
       {cats.length > 2 && (
         <div className="blog-chips">
-          {cats.map((c) => <button key={c} type="button" className={"blog-chip" + (c === cat ? " active" : "")} onClick={() => setCat(c)}>{c}</button>)}
+          {cats.map((c) => <button key={c} type="button" className={"blog-chip" + (c === cat ? " active" : "")} onClick={() => setCat(c)}>{tx(c)}</button>)}
         </div>
       )}
       {shown.length ? (
@@ -58,33 +60,34 @@ export function Notiviajero({ posts }: { posts: Omit<BlogPost, "body">[] }) {
             <Link key={p.id} href={ROUTES.post(p.id)} className="blog-card">
               <Cover post={p} />
               <div className="blog-card-body">
-                <div className="blog-meta"><span className="blog-tag">{p.category}</span><span>{formatPostDate(p.publishedAt)}</span></div>
+                <div className="blog-meta"><span className="blog-tag">{tx(p.category)}</span><span>{fmtDate(p.publishedAt)}</span></div>
                 <h3>{p.title}</h3>
                 {p.excerpt && <p>{p.excerpt}</p>}
-                <span className="blog-more">Leer más <Icon name="arrow" /></span>
+                <span className="blog-more">{t("Leer más")} <Icon name="arrow" /></span>
               </div>
             </Link>
           ))}
         </div>
-      ) : <p className="empty-note">Aún no hay publicaciones. Muy pronto compartiremos historias y consejos de viaje.</p>}
+      ) : <p className="empty-note">{t("Aún no hay publicaciones. Muy pronto compartiremos historias y consejos de viaje.")}</p>}
     </div></section>
   );
 }
 
 export function PostPage({ post }: { post: BlogPost | null }) {
+  const { t, tx, fmtDate } = useI18n();
   if (!post) {
     return (
       <div className="container section">
-        <p>No encontramos esta publicación.</p>
-        <Link href={ROUTES.notiviajero} className="btn btn-ghost" style={{ marginTop: 12 }}>Ver Notiviajero</Link>
+        <p>{t("No encontramos esta publicación.")}</p>
+        <Link href={ROUTES.notiviajero} className="btn btn-ghost" style={{ marginTop: 12 }}>{t("Ver Notiviajero")}</Link>
       </div>
     );
   }
   return (
     <section className="section" style={{ paddingTop: 36 }}><div className="container">
-      <div className="crumb"><CrumbLink href={ROUTES.home}>Inicio</CrumbLink> / <CrumbLink href={ROUTES.notiviajero}>Notiviajero</CrumbLink> / <span>{post.title}</span></div>
+      <div className="crumb"><CrumbLink href={ROUTES.home}>{t("Inicio")}</CrumbLink> / <CrumbLink href={ROUTES.notiviajero}>Notiviajero</CrumbLink> / <span>{post.title}</span></div>
       <article className="post-wrap">
-        <div className="blog-meta"><span className="blog-tag">{post.category}</span><span>{formatPostDate(post.publishedAt)}</span><span>Por {post.author}</span></div>
+        <div className="blog-meta"><span className="blog-tag">{tx(post.category)}</span><span>{fmtDate(post.publishedAt)}</span><span>{t("Por")} {post.author}</span></div>
         <h1>{post.title}</h1>
         {post.excerpt && <p className="post-lede">{post.excerpt}</p>}
         {post.coverUrl && (
@@ -94,7 +97,7 @@ export function PostPage({ post }: { post: BlogPost | null }) {
           </div>
         )}
         <PostBody text={post.body} />
-        <Link href={ROUTES.notiviajero} className="btn btn-ghost" style={{ marginTop: 30 }}>← Más publicaciones</Link>
+        <Link href={ROUTES.notiviajero} className="btn btn-ghost" style={{ marginTop: 30 }}>← {t("Más publicaciones")}</Link>
       </article>
     </div></section>
   );

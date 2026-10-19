@@ -3,14 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { photoFor, type Category, type Listing } from "@/lib/data";
-import { cop } from "@/lib/format";
 import { Icon } from "@/lib/icons";
 import { useApp } from "@/lib/store";
 import { ROUTES } from "@/lib/routes";
 import { CountTo } from "./CountTo";
 import { ListingCard } from "./ListingCard";
 import { ReviewCard } from "./ReviewCard";
-import { useSite, useVisibleListings } from "./SiteContext";
+import { useContent, useI18n, useSite, useVisibleListings } from "./SiteContext";
 
 const FEATURED = ["finca-serrana", "panaca", "ruta-cafe", "termales-otun"];
 
@@ -29,10 +28,11 @@ function HeroPhoto({ src, alt, extraClass }: { src: string; alt: string; extraCl
 function TripsPanel({ title, text, trips, onOpen, onAll }: {
   title: string; text: string; trips: Listing[]; onOpen: (l: Listing) => void; onAll: () => void;
 }) {
+  const { t: tr, price } = useI18n();
   return (
     <aside className="trips-panel" aria-labelledby="tripsTitle">
       <div className="trips-head">
-        <span className="trips-badge"><Icon name="calendar" /> Agenda de salidas</span>
+        <span className="trips-badge"><Icon name="calendar" /> {tr("Agenda de salidas")}</span>
         <h2 id="tripsTitle">{title}</h2>
         {text && <p>{text}</p>}
       </div>
@@ -51,14 +51,14 @@ function TripsPanel({ title, text, trips, onOpen, onAll }: {
                     <b>{t.name}</b>
                     <span>{[t.schedule || t.duration, t.town].filter(Boolean).join(" · ")}</span>
                   </span>
-                  <span className="trip-price"><b>{cop(t.price)}</b><span>por persona</span></span>
+                  <span className="trip-price"><b>{price(t.price)}</b><span>{tr("por persona")}</span></span>
                 </button>
               </li>
             );
           })}
         </ul>
-      ) : <p className="trips-empty">Muy pronto publicaremos las salidas de este año.</p>}
-      <button type="button" className="trips-all" onClick={onAll}>Ver todas las experiencias <Icon name="arrow" /></button>
+      ) : <p className="trips-empty">{tr("Muy pronto publicaremos las salidas de este año.")}</p>}
+      <button type="button" className="trips-all" onClick={onAll}>{tr("Ver todas las experiencias")} <Icon name="arrow" /></button>
     </aside>
   );
 }
@@ -68,11 +68,12 @@ function TrustItem({ icon, title, desc }: { icon: string; title: string; desc: s
 }
 
 function CatCardPhoto({ photo, title, desc, count, onClick }: { photo: string; title: string; desc: string; count: number; onClick: () => void }) {
+  const { t } = useI18n();
   return (
     <div className="cat-card cat-card-photo reveal" onClick={onClick}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={photo} alt="" loading="lazy" />
-      <span className="cat-count">{count} opciones</span>
+      <span className="cat-count">{count} {t(count === 1 ? "opción" : "opciones")}</span>
       <h3>{title}</h3><p>{desc}</p>
     </div>
   );
@@ -90,7 +91,9 @@ function DestCard({ town, photo, label, onClick }: { town: string; photo: string
 
 export function Home() {
   const router = useRouter();
-  const { content, reviews } = useApp();
+  const { reviews } = useApp();
+  const content = useContent();
+  const { t } = useI18n();
   const { setCatalogTown } = useSite();
   const listings = useVisibleListings();
   const [searchTown, setSearchTown] = useState("todos");
@@ -102,6 +105,10 @@ export function Home() {
 
   function goCatalog(cat: Category) { router.push(ROUTES[cat]); }
   const catCount = (cat: Category) => listings.filter((l) => l.cat === cat).length;
+  const townLabel = (town: string) => {
+    const n = listings.filter((l) => l.town === town).length;
+    return n + " " + t(n === 1 ? "opción" : "opciones");
+  };
   // Destino: filtra el catálogo por pueblo, en la categoría del primer listado de ese pueblo
   const goTown = (town: string) => () => {
     const match = listings.find((l) => l.town === town);
@@ -118,13 +125,13 @@ export function Home() {
             <h1 dangerouslySetInnerHTML={{ __html: content.heroTitle }} />
             <p className="hero-lede" dangerouslySetInnerHTML={{ __html: content.heroLede }} />
             <div className="hero-actions">
-              <button className="btn btn-accent" onClick={() => goCatalog("alojamientos")}>Explorar fincas y cabañas</button>
-              <button className="btn btn-ghost" onClick={() => goCatalog("tours")}>Ver experiencias</button>
+              <button className="btn btn-accent" onClick={() => goCatalog("alojamientos")}>{t("Explorar fincas y cabañas")}</button>
+              <button className="btn btn-ghost" onClick={() => goCatalog("tours")}>{t("Ver experiencias")}</button>
             </div>
             <div className="hero-stats">
-              <div className="hero-stat"><CountTo to={listings.length} prefix="+" /><span>Alojamientos y experiencias</span></div>
-              <div className="hero-stat"><CountTo to={4.8} decimals={1} /><span>Calificación promedio</span></div>
-              <div className="hero-stat"><CountTo to={3} /><span>Departamentos del eje cafetero</span></div>
+              <div className="hero-stat"><CountTo to={listings.length} prefix="+" /><span>{t("Alojamientos y experiencias")}</span></div>
+              <div className="hero-stat"><CountTo to={4.8} decimals={1} /><span>{t("Calificación promedio")}</span></div>
+              <div className="hero-stat"><CountTo to={3} /><span>{t("Departamentos del eje cafetero")}</span></div>
             </div>
             <div className="rnt-badge">
               <Icon name="shield" />
@@ -139,27 +146,27 @@ export function Home() {
         </div>
         <div className="container">
           <div className="search-card">
-            <div className="field"><label>Destino</label>
+            <div className="field"><label>{t("Destino")}</label>
               <select id="searchTown" value={searchTown} onChange={(e) => setSearchTown(e.target.value)}>
-                <option value="todos">Todo el eje cafetero</option>
+                <option value="todos">{t("Todo el eje cafetero")}</option>
                 <option>Salento</option><option>Filandia</option><option>Circasia</option><option>Manizales</option><option>Santa Rosa de Cabal</option>
               </select>
             </div>
-            <div className="field"><label>Tipo</label>
+            <div className="field"><label>{t("Tipo")}</label>
               <select id="searchCat" value={searchCat} onChange={(e) => setSearchCat(e.target.value as Category)}>
-                <option value="alojamientos">Fincas y Cabañas</option><option value="parques">Parques Temáticos</option><option value="tours">Experiencias</option>
+                <option value="alojamientos">{t("Fincas y Cabañas")}</option><option value="parques">{t("Parques Temáticos")}</option><option value="tours">{t("Experiencias")}</option>
               </select>
             </div>
-            <div className="field"><label>Huéspedes</label>
-              <select id="searchGuests"><option>2 personas</option><option>4 personas</option><option>6 personas</option><option>8+ personas</option></select>
+            <div className="field"><label>{t("Huéspedes")}</label>
+              <select id="searchGuests">{["2", "4", "6", "8+"].map((n) => <option key={n}>{n} {t("personas")}</option>)}</select>
             </div>
-            <button className="btn btn-primary" id="searchGo" onClick={() => { setCatalogTown(searchTown); goCatalog(searchCat); }}>Buscar</button>
+            <button className="btn btn-primary" id="searchGo" onClick={() => { setCatalogTown(searchTown); goCatalog(searchCat); }}>{t("Buscar")}</button>
           </div>
         </div>
       </section>
 
       <section className="section"><div className="container">
-        <div className="section-head reveal"><div><p className="eyebrow">Categorías</p><h2>{content.catSectionTitle}</h2></div></div>
+        <div className="section-head reveal"><div><p className="eyebrow">{t("Categorías")}</p><h2>{content.catSectionTitle}</h2></div></div>
         <div className="cat-grid">
           <CatCardPhoto count={catCount("alojamientos")} onClick={() => goCatalog("alojamientos")} photo="/photos/finca-a.jpg" title={content.catAlojTitle} desc={content.catAlojDesc} />
           <CatCardPhoto count={catCount("parques")} onClick={() => goCatalog("parques")} photo="/photos/parque-cafe.jpg" title={content.catParquesTitle} desc={content.catParquesDesc} />
@@ -169,24 +176,24 @@ export function Home() {
 
       <section className="section section-sunken"><div className="container">
         <div className="section-head reveal">
-          <div><p className="eyebrow">Destacados</p><h2>{content.featuredTitle}</h2></div>
-          <button className="btn btn-ghost btn-sm" onClick={() => goCatalog("alojamientos")}>Ver todo <Icon name="arrow" /></button>
+          <div><p className="eyebrow">{t("Destacados")}</p><h2>{content.featuredTitle}</h2></div>
+          <button className="btn btn-ghost btn-sm" onClick={() => goCatalog("alojamientos")}>{t("Ver todo")} <Icon name="arrow" /></button>
         </div>
         <div className="card-grid">{featured.map((l) => <ListingCard key={l.id} l={l} />)}</div>
       </div></section>
 
       <section className="section"><div className="container">
-        <div className="section-head reveal"><div><p className="eyebrow">Explora por destino</p><h2>Cuatro pueblos, un mismo territorio</h2></div></div>
+        <div className="section-head reveal"><div><p className="eyebrow">{t("Explora por destino")}</p><h2>{t("Cuatro pueblos, un mismo territorio")}</h2></div></div>
         <div className="dest-grid">
-          <DestCard town="Salento" onClick={goTown("Salento")} photo="/photos/salento-calle.jpg" label="6 opciones" />
-          <DestCard town="Filandia" onClick={goTown("Filandia")} photo="/photos/filandia-colina.jpg" label="3 opciones" />
-          <DestCard town="Manizales" onClick={goTown("Manizales")} photo="/photos/manizales-catedral.jpg" label="1 opción" />
-          <DestCard town="Santa Rosa de Cabal" onClick={goTown("Santa Rosa de Cabal")} photo="/photos/termales.jpg" label="2 opciones" />
+          <DestCard town="Salento" onClick={goTown("Salento")} photo="/photos/salento-calle.jpg" label={townLabel("Salento")} />
+          <DestCard town="Filandia" onClick={goTown("Filandia")} photo="/photos/filandia-colina.jpg" label={townLabel("Filandia")} />
+          <DestCard town="Manizales" onClick={goTown("Manizales")} photo="/photos/manizales-catedral.jpg" label={townLabel("Manizales")} />
+          <DestCard town="Santa Rosa de Cabal" onClick={goTown("Santa Rosa de Cabal")} photo="/photos/termales.jpg" label={townLabel("Santa Rosa de Cabal")} />
         </div>
       </div></section>
 
       <section className="section section-sunken"><div className="container">
-        <div className="section-head reveal"><div><p className="eyebrow">Por qué reservar aquí</p><h2>{content.trustTitle}</h2></div></div>
+        <div className="section-head reveal"><div><p className="eyebrow">{t("Por qué reservar aquí")}</p><h2>{content.trustTitle}</h2></div></div>
         <div className="trust-grid">
           <TrustItem icon="shield" title={content.trust1Title} desc={content.trust1Desc} />
           <TrustItem icon="host" title={content.trust2Title} desc={content.trust2Desc} />
@@ -196,25 +203,25 @@ export function Home() {
       </div></section>
 
       <section className="section" id="experiencias"><div className="container">
-        <div className="section-head reveal"><div><p className="eyebrow">Testimonios</p><h2>{content.reviewsTitle}</h2></div></div>
+        <div className="section-head reveal"><div><p className="eyebrow">{t("Testimonios")}</p><h2>{content.reviewsTitle}</h2></div></div>
         <div className="carousel-wrap reveal">
           <div className="carousel-track" id="reviewTrack" ref={reviewTrack}>
             {reviews.map((r, i) => <ReviewCard key={r.name + i} r={r} />)}
           </div>
           <div className="carousel-arrows">
-            <button type="button" className="carousel-arrow" aria-label="Anteriores reseñas" onClick={() => reviewTrack.current?.scrollBy({ left: -340, behavior: "smooth" })}><Icon name="chevLeft" /></button>
-            <button type="button" className="carousel-arrow" aria-label="Siguientes reseñas" onClick={() => reviewTrack.current?.scrollBy({ left: 340, behavior: "smooth" })}><Icon name="chevRight" /></button>
+            <button type="button" className="carousel-arrow" aria-label={t("Anteriores reseñas")} onClick={() => reviewTrack.current?.scrollBy({ left: -340, behavior: "smooth" })}><Icon name="chevLeft" /></button>
+            <button type="button" className="carousel-arrow" aria-label={t("Siguientes reseñas")} onClick={() => reviewTrack.current?.scrollBy({ left: 340, behavior: "smooth" })}><Icon name="chevRight" /></button>
           </div>
         </div>
       </div></section>
 
       <section className="section" id="nosotros"><div className="container hero-grid">
-        <div><HeroPhoto src="/photos/penol-guatape.jpg" alt="Paisaje colombiano de montaña y agua" extraClass="hero-art-ring-sm" /></div>
+        <div><HeroPhoto src="/photos/penol-guatape.jpg" alt={t("Paisaje colombiano de montaña y agua")} extraClass="hero-art-ring-sm" /></div>
         <div>
           <p className="eyebrow">{content.aboutEyebrow}</p>
           <h2 style={{ fontSize: "clamp(24px,3.2vw,34px)", marginTop: 10 }}>{content.aboutTitle}</h2>
           <p className="hero-lede" style={{ marginTop: 16 }}>{content.aboutText}</p>
-          <button className="btn btn-primary" style={{ marginTop: 22 }} onClick={() => router.push(ROUTES.nosotros)}>Conocer más sobre nosotros</button>
+          <button className="btn btn-primary" style={{ marginTop: 22 }} onClick={() => router.push(ROUTES.nosotros)}>{t("Conocer más sobre nosotros")}</button>
         </div>
       </div></section>
     </>

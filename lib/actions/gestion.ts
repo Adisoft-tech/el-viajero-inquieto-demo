@@ -36,6 +36,7 @@ interface FincaRow {
   id: string; name: string; town: string; dept: string; icon: string; tone: Listing["tone"];
   price: number; cap: number; rating: string; reviews: number; tags: string[]; description: string; highlights: string[];
   active: boolean; photos: string[];
+  name_en: string; description_en: string; highlights_en: string[]; tags_en: string[];
 }
 function toListing(r: FincaRow): Listing {
   return {
@@ -43,12 +44,14 @@ function toListing(r: FincaRow): Listing {
     unit: "noche", price: r.price, cap: r.cap, rating: Number(r.rating), reviews: r.reviews,
     tags: r.tags, desc: r.description, highlights: r.highlights,
     active: r.active, ...(r.photos.length ? { photos: r.photos } : {}),
+    ...(r.name_en ? { nameEn: r.name_en } : {}), ...(r.description_en ? { descEn: r.description_en } : {}),
+    ...(r.highlights_en.length ? { highlightsEn: r.highlights_en } : {}), ...(r.tags_en.length ? { tagsEn: r.tags_en } : {}),
   };
 }
 
 export async function listFincas(): Promise<Listing[]> {
   const rows = await db()<FincaRow[]>`
-    select id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos
+    select id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos, name_en, description_en, highlights_en, tags_en
     from fincas where deleted_at is null order by created_at, id`;
   return rows.map(toListing);
 }
@@ -69,12 +72,12 @@ export async function saveFinca(token: string, id: string | null, input: FincaIn
           name = ${name}, town = coalesce(nullif(${town}, ''), town), dept = coalesce(nullif(${dept}, ''), dept),
           price = ${price}, cap = ${cap}, description = coalesce(nullif(${desc}, ''), description), updated_at = now()
         where id = ${text(id, 120)} and deleted_at is null
-        returning id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos`
+        returning id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos, name_en, description_en, highlights_en, tags_en`
     : await sql<FincaRow[]>`
         insert into fincas (id, name, town, dept, price, cap, rating, reviews, description, highlights)
         values (${"finca-" + Date.now()}, ${name}, ${town || "Por definir"}, ${dept || "Eje cafetero"}, ${price}, ${cap},
                 5.0, 0, ${desc || "Descripción pendiente por completar."}, ${["Detalles por definir"]})
-        returning id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos`;
+        returning id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos, name_en, description_en, highlights_en, tags_en`;
   if (!rows.length) throw new Error("La finca no existe");
   return toListing(rows[0]);
 }

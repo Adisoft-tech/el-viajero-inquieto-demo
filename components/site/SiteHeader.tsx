@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/lib/icons";
 import { useApp } from "@/lib/store";
 import { ROUTES } from "@/lib/routes";
+import { useI18n } from "./SiteContext";
 
 const LINKS = [["home", "Inicio"], ["experiencias", "Testimonios"], ["notiviajero", "Notiviajero"], ["nosotros", "Nosotros"]] as const;
 type LinkKey = (typeof LINKS)[number][0];
@@ -18,8 +19,32 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
+/** Banderas del selector de idioma (SVG: las banderas emoji no se ven en Windows). */
+function FlagCO() {
+  return (
+    <svg viewBox="0 0 30 20" aria-hidden="true">
+      <rect width="30" height="10" fill="#FCD116" />
+      <rect y="10" width="30" height="5" fill="#003893" />
+      <rect y="15" width="30" height="5" fill="#CE1126" />
+    </svg>
+  );
+}
+function FlagUS() {
+  const stripes = Array.from({ length: 13 }, (_, i) => i);
+  return (
+    <svg viewBox="0 0 30 20" aria-hidden="true">
+      {stripes.map((i) => <rect key={i} y={(i * 20) / 13} width="30" height={20 / 13 + 0.05} fill={i % 2 ? "#FFFFFF" : "#B22234"} />)}
+      <rect width="13" height={(20 / 13) * 7} fill="#3C3B6E" />
+      {[0, 1, 2, 3].flatMap((r) => [0, 1, 2, 3, 4].map((c) => (
+        <circle key={r + "-" + c} cx={1.6 + c * 2.45 + (r % 2) * 1.2} cy={1.4 + r * 2.5} r="0.55" fill="#FFFFFF" />
+      )))}
+    </svg>
+  );
+}
+
 /** Botón "Servicios" con flecha: reúne Fincas y Cabañas, Parques Temáticos y Tours. */
 function ServicesMenu({ pathname, onNavigate, inline }: { pathname: string; onNavigate: () => void; inline?: boolean }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const active = SERVICES.some(([key]) => pathname === ROUTES[key]);
@@ -37,12 +62,12 @@ function ServicesMenu({ pathname, onNavigate, inline }: { pathname: string; onNa
   return (
     <div className={"nav-dropdown" + (inline ? " inline" : "")} ref={ref}>
       <button type="button" className={"nav-link nav-dropdown-btn" + (active ? " active" : "")} aria-expanded={open} aria-haspopup="true" onClick={() => setOpen((o) => !o)}>
-        Servicios <Chevron open={open} />
+        {t("Servicios")} <Chevron open={open} />
       </button>
       {open && (
         <div className="nav-dropdown-menu" role="menu">
           {SERVICES.map(([key, label]) => (
-            <Link key={key} href={ROUTES[key]} role="menuitem" className={"nav-dropdown-item" + (pathname === ROUTES[key] ? " active" : "")} onClick={onNavigate}>{label}</Link>
+            <Link key={key} href={ROUTES[key]} role="menuitem" className={"nav-dropdown-item" + (pathname === ROUTES[key] ? " active" : "")} onClick={onNavigate}>{t(label)}</Link>
           ))}
         </div>
       )}
@@ -55,6 +80,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { t, lang, setLang } = useI18n();
 
   // Cierra el menú móvil al cambiar de página
   useEffect(() => { setMobileOpen(false); }, [pathname]);
@@ -62,7 +88,7 @@ export function SiteHeader() {
   const isActive = (key: LinkKey) => pathname === ROUTES[key] || (key === "notiviajero" && pathname.startsWith(ROUTES.notiviajero + "/"));
   const navLink = ([key, label]: readonly [LinkKey, string]) => (
     <Link key={key} href={ROUTES[key]} className={"nav-link" + (isActive(key) ? " active" : "")} onClick={() => setMobileOpen(false)}>
-      {label}
+      {t(label)}
     </Link>
   );
   const links = (inline: boolean) => (
@@ -83,16 +109,20 @@ export function SiteHeader() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="logo-dark" src="/photos/logo-mark-white.png" alt="El Viajero Inquieto" />
           </div>
-          <div><span className="brand-word">El Viajero Inquieto</span><span className="brand-sub">Tu aliado al viajar</span></div>
+          <div><span className="brand-word">El Viajero Inquieto</span><span className="brand-sub">{t("Tu aliado al viajar")}</span></div>
         </Link>
         <nav className="nav-links">{links(false)}</nav>
         <div className="nav-cta">
-          <button className={"nav-fav" + (pathname === ROUTES.favoritos ? " active" : "")} id="navFavBtn" aria-label="Ver favoritos" onClick={() => router.push(ROUTES.favoritos)}>
+          <div className="lang-switch" role="group" aria-label={t("Idioma")}>
+            <button type="button" className={lang === "es" ? "active" : undefined} aria-pressed={lang === "es"} aria-label="Español" title="Español" onClick={() => setLang("es")}><FlagCO /><span>ES</span></button>
+            <button type="button" className={lang === "en" ? "active" : undefined} aria-pressed={lang === "en"} aria-label="English" title="English" onClick={() => setLang("en")}><FlagUS /><span>EN</span></button>
+          </div>
+          <button className={"nav-fav" + (pathname === ROUTES.favoritos ? " active" : "")} id="navFavBtn" aria-label={t("Ver favoritos")} onClick={() => router.push(ROUTES.favoritos)}>
             <Icon name="heart" />
             {favorites.length > 0 && <span className="nav-fav-count">{favorites.length}</span>}
           </button>
-          <button className="btn btn-primary btn-sm" onClick={() => router.push(ROUTES.alojamientos)}>Reservar ahora</button>
-          <button className="nav-burger" id="burgerBtn" aria-label="Abrir menú" onClick={() => setMobileOpen((o) => !o)}>
+          <button className="btn btn-primary btn-sm" onClick={() => router.push(ROUTES.alojamientos)}>{t("Reservar ahora")}</button>
+          <button className="nav-burger" id="burgerBtn" aria-label={t("Abrir menú")} onClick={() => setMobileOpen((o) => !o)}>
             <Icon name="dash" />
           </button>
         </div>

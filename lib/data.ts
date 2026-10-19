@@ -6,6 +6,8 @@ export interface Listing {
   icon: string; tone: "sage" | "lagoon" | "ink"; unit: "noche" | "persona";
   price: number; cap: number; rating: number; reviews: number;
   duration?: string; tags: string[]; desc: string; highlights: string[];
+  /** Versión en inglés (opcional): si falta, el sitio en inglés usa la traducción por defecto o el texto en español. */
+  nameEn?: string; descEn?: string; highlightsEn?: string[]; tagsEn?: string[]; durationEn?: string; scheduleEn?: string;
   /** Fecha del viaje programado, en texto libre (ej. "15–18 de marzo de 2027"); se muestra en el inicio. */
   schedule?: string;
   /** Fotos propias del listado (URLs); si faltan se usan las de LISTING_GALLERY. */
