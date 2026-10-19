@@ -57,7 +57,7 @@ const same = (s: string) => s;
 
 const CHAT_INTENTS: { test: RegExp; reply: (ctx: ChatContext) => ChatAnswer }[] = [
   { test: /^(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|hi|ola|hello|good morning|good afternoon|good evening)\b/, reply: ({ t = same }) => ({
-    text: t("¡Hola! Puedo ayudarte a encontrar fincas, parques o experiencias en el eje cafetero, contarte sobre pagos o ponerte en contacto con nosotros."),
+    text: t("¡Hola! Puedo ayudarte a encontrar fincas, parques o experiencias en Colombia, contarte sobre pagos o ponerte en contacto con nosotros."),
     chips: ["Fincas cerca a Manizales", "Parques para niños", "Experiencias de un día", "¿Cómo pago?"],
   }) },
   { test: /ayuda|que puedes hacer|qué puedes hacer|como funciona|cómo funcionas|que eres|qué eres|help|what can you do|how does (this|it) work/, reply: ({ t = same }) => ({
@@ -65,7 +65,7 @@ const CHAT_INTENTS: { test: RegExp; reply: (ctx: ChatContext) => ChatAnswer }[] 
     chips: ["Fincas en Quindío", "Lo más barato", "Mejor calificado"],
   }) },
   { test: /quienes son|quiénes son|sobre ustedes|mision|misión|vision|visión|empresa|who are you|about (you|us)|mission|company/, reply: ({ t = same }) => ({
-    text: t("El Viajero Inquieto es una agencia de viajes colombiana enfocada en turismo familiar y experiencias con raíz local: fincas, cabañas, parques y experiencias en el eje cafetero. Creamos viajes memorables conectando a los viajeros con la riqueza cultural, natural y humana de cada destino."),
+    text: t("El Viajero Inquieto es una agencia de viajes colombiana enfocada en turismo familiar y experiencias con raíz local: fincas, cabañas, parques y experiencias en toda Colombia. Creamos viajes memorables conectando a los viajeros con la riqueza cultural, natural y humana de cada destino."),
     chips: ["Ver Nosotros"],
   }) },
   { test: /contacto|telefono|teléfono|correo|email|whatsapp|hablar con alguien|contact|phone|call|talk to (someone|a person)/, reply: ({ content: c, t = same }) => ({
@@ -144,7 +144,7 @@ function answerInSpanishTemplates(raw: string, listings: Listing[], ctx: ChatCon
     return { text: "No estoy segura de haber entendido. Puedo buscar por destino (ej. \"cerca a Manizales\"), tipo (fincas, parques, experiencias), precio o calificación.", chips: ["Fincas cerca a Manizales", "Parques para niños", "Lo más barato", "Mejor calificado"] };
   }
   if (!results.length) {
-    return { text: "No encontré opciones exactas para eso. Tenemos fincas y cabañas, parques temáticos y experiencias en Quindío, Caldas y Risaralda.", chips: ["Fincas y Cabañas", "Parques Temáticos", "Experiencias"] };
+    return { text: "No encontré opciones exactas para eso. Tenemos fincas y cabañas, parques temáticos y experiencias en distintos destinos de Colombia.", chips: ["Fincas y Cabañas", "Parques Temáticos", "Experiencias"] };
   }
   const top = results.slice(0, 4);
   const label = (cat ? t(catLabel(cat)) : t("opciones")).toLowerCase();

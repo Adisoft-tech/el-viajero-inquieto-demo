@@ -8,8 +8,8 @@ import { useI18n, useSite, useVisibleListings, type CatalogSort } from "./SiteCo
 
 const TITLES: Record<Category, [string, string]> = {
   alojamientos: ["Fincas y Cabañas", "Descansa en casonas cafeteras y refugios de montaña operados por anfitriones locales."],
-  parques: ["Parques Temáticos", "Café, agro y naturaleza en un solo día, con entradas listas desde antes de llegar."],
-  tours: ["Experiencias", "Caminatas, agua y miradores del eje cafetero, con guía y transporte incluidos."],
+  parques: ["Parques Temáticos", "Parques temáticos, naturaleza y aventura en todo Colombia, con entradas listas desde antes de llegar."],
+  tours: ["Experiencias", "Caminatas, agua y miradores de Colombia, con guía y transporte incluidos."],
 };
 
 export function Catalog({ cat }: { cat: Category }) {

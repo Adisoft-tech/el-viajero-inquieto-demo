@@ -105,6 +105,8 @@ export function Home() {
 
   function goCatalog(cat: Category) { router.push(ROUTES[cat]); }
   const catCount = (cat: Category) => listings.filter((l) => l.cat === cat).length;
+  const deptCount = new Set(listings.map((l) => l.dept)).size;
+  const towns = Array.from(new Set(listings.map((l) => l.town))).sort((a, b) => a.localeCompare(b, "es"));
   const townLabel = (town: string) => {
     const n = listings.filter((l) => l.town === town).length;
     return n + " " + t(n === 1 ? "opción" : "opciones");
@@ -131,7 +133,7 @@ export function Home() {
             <div className="hero-stats">
               <div className="hero-stat"><CountTo to={listings.length} prefix="+" /><span>{t("Alojamientos y experiencias")}</span></div>
               <div className="hero-stat"><CountTo to={4.8} decimals={1} /><span>{t("Calificación promedio")}</span></div>
-              <div className="hero-stat"><CountTo to={3} /><span>{t("Departamentos del eje cafetero")}</span></div>
+              <div className="hero-stat"><CountTo to={deptCount} /><span>{t("Departamentos de Colombia")}</span></div>
             </div>
             <div className="rnt-badge">
               <Icon name="shield" />
@@ -148,8 +150,8 @@ export function Home() {
           <div className="search-card">
             <div className="field"><label>{t("Destino")}</label>
               <select id="searchTown" value={searchTown} onChange={(e) => setSearchTown(e.target.value)}>
-                <option value="todos">{t("Todo el eje cafetero")}</option>
-                <option>Salento</option><option>Filandia</option><option>Circasia</option><option>Manizales</option><option>Santa Rosa de Cabal</option>
+                <option value="todos">{t("Toda Colombia")}</option>
+                {towns.map((town) => <option key={town}>{town}</option>)}
               </select>
             </div>
             <div className="field"><label>{t("Tipo")}</label>
@@ -183,7 +185,7 @@ export function Home() {
       </div></section>
 
       <section className="section"><div className="container">
-        <div className="section-head reveal"><div><p className="eyebrow">{t("Explora por destino")}</p><h2>{t("Cuatro pueblos, un mismo territorio")}</h2></div></div>
+        <div className="section-head reveal"><div><p className="eyebrow">{t("Explora por destino")}</p><h2>{t("Destinos para empezar tu viaje")}</h2></div></div>
         <div className="dest-grid">
           <DestCard town="Salento" onClick={goTown("Salento")} photo="/photos/salento-calle.jpg" label={townLabel("Salento")} />
           <DestCard town="Filandia" onClick={goTown("Filandia")} photo="/photos/filandia-colina.jpg" label={townLabel("Filandia")} />

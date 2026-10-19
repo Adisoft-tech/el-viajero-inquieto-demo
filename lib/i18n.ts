@@ -31,11 +31,11 @@ export const INITIAL_CONTENT_EN: SiteContent = {
   rntLabel: "Active National Tourism Registry",
   heroTripsTitle: "Scheduled trips 2027",
   heroTripsText: "Fixed-date departures with a guide and everything taken care of. Save your spot early.",
-  catSectionTitle: "Three ways to explore the Coffee Region",
+  catSectionTitle: "Three ways to explore Colombia",
   catAlojTitle: "Farms & Cabins",
   catAlojDesc: "Coffee estates, mountain cabins and retreats with real hosts.",
   catParquesTitle: "Theme Parks",
-  catParquesDesc: "Coffee, farm life and nature in the region's most visited parks.",
+  catParquesDesc: "Coffee, farm life, water fun and nature in Colombia's most visited parks.",
   catToursTitle: "Experiences",
   catToursDesc: "Hikes, kayaking, birdwatching and guided day trips.",
   featuredTitle: "What our travelers book the most",
@@ -65,7 +65,7 @@ export const INITIAL_CONTENT_EN: SiteContent = {
   contactTitle: "Let's talk about your next trip",
   whatsappMessage: "Hi! I'm interested in an experience with El Viajero Inquieto",
   socialTitle: "Follow us",
-  footerTagline: "Family travel, farm stays and experiences with Colombian roots, in the Coffee Region and abroad.",
+  footerTagline: "Family travel, farm stays and experiences with Colombian roots, all over Colombia and abroad.",
 };
 export const TRANSLATABLE_KEYS = Object.keys(INITIAL_CONTENT_EN);
 

@@ -31,18 +31,18 @@ export interface FincaBooking {
 
 export const INITIAL_CONTENT: SiteContent = {
   // Inicio
-  heroEyebrow: "Agencia de viajes · Eje cafetero y Colombia",
+  heroEyebrow: "Agencia de viajes · Colombia",
   heroTitle: "Colombia, en una forma <em>más cercana</em>",
   heroLede: "Fincas que se vuelven refugio, rutas que despiertan curiosidad y destinos vividos desde la emoción. Reserva directamente con quienes conocen cada camino.",
   rnt: "222679",
   rntLabel: "Registro Nacional de Turismo activo",
   heroTripsTitle: "Viajes programados 2027",
   heroTripsText: "Salidas con fecha fija, guía y todo organizado. Reserva tu cupo con tiempo.",
-  catSectionTitle: "Tres formas de recorrer el eje cafetero",
+  catSectionTitle: "Tres formas de recorrer Colombia",
   catAlojTitle: "Fincas y Cabañas",
   catAlojDesc: "Casonas cafeteras, cabañas de montaña y refugios con anfitriones reales.",
   catParquesTitle: "Parques Temáticos",
-  catParquesDesc: "Café, agro y naturaleza en los parques más visitados de la región.",
+  catParquesDesc: "Café, agro, agua y naturaleza en los parques más visitados de Colombia.",
   catToursTitle: "Experiencias",
   catToursDesc: "Caminatas, kayak, avistamiento de aves y rutas guiadas de un día.",
   featuredTitle: "Lo que más reservan nuestros viajeros",
@@ -81,7 +81,7 @@ export const INITIAL_CONTENT: SiteContent = {
   facebookUrl: "https://www.facebook.com/people/El-viajero-inquieto/61572239858718/?mibextid=wwXIfr&rdid=BObk5mMe9Qp2PFFH&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1e2pvzghQU%2F%3Fmibextid%3DwwXIfr",
   instagramUrl: "https://www.instagram.com/elviajeroinquieto11?stkn=MWJxaWtlbnVtdXZvYw%3D%3D&utm_source=qr",
   // Pie de página
-  footerTagline: "Turismo familiar, fincas y experiencias con raíz colombiana, en el eje cafetero y en el exterior.",
+  footerTagline: "Turismo familiar, fincas y experiencias con raíz colombiana, en toda Colombia y en el exterior.",
 };
 
 export const INITIAL_LISTINGS: Listing[] = [
