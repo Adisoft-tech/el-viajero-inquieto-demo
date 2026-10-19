@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { adminListPosts, deletePost, savePost, type BlogInput, type BlogPost } from "@/lib/actions/blog";
 import { Icon } from "@/lib/icons";
 import { useApp } from "@/lib/store";
+import { ImageUpload } from "./ImageUpload";
 import { Modal } from "./Modal";
 import { formatPostDate, POST_CATEGORIES } from "@/components/site/Notiviajero";
 
@@ -37,7 +38,8 @@ function PostEditor({ post, onSave, onCancel }: { post: BlogPost | null; onSave:
           </div>
           <div className="field"><label>Fecha de publicación</label><input id="pbDate" type="date" value={f.publishedAt} onChange={(e) => set("publishedAt", e.target.value)} /></div>
           <div className="field"><label>Autor</label><input id="pbAuthor" value={f.author} onChange={(e) => set("author", e.target.value)} /></div>
-          <div className="field"><label>Imagen de portada (enlace)</label><input id="pbCover" placeholder="https://…/foto.jpg" value={f.coverUrl} onChange={(e) => set("coverUrl", e.target.value)} /></div>
+
+          <div className="field full"><label htmlFor="pbCover">Imagen de portada</label><ImageUpload id="pbCover" value={f.coverUrl} onChange={(url) => set("coverUrl", url)} /></div>
           <div className="field full"><label>Resumen (se ve en la lista)</label><textarea id="pbExcerpt" rows={2} value={f.excerpt} onChange={(e) => set("excerpt", e.target.value)} /></div>
           <div className="field full"><label>Contenido</label>
             <textarea id="pbBody" rows={14} value={f.body} onChange={(e) => set("body", e.target.value)} />

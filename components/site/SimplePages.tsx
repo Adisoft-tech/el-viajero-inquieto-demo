@@ -56,7 +56,7 @@ export function Nosotros() {
           <img src="/photos/logo-stacked-ink.png" alt="El Viajero Inquieto" style={{ width: 220, maxWidth: "60%", height: "auto", margin: "0 auto" }} />
         </div>
         <h1 style={{ fontSize: "clamp(26px,3.6vw,36px)", textAlign: "center", whiteSpace: "pre-line" }}>{c.nosName}</h1>
-        <p className="detail-desc" style={{ marginTop: 14, textAlign: "center", fontStyle: "italic" }}>{c.nosMotto}</p>
+        <p style={{ margin: "16px auto 0", maxWidth: "32ch", textAlign: "center", fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "clamp(24px,3.4vw,34px)", lineHeight: 1.25, color: "var(--accent)" }}>{c.nosMotto}</p>
 
         <div className="detail-highlights" style={{ marginTop: 40, gridTemplateColumns: "1fr 1fr" }}>
           <div className="panel" style={{ marginBottom: 0 }}>

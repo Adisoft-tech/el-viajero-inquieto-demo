@@ -7,6 +7,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Deja pasar /gestion, los assets de Next y los archivos estáticos de /public (sw.js, manifest, fotos).
-  matcher: ["/((?!gestion(?:/|$)|_next/|.*\\.[\\w]+$).*)"],
+  // Deja pasar /gestion, las imágenes subidas (/api/media), los assets de Next y los archivos estáticos de /public.
+  matcher: ["/((?!gestion(?:/|$)|api/media(?:/|$)|_next/|.*\\.[\\w]+$).*)"],
 };

@@ -20,7 +20,8 @@ export type AuthStatus = "checking" | "authed" | "anon";
 
 const TOKEN_KEY = "vi_session_token";
 
-function readToken(): string | null {
+/** Token de sesión guardado; lo usan también las subidas de archivos (que no pasan por Server Actions). */
+export function readToken(): string | null {
   try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
 }
 function writeToken(token: string | null) {

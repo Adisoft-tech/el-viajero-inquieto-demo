@@ -55,7 +55,7 @@ export const INITIAL_CONTENT: SiteContent = {
   aboutText: "Creamos experiencias de viaje personalizadas y memorables en Colombia, conectando de manera responsable a los viajeros con la riqueza cultural, natural y humana de cada destino. Viajar juntos: la experiencia empieza antes de llegar y continúa en la memoria.",
   // Página Nosotros (los párrafos se separan con una línea en blanco)
   nosEyebrow: "Nuestra esencia",
-  nosName: "EL VIAJERO INQUIETO\nAGENCIA DE VIAJES",
+  nosName: "AGENCIA DE VIAJES",
   nosMotto: "Viajando lento, profundo y con sentido.",
   nosMissionTitle: "Misión",
   nosMission: "En El Viajero Inquieto Agencia de Viajes creamos y acompañamos experiencias de viaje que conectan a las personas con los territorios, sus culturas y sus comunidades.\n\nDiseñamos viajes con sentido, combinando turismo, educación y experiencias pedagógicas que permitan a niños, jóvenes, familias y viajeros conocer, aprender, disfrutar y comprender mejor el país que habitamos.\n\nTrabajamos con cercanía, transparencia y responsabilidad, procurando que cada viaje genere valor no solo para quien viaja, sino también para los lugares y las personas que nos reciben.\n\nPorque creemos que viajar puede enseñarnos, transformarnos y también transformar positivamente los lugares que visitamos.",
