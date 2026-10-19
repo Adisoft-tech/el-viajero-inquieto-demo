@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import type { Category } from "@/lib/data";
+import { photoFor, type Category, type Listing } from "@/lib/data";
+import { cop } from "@/lib/format";
 import { Icon } from "@/lib/icons";
 import { useApp } from "@/lib/store";
 import { ROUTES } from "@/lib/routes";
@@ -21,6 +22,44 @@ function HeroPhoto({ src, alt, extraClass }: { src: string; alt: string; extraCl
         <img src={src} alt={alt} loading="lazy" />
       </div>
     </div>
+  );
+}
+
+/** Panel del inicio con las experiencias activas (viajes programados), con su fecha si la tienen. */
+function TripsPanel({ title, text, trips, onOpen, onAll }: {
+  title: string; text: string; trips: Listing[]; onOpen: (l: Listing) => void; onAll: () => void;
+}) {
+  return (
+    <aside className="trips-panel" aria-labelledby="tripsTitle">
+      <div className="trips-head">
+        <span className="trips-badge"><Icon name="calendar" /> Agenda de salidas</span>
+        <h2 id="tripsTitle">{title}</h2>
+        {text && <p>{text}</p>}
+      </div>
+      {trips.length ? (
+        <ul className="trips-list">
+          {trips.map((t) => {
+            const photo = photoFor(t);
+            return (
+              <li key={t.id}>
+                <button type="button" className="trip-row" onClick={() => onOpen(t)}>
+                  <span className={"trip-thumb tone-" + t.tone}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {photo ? <img src={photo} alt="" loading="lazy" /> : <Icon name={t.icon} />}
+                  </span>
+                  <span className="trip-info">
+                    <b>{t.name}</b>
+                    <span>{[t.schedule || t.duration, t.town].filter(Boolean).join(" · ")}</span>
+                  </span>
+                  <span className="trip-price"><b>{cop(t.price)}</b><span>por persona</span></span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : <p className="trips-empty">Muy pronto publicaremos las salidas de este año.</p>}
+      <button type="button" className="trips-all" onClick={onAll}>Ver todas las experiencias <Icon name="arrow" /></button>
+    </aside>
   );
 }
 
@@ -58,6 +97,7 @@ export function Home() {
   const [searchCat, setSearchCat] = useState<Category>("alojamientos");
   const reviewTrack = useRef<HTMLDivElement>(null);
 
+  const trips = listings.filter((l) => l.cat === "tours");
   const featured = FEATURED.map((id) => listings.find((l) => l.id === id)).filter((l) => l !== undefined);
 
   function goCatalog(cat: Category) { router.push(ROUTES[cat]); }
@@ -79,7 +119,7 @@ export function Home() {
             <p className="hero-lede" dangerouslySetInnerHTML={{ __html: content.heroLede }} />
             <div className="hero-actions">
               <button className="btn btn-accent" onClick={() => goCatalog("alojamientos")}>Explorar fincas y cabañas</button>
-              <button className="btn btn-ghost" onClick={() => document.getElementById("experiencias")?.scrollIntoView({ behavior: "smooth" })}>Ver experiencias</button>
+              <button className="btn btn-ghost" onClick={() => goCatalog("tours")}>Ver experiencias</button>
             </div>
             <div className="hero-stats">
               <div className="hero-stat"><CountTo to={listings.length} prefix="+" /><span>Alojamientos y experiencias</span></div>
@@ -91,7 +131,11 @@ export function Home() {
               <div><b>RNT {content.rnt}</b><span>{content.rntLabel}</span></div>
             </div>
           </div>
-          <div><HeroPhoto src="/photos/finca-a.jpg" alt="Finca cafetera en el eje cafetero, con vista a las montañas de Quindío" /></div>
+          <TripsPanel
+            title={content.heroTripsTitle} text={content.heroTripsText} trips={trips}
+            onAll={() => goCatalog("tours")}
+            onOpen={(l) => (l.externalUrl ? window.open(l.externalUrl, "_blank", "noopener,noreferrer") : router.push(ROUTES.listing(l.id)))}
+          />
         </div>
         <div className="container">
           <div className="search-card">
@@ -103,7 +147,7 @@ export function Home() {
             </div>
             <div className="field"><label>Tipo</label>
               <select id="searchCat" value={searchCat} onChange={(e) => setSearchCat(e.target.value as Category)}>
-                <option value="alojamientos">Fincas y Cabañas</option><option value="parques">Parques Temáticos</option><option value="tours">Tours</option>
+                <option value="alojamientos">Fincas y Cabañas</option><option value="parques">Parques Temáticos</option><option value="tours">Experiencias</option>
               </select>
             </div>
             <div className="field"><label>Huéspedes</label>
@@ -152,7 +196,7 @@ export function Home() {
       </div></section>
 
       <section className="section" id="experiencias"><div className="container">
-        <div className="section-head reveal"><div><p className="eyebrow">Experiencias</p><h2>{content.reviewsTitle}</h2></div></div>
+        <div className="section-head reveal"><div><p className="eyebrow">Testimonios</p><h2>{content.reviewsTitle}</h2></div></div>
         <div className="carousel-wrap reveal">
           <div className="carousel-track" id="reviewTrack" ref={reviewTrack}>
             {reviews.map((r, i) => <ReviewCard key={r.name + i} r={r} />)}

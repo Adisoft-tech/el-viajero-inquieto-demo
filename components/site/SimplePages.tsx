@@ -86,8 +86,8 @@ export function Experiencias() {
   const { content, reviews } = useApp();
   return (
     <section className="section" style={{ paddingTop: 40 }}><div className="container">
-      <div className="crumb"><CrumbLink href={ROUTES.home}>Inicio</CrumbLink> / <span>Experiencias</span></div>
-      <div className="section-head"><div><p className="eyebrow">Experiencias</p><h2>{content.reviewsTitle}</h2></div></div>
+      <div className="crumb"><CrumbLink href={ROUTES.home}>Inicio</CrumbLink> / <span>Testimonios</span></div>
+      <div className="section-head"><div><p className="eyebrow">Testimonios</p><h2>{content.reviewsTitle}</h2></div></div>
       <div className="review-row">{reviews.map((r, i) => <ReviewCard key={r.name + i} r={r} />)}</div>
     </div></section>
   );

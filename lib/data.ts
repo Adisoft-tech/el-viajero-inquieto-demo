@@ -6,6 +6,8 @@ export interface Listing {
   icon: string; tone: "sage" | "lagoon" | "ink"; unit: "noche" | "persona";
   price: number; cap: number; rating: number; reviews: number;
   duration?: string; tags: string[]; desc: string; highlights: string[];
+  /** Fecha del viaje programado, en texto libre (ej. "15–18 de marzo de 2027"); se muestra en el inicio. */
+  schedule?: string;
   /** Fotos propias del listado (URLs); si faltan se usan las de LISTING_GALLERY. */
   photos?: string[];
   /** Si existe, el listado enlaza a esta página externa (ej. el parque aliado en Triviantes) en vez de a nuestro propio detalle. */
@@ -32,12 +34,14 @@ export const INITIAL_CONTENT: SiteContent = {
   heroLede: "Fincas que se vuelven refugio, rutas que despiertan curiosidad y destinos vividos desde la emoción. Reserva directamente con quienes conocen cada camino.",
   rnt: "222679",
   rntLabel: "Registro Nacional de Turismo activo",
+  heroTripsTitle: "Viajes programados 2027",
+  heroTripsText: "Salidas con fecha fija, guía y todo organizado. Reserva tu cupo con tiempo.",
   catSectionTitle: "Tres formas de recorrer el eje cafetero",
   catAlojTitle: "Fincas y Cabañas",
   catAlojDesc: "Casonas cafeteras, cabañas de montaña y refugios con anfitriones reales.",
   catParquesTitle: "Parques Temáticos",
   catParquesDesc: "Café, agro y naturaleza en los parques más visitados de la región.",
-  catToursTitle: "Tours y Actividades",
+  catToursTitle: "Experiencias",
   catToursDesc: "Caminatas, kayak, avistamiento de aves y rutas guiadas de un día.",
   featuredTitle: "Lo que más reservan nuestros viajeros",
   trustTitle: "Anfitrión atento, no una vitrina más",

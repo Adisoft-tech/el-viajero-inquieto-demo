@@ -101,6 +101,8 @@ function cleanListing(l: Listing, cat: Listing["cat"], id: string): Listing {
   };
   const photos = (Array.isArray(l.photos) ? l.photos : []).map(url).filter(Boolean).slice(0, 12);
   if (photos.length) out.photos = photos;
+  const schedule = text(l.schedule, 80);
+  if (schedule) out.schedule = schedule;
   const duration = text(l.duration, 80);
   if (duration) out.duration = duration;
   const ext = url(l.externalUrl);

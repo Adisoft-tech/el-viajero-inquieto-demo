@@ -26,7 +26,7 @@ export function ListingEditor({ listing, cat, canChangeCat, onSave, onCancel }: 
     price: String(listing?.price ?? ""), cap: String(listing?.cap ?? (cat === "alojamientos" ? 4 : 1)),
     rating: String(listing?.rating ?? 5), reviews: String(listing?.reviews ?? 0),
     icon: listing?.icon ?? "valle", tone: listing?.tone ?? ("sage" as Listing["tone"]),
-    duration: listing?.duration ?? "", externalUrl: listing?.externalUrl ?? "",
+    duration: listing?.duration ?? "", schedule: listing?.schedule ?? "", externalUrl: listing?.externalUrl ?? "",
     tags: (listing?.tags ?? []).join(", "), highlights: lines(listing?.highlights),
     desc: listing?.desc ?? "", photos: lines(listing?.photos), active: listing?.active !== false,
   }));
@@ -46,7 +46,7 @@ export function ListingEditor({ listing, cat, canChangeCat, onSave, onCancel }: 
         price: parseInt(f.price, 10) || 0, cap: parseInt(f.cap, 10) || 1,
         rating: Math.min(5, Math.max(0, parseFloat(f.rating) || 0)), reviews: parseInt(f.reviews, 10) || 0,
         tags: f.tags.split(",").map((t) => t.trim()).filter(Boolean), desc: f.desc.trim(), highlights: parseLines(f.highlights),
-        photos: parseLines(f.photos), duration: f.duration.trim() || undefined,
+        photos: parseLines(f.photos), duration: f.duration.trim() || undefined, schedule: f.schedule.trim() || undefined,
         externalUrl: f.externalUrl.trim() || undefined, active: f.active,
       } as Listing);
     } catch (err) {
@@ -77,6 +77,7 @@ export function ListingEditor({ listing, cat, canChangeCat, onSave, onCancel }: 
           <div className="field"><label>Calificación (0 a 5)</label><input id="leRating" type="number" min={0} max={5} step={0.1} value={f.rating} onChange={(e) => set("rating", e.target.value)} /></div>
           <div className="field"><label>Número de reseñas</label><input id="leReviews" type="number" min={0} value={f.reviews} onChange={(e) => set("reviews", e.target.value)} /></div>
           {!stay && <div className="field"><label>Duración (opcional)</label><input id="leDuration" placeholder="Ej. Día completo" value={f.duration} onChange={(e) => set("duration", e.target.value)} /></div>}
+          {!stay && <div className="field"><label>Fecha del viaje (opcional)</label><input id="leSchedule" placeholder="Ej. 15–18 de marzo de 2027" value={f.schedule} onChange={(e) => set("schedule", e.target.value)} /></div>}
           {!stay && <div className="field"><label>Enlace externo (opcional)</label><input id="leExt" placeholder="https://…" value={f.externalUrl} onChange={(e) => set("externalUrl", e.target.value)} /></div>}
           <div className="field"><label>Ícono (si no hay foto)</label>
             <select id="leIcon" value={f.icon} onChange={(e) => set("icon", e.target.value)}>

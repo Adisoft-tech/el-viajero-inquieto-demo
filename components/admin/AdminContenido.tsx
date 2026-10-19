@@ -18,12 +18,14 @@ const INICIO: Section[] = [
     { key: "heroLede", label: "Texto de apoyo", kind: "area", rows: 3 },
     { key: "rnt", label: "Número de RNT" },
     { key: "rntLabel", label: "Texto bajo el RNT" },
+    { key: "heroTripsTitle", label: "Viajes programados · título" },
+    { key: "heroTripsText", label: "Viajes programados · texto", kind: "area", rows: 2, hint: "La lista muestra las experiencias activas del Inventario, con su fecha." },
   ] },
   { title: "Categorías", fields: [
     { key: "catSectionTitle", label: "Título de la sección" },
     { key: "catAlojTitle", label: "Fincas · título" }, { key: "catAlojDesc", label: "Fincas · descripción", kind: "area", rows: 2 },
     { key: "catParquesTitle", label: "Parques · título" }, { key: "catParquesDesc", label: "Parques · descripción", kind: "area", rows: 2 },
-    { key: "catToursTitle", label: "Tours · título" }, { key: "catToursDesc", label: "Tours · descripción", kind: "area", rows: 2 },
+    { key: "catToursTitle", label: "Experiencias · título" }, { key: "catToursDesc", label: "Experiencias · descripción", kind: "area", rows: 2 },
     { key: "featuredTitle", label: "Título de “Destacados”" },
   ] },
   { title: "Por qué reservar aquí", fields: [

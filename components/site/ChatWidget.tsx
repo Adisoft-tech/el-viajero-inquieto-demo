@@ -13,7 +13,7 @@ interface ChatMsg { who: "bot" | "user"; text: string; chips?: string[]; listing
 const GREETING: ChatMsg = {
   who: "bot",
   text: "¡Hola! Soy el asistente de El Viajero Inquieto. Pregúntame por fincas, parques o tours — por ejemplo:",
-  chips: ["Fincas cerca a Manizales", "Parques para niños", "Tours de un día", "Lo más barato"],
+  chips: ["Fincas cerca a Manizales", "Parques para niños", "Experiencias de un día", "Lo más barato"],
 };
 
 function markSeen() { try { localStorage.setItem("vi_chat_seen", "1"); } catch { /* sin storage */ } }

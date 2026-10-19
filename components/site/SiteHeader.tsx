@@ -7,9 +7,9 @@ import { Icon } from "@/lib/icons";
 import { useApp } from "@/lib/store";
 import { ROUTES } from "@/lib/routes";
 
-const LINKS = [["home", "Inicio"], ["experiencias", "Experiencias"], ["notiviajero", "Notiviajero"], ["nosotros", "Nosotros"]] as const;
+const LINKS = [["home", "Inicio"], ["experiencias", "Testimonios"], ["notiviajero", "Notiviajero"], ["nosotros", "Nosotros"]] as const;
 type LinkKey = (typeof LINKS)[number][0];
-const SERVICES = [["alojamientos", "Fincas y Cabañas"], ["parques", "Parques Temáticos"], ["tours", "Tours"]] as const;
+const SERVICES = [["alojamientos", "Fincas y Cabañas"], ["parques", "Parques Temáticos"], ["tours", "Experiencias"]] as const;
 
 function Chevron({ open }: { open: boolean }) {
   return (

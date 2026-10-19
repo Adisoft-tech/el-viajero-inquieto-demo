@@ -28,5 +28,5 @@ export function numberToWords(n: number): string{
 }
 export function copWords(n: number): string{ return numberToWords(n) + " PESOS M/CTE"; }
 export function stars(n: number): string{ const full=Math.round(n); return "★★★★★☆☆☆☆☆".slice(5-full,10-full); }
-export function catLabel(cat: string): string{ return cat==="alojamientos"?"Fincas y Cabañas":cat==="parques"?"Parques Temáticos":"Tours"; }
+export function catLabel(cat: string): string{ return cat==="alojamientos"?"Fincas y Cabañas":cat==="parques"?"Parques Temáticos":"Experiencias"; }
 export function esc(s: unknown): string { return String(s).replace(/[&<>"']/g, function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'} as Record<string,string>)[c];}); }

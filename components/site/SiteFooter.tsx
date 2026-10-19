@@ -26,12 +26,12 @@ export function SiteFooter() {
             <h5>Explorar</h5>
             <Link href={ROUTES.alojamientos} className="foot-link">Fincas y Cabañas</Link>
             <Link href={ROUTES.parques} className="foot-link">Parques Temáticos</Link>
-            <Link href={ROUTES.tours} className="foot-link">Tours</Link>
+            <Link href={ROUTES.tours} className="foot-link">Experiencias</Link>
           </div>
           <div>
             <h5>Agencia</h5>
             <Link href={ROUTES.nosotros} className="foot-link">Nosotros</Link>
-            <Link href={ROUTES.experiencias} className="foot-link">Experiencias</Link>
+            <Link href={ROUTES.experiencias} className="foot-link">Testimonios</Link>
             <Link href={ROUTES.notiviajero} className="foot-link">Notiviajero</Link>
             <Link href={ROUTES.contacto} className="foot-link">Contacto</Link>
           </div>

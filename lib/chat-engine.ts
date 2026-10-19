@@ -22,7 +22,7 @@ const NEARBY_TOWNS: Record<string, string[]> = {
 const CHAT_CATS: { cat: Category; words: string[] }[] = [
   { cat: "alojamientos", words: ["finca", "fincas", "cabaña", "cabanas", "cabañas", "cabana", "alojamiento", "alojamientos", "hospedaje", "hotel", "dormir", "quedarme", "quedar", "noche", "hospedarme", "casa"] },
   { cat: "parques", words: ["parque", "parques", "panaca", "tematico", "temático", "entrada", "entradas"] },
-  { cat: "tours", words: ["tour", "tours", "actividad", "actividades", "excursion", "excursión", "paseo", "paseos", "recorrido", "plan", "planes", "kayak", "aves"] },
+  { cat: "tours", words: ["tour", "tours", "experiencia", "experiencias", "actividad", "actividades", "excursion", "excursión", "paseo", "paseos", "recorrido", "plan", "planes", "kayak", "aves"] },
 ];
 
 export function normalizeText(s: unknown): string {
@@ -51,15 +51,15 @@ export interface ChatContext { content: SiteContent; reviews: Review[] }
 
 const CHAT_INTENTS: { test: RegExp; reply: (ctx: ChatContext) => ChatAnswer }[] = [
   { test: /^(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|hi|ola)\b/, reply: () => ({
-    text: "¡Hola! Puedo ayudarte a encontrar fincas, parques o tours en el eje cafetero, contarte sobre pagos o ponerte en contacto con nosotros.",
-    chips: ["Fincas cerca a Manizales", "Parques para niños", "Tours de un día", "¿Cómo pago?"],
+    text: "¡Hola! Puedo ayudarte a encontrar fincas, parques o experiencias en el eje cafetero, contarte sobre pagos o ponerte en contacto con nosotros.",
+    chips: ["Fincas cerca a Manizales", "Parques para niños", "Experiencias de un día", "¿Cómo pago?"],
   }) },
   { test: /ayuda|que puedes hacer|qué puedes hacer|como funciona|cómo funcionas|que eres|qué eres/, reply: () => ({
     text: "Soy un asistente que busca directamente en el catálogo de El Viajero Inquieto (sin inteligencia artificial de por medio, solo leo los datos publicados en la página). Pregúntame por destino, tipo de experiencia, precio o calificación.",
     chips: ["Fincas en Quindío", "Lo más barato", "Mejor calificado"],
   }) },
   { test: /quienes son|quiénes son|sobre ustedes|mision|misión|vision|visión|empresa/, reply: () => ({
-    text: "El Viajero Inquieto es una agencia de viajes colombiana enfocada en turismo familiar y experiencias con raíz local: fincas, cabañas, parques y tours en el eje cafetero. Creamos viajes memorables conectando a los viajeros con la riqueza cultural, natural y humana de cada destino.",
+    text: "El Viajero Inquieto es una agencia de viajes colombiana enfocada en turismo familiar y experiencias con raíz local: fincas, cabañas, parques y experiencias en el eje cafetero. Creamos viajes memorables conectando a los viajeros con la riqueza cultural, natural y humana de cada destino.",
     chips: ["Ver Nosotros"],
   }) },
   { test: /contacto|telefono|teléfono|correo|email|whatsapp|hablar con alguien/, reply: ({ content: c }) => ({
@@ -72,11 +72,11 @@ const CHAT_INTENTS: { test: RegExp; reply: (ctx: ChatContext) => ChatAnswer }[] 
   }) },
   { test: /opinion|opinión|reseñ|resen|comentarios|que dicen|qué dicen|calificacion|calificación/, reply: ({ reviews }) => {
     const txt = reviews.slice(0, 2).map((r) => '"' + r.quote + '" — ' + r.name).join("  ·  ");
-    return { text: "Esto dicen algunos viajeros: " + txt, chips: ["Ver todas las experiencias"] };
+    return { text: "Esto dicen algunos viajeros: " + txt, chips: ["¿Qué dicen los viajeros?"] };
   } },
   { test: /gracias|thank/, reply: () => ({
     text: "¡Con gusto! ¿Buscas algo más?",
-    chips: ["Fincas y Cabañas", "Parques Temáticos", "Tours"],
+    chips: ["Fincas y Cabañas", "Parques Temáticos", "Experiencias"],
   }) },
 ];
 
@@ -128,10 +128,10 @@ export function answerChat(raw: string, listings: Listing[], ctx: ChatContext = 
   }
 
   if (!cat && !usedLocationFilter && !priceMatch && !wantsCheap && !wantsTop && !capMatch) {
-    return { text: "No estoy segura de haber entendido. Puedo buscar por destino (ej. \"cerca a Manizales\"), tipo (fincas, parques, tours), precio o calificación.", chips: ["Fincas cerca a Manizales", "Parques para niños", "Lo más barato", "Mejor calificado"] };
+    return { text: "No estoy segura de haber entendido. Puedo buscar por destino (ej. \"cerca a Manizales\"), tipo (fincas, parques, experiencias), precio o calificación.", chips: ["Fincas cerca a Manizales", "Parques para niños", "Lo más barato", "Mejor calificado"] };
   }
   if (!results.length) {
-    return { text: "No encontré opciones exactas para eso. Tenemos fincas y cabañas, parques temáticos y tours en Quindío, Caldas y Risaralda.", chips: ["Fincas y Cabañas", "Parques Temáticos", "Tours"] };
+    return { text: "No encontré opciones exactas para eso. Tenemos fincas y cabañas, parques temáticos y experiencias en Quindío, Caldas y Risaralda.", chips: ["Fincas y Cabañas", "Parques Temáticos", "Experiencias"] };
   }
   const top = results.slice(0, 4);
   const label = cat ? catLabel(cat).toLowerCase() : "opciones";

@@ -74,7 +74,7 @@ export function InventoryManager() {
           <option value="todas">Todas las categorías</option>
           <option value="alojamientos">Fincas y Cabañas</option>
           <option value="parques">Parques Temáticos</option>
-          <option value="tours">Tours</option>
+          <option value="tours">Experiencias</option>
         </select>
         <span className="inv-count">{shown.length} de {listings.length}</span>
         <button className="btn btn-primary btn-sm" onClick={() => setEditing({ listing: null, cat: cat === "todas" ? "alojamientos" : cat })}><Icon name="plus" /> Agregar</button>
