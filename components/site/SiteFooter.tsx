@@ -40,10 +40,10 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="foot-bottom">
-          <span>© 2026 El Viajero Inquieto — {t("sitio de demostración preparado por AdiSoft")}</span>
+          <span>© 2026 El Viajero Inquieto</span>
           <span className="foot-admin-group">
-            <Link href={adminAuthed ? ROUTES.admin : ROUTES.adminLogin} className="foot-admin">{t("Panel administrativo (demo)")} →</Link>
-            <Link href={gestionAuthed ? ROUTES.gestion : ROUTES.gestionLogin} className="foot-admin">{t("Panel de gestión (demo)")} →</Link>
+            <Link href={adminAuthed ? ROUTES.admin : ROUTES.adminLogin} className="foot-admin">{t("Panel administrativo")} →</Link>
+            <Link href={gestionAuthed ? ROUTES.gestion : ROUTES.gestionLogin} className="foot-admin">{t("Panel de gestión")} →</Link>
           </span>
         </div>
       </div>
