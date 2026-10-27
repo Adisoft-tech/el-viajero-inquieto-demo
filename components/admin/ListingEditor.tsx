@@ -6,6 +6,7 @@ import { catLabel } from "@/lib/format";
 import { Icon } from "@/lib/icons";
 import { LISTING_EN } from "@/lib/i18n";
 import { Modal } from "./Modal";
+import { PhotoListUpload } from "./ImageUpload";
 
 /** Íconos de ilustración disponibles para un listado sin foto. */
 const LISTING_ICONS = [
@@ -29,7 +30,7 @@ export function ListingEditor({ listing, cat, canChangeCat, onSave, onCancel }: 
     icon: listing?.icon ?? "valle", tone: listing?.tone ?? ("sage" as Listing["tone"]),
     duration: listing?.duration ?? "", schedule: listing?.schedule ?? "", externalUrl: listing?.externalUrl ?? "",
     tags: (listing?.tags ?? []).join(", "), highlights: lines(listing?.highlights),
-    desc: listing?.desc ?? "", photos: lines(listing?.photos), active: listing?.active !== false,
+    desc: listing?.desc ?? "", photos: listing?.photos ?? [], active: listing?.active !== false,
     nameEn: listing?.nameEn ?? "", descEn: listing?.descEn ?? "", highlightsEn: lines(listing?.highlightsEn),
     tagsEn: (listing?.tagsEn ?? []).join(", "), durationEn: listing?.durationEn ?? "", scheduleEn: listing?.scheduleEn ?? "",
   }));
@@ -50,7 +51,7 @@ export function ListingEditor({ listing, cat, canChangeCat, onSave, onCancel }: 
         price: parseInt(f.price, 10) || 0, cap: parseInt(f.cap, 10) || 1,
         rating: Math.min(5, Math.max(0, parseFloat(f.rating) || 0)), reviews: parseInt(f.reviews, 10) || 0,
         tags: f.tags.split(",").map((t) => t.trim()).filter(Boolean), desc: f.desc.trim(), highlights: parseLines(f.highlights),
-        photos: parseLines(f.photos), duration: f.duration.trim() || undefined, schedule: f.schedule.trim() || undefined,
+        photos: f.photos.map((p) => p.trim()).filter(Boolean), duration: f.duration.trim() || undefined, schedule: f.schedule.trim() || undefined,
         nameEn: f.nameEn.trim() || undefined, descEn: f.descEn.trim() || undefined,
         highlightsEn: parseLines(f.highlightsEn), tagsEn: f.tagsEn.split(",").map((t) => t.trim()).filter(Boolean),
         durationEn: f.durationEn.trim() || undefined, scheduleEn: f.scheduleEn.trim() || undefined,
@@ -99,7 +100,7 @@ export function ListingEditor({ listing, cat, canChangeCat, onSave, onCancel }: 
           <div className="field full"><label>Etiquetas (separadas por coma)</label><input id="leTags" value={f.tags} onChange={(e) => set("tags", e.target.value)} /></div>
           <div className="field full"><label>Descripción</label><textarea id="leDesc" rows={4} value={f.desc} onChange={(e) => set("desc", e.target.value)} /></div>
           <div className="field full"><label>Puntos destacados (uno por línea)</label><textarea id="leHighlights" rows={4} value={f.highlights} onChange={(e) => set("highlights", e.target.value)} /></div>
-          <div className="field full"><label>Fotos (un enlace por línea; la primera es la principal)</label><textarea id="lePhotos" rows={3} placeholder="https://…/foto.jpg" value={f.photos} onChange={(e) => set("photos", e.target.value)} /></div>
+          <div className="field full"><label htmlFor="lePhotos">Fotos (la primera es la principal)</label><PhotoListUpload id="lePhotos" value={f.photos} onChange={(urls) => set("photos", urls)} /></div>
           <div className="field full"><p className="cms-section-title" style={{ margin: "8px 0 0" }}>Versión en inglés (opcional)</p>
             <p style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 4 }}>Lo que dejes vacío se muestra con la traducción por defecto{seed ? " (la que ves en gris)" : ""} o, si no hay, en español.</p>
           </div>
