@@ -30,7 +30,7 @@ function ChatBubble({ msg, onAsk, onGo }: { msg: ChatMsg; onAsk: (q: string) => 
         <div className="chat-results">
           {msg.listings.map((r) => (
             <button key={r.id} type="button" className="chat-result" onClick={() => onGo(r.id)}>
-              <span><b>{r.name}</b><span>{r.town}, {r.dept} · ★ {r.rating.toFixed(1)}</span></span>
+              <span><b>{r.name}</b><span>{r.town}, {r.dept}{r.rating > 0 && " · ★ " + r.rating.toFixed(1)}</span></span>
               <strong>{r.price}</strong>
             </button>
           ))}

@@ -11,7 +11,16 @@ import { ListingCard } from "./ListingCard";
 import { ReviewCard } from "./ReviewCard";
 import { useContent, useI18n, useSite, useVisibleListings } from "./SiteContext";
 
-const FEATURED = ["finca-serrana", "panaca", "ruta-cafe", "termales-otun"];
+/** Destacados: hasta 2 fincas, un parque y una experiencia (Panaca y la Ruta del Café si están); completa hasta 4. */
+function pickFeatured(listings: Listing[]): Listing[] {
+  const first = (cat: Category, preferId: string) => {
+    const items = listings.filter((l) => l.cat === cat);
+    return items.find((l) => l.id === preferId) ?? items[0];
+  };
+  const fincas = listings.filter((l) => l.cat === "alojamientos").slice(0, 2);
+  const picks = [...fincas, first("parques", "panaca"), first("tours", "ruta-cafe")].filter((l) => l !== undefined);
+  return [...picks, ...listings.filter((l) => !picks.includes(l))].slice(0, 4);
+}
 
 function HeroPhoto({ src, alt, extraClass }: { src: string; alt: string; extraClass?: string }) {
   return (
@@ -45,7 +54,7 @@ function TripsPanel({ title, text, trips, onOpen, onAll }: {
                 <button type="button" className="trip-row" onClick={() => onOpen(t)}>
                   <span className={"trip-thumb tone-" + t.tone}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {photo ? <img src={photo} alt="" loading="lazy" /> : <Icon name={t.icon} />}
+                    {photo ? <img src={photo} alt={t.name} loading="lazy" /> : <Icon name={t.icon} />}
                   </span>
                   <span className="trip-info">
                     <b>{t.name}</b>
@@ -72,7 +81,7 @@ function CatCardPhoto({ photo, title, desc, count, onClick }: { photo: string; t
   return (
     <div className="cat-card cat-card-photo reveal" onClick={onClick}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={photo} alt="" loading="lazy" />
+      <img src={photo} alt={title} loading="lazy" />
       <span className="cat-count">{count} {t(count === 1 ? "opción" : "opciones")}</span>
       <h3>{title}</h3><p>{desc}</p>
     </div>
@@ -101,7 +110,9 @@ export function Home() {
   const reviewTrack = useRef<HTMLDivElement>(null);
 
   const trips = listings.filter((l) => l.cat === "tours");
-  const featured = FEATURED.map((id) => listings.find((l) => l.id === id)).filter((l) => l !== undefined);
+  const featured = pickFeatured(listings);
+  // Calificación promedio: solo con reseñas reales publicadas por el administrador.
+  const avgRating = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
 
   function goCatalog(cat: Category) { router.push(ROUTES[cat]); }
   const catCount = (cat: Category) => listings.filter((l) => l.cat === cat).length;
@@ -132,7 +143,7 @@ export function Home() {
             </div>
             <div className="hero-stats">
               <div className="hero-stat"><CountTo to={listings.length} prefix="+" /><span>{t("Alojamientos y experiencias")}</span></div>
-              <div className="hero-stat"><CountTo to={4.8} decimals={1} /><span>{t("Calificación promedio")}</span></div>
+              {avgRating > 0 && <div className="hero-stat"><CountTo to={avgRating} decimals={1} /><span>{t("Calificación promedio")}</span></div>}
               <div className="hero-stat"><CountTo to={deptCount} /><span>{t("Departamentos de Colombia")}</span></div>
             </div>
             <div className="rnt-badge">
@@ -204,7 +215,7 @@ export function Home() {
         </div>
       </div></section>
 
-      <section className="section" id="experiencias"><div className="container">
+      {reviews.length > 0 && <section className="section" id="experiencias"><div className="container">
         <div className="section-head reveal"><div><p className="eyebrow">{t("Testimonios")}</p><h2>{content.reviewsTitle}</h2></div></div>
         <div className="carousel-wrap reveal">
           <div className="carousel-track" id="reviewTrack" ref={reviewTrack}>
@@ -215,7 +226,7 @@ export function Home() {
             <button type="button" className="carousel-arrow" aria-label={t("Siguientes reseñas")} onClick={() => reviewTrack.current?.scrollBy({ left: 340, behavior: "smooth" })}><Icon name="chevRight" /></button>
           </div>
         </div>
-      </div></section>
+      </div></section>}
 
       <section className="section" id="nosotros"><div className="container hero-grid">
         <div><HeroPhoto src="/photos/penol-guatape.jpg" alt={t("Paisaje colombiano de montaña y agua")} extraClass="hero-art-ring-sm" /></div>

@@ -161,6 +161,8 @@ export const EN: Record<string, string> = {
   "Estamos en": "We're based in",
   "Las reservas se coordinan directamente con nuestro equipo por WhatsApp: ahí confirmamos fechas, disponibilidad y la forma de pago.": "Bookings are arranged directly with our team on WhatsApp: that's where we confirm dates, availability and the payment method.",
   "Esto dicen algunos viajeros:": "Here's what some travelers say:",
+  "Todavía no hemos publicado reseñas de viajeros. Si quieres referencias, escríbenos por WhatsApp y con gusto te contamos.": "We haven't published traveler reviews yet. If you'd like references, message us on WhatsApp and we'll gladly tell you more.",
+  "Pronto publicaremos aquí las opiniones de quienes ya viajaron con nosotros.": "Soon we'll share here what travelers who have been with us have to say.",
   "¡Con gusto! ¿Buscas algo más?": "You're welcome! Looking for anything else?",
   "No estoy segura de haber entendido. Puedo buscar por destino (ej. \"cerca a Manizales\"), tipo (fincas, parques, experiencias), precio o calificación.": "I'm not sure I understood. I can search by destination (e.g. \"near Manizales\"), type (farms, parks, experiences), price or rating.",
   "No encontré opciones exactas para eso. Tenemos fincas y cabañas, parques temáticos y experiencias en distintos destinos de Colombia.": "I couldn't find exact matches for that. We have farms and cabins, theme parks and experiences in destinations all over Colombia.",

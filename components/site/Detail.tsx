@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { galleryFor, type Listing } from "@/lib/data";
+import { galleryFor, hasRating, type Listing } from "@/lib/data";
 import { catLabel } from "@/lib/format";
 import { Icon } from "@/lib/icons";
 import { useApp } from "@/lib/store";
@@ -80,7 +80,7 @@ export function Detail({ id }: { id: string }) {
                   {gallery.map((src, i) => (
                     <button key={src} type="button" className={"gthumb" + (i === photoIndex ? " active" : "")} onClick={() => setPhotoIndex(i)}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt="" />
+                      <img src={src} alt={`${l.name}, foto ${i + 1}`} />
                     </button>
                   ))}
                 </div>
@@ -93,9 +93,11 @@ export function Detail({ id }: { id: string }) {
                   <Icon name="pin" /> {l.town}, {l.dept}{isStay ? " · " + t("hasta") + " " + l.cap + " " + t("huéspedes") : (l.duration ? " · " + l.duration : "")}
                 </div>
               </div>
-              <div className="detail-rating">
-                ★ {l.rating.toFixed(1)} <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 13.5 }}>({l.reviews} {t("reseñas")})</span>
-              </div>
+              {hasRating(l) && (
+                <div className="detail-rating">
+                  ★ {l.rating.toFixed(1)} <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 13.5 }}>({l.reviews} {t("reseñas")})</span>
+                </div>
+              )}
             </div>
             <div className="detail-highlights">
               {l.highlights.map((h) => <div key={h} className="hl-item"><Icon name="check" /><span>{h}</span></div>)}

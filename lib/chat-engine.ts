@@ -1,7 +1,7 @@
 // Motor del chat público (reglas locales, sin IA ni backend).
 // Todo lo que responde sale del catálogo/reseñas que se le pasan como parámetro.
 
-import { INITIAL_CONTENT, REVIEWS, type Category, type Listing, type Review, type SiteContent } from "./data";
+import { hasRating, INITIAL_CONTENT, REVIEWS, type Category, type Listing, type Review, type SiteContent } from "./data";
 import { catLabel, cop } from "./format";
 
 export interface ChatListingResult { id: string; name: string; town: string; dept: string; price: string; rating: number }
@@ -45,7 +45,7 @@ function findCategory(text: string): Category | null {
   return null;
 }
 function chatFormatListing(l: Listing, t: (s: string) => string, price: (n: number) => string): ChatListingResult {
-  return { id: l.id, name: l.name, town: l.town, dept: l.dept, price: price(l.price) + " / " + t(l.unit), rating: l.rating };
+  return { id: l.id, name: l.name, town: l.town, dept: l.dept, price: price(l.price) + " / " + t(l.unit), rating: hasRating(l) ? l.rating : 0 };
 }
 
 /**
@@ -77,6 +77,7 @@ const CHAT_INTENTS: { test: RegExp; reply: (ctx: ChatContext) => ChatAnswer }[] 
     chips: [],
   }) },
   { test: /opinion|opinión|reseñ|resen|comentarios|que dicen|qué dicen|calificacion|calificación|review|testimonial|what do (people|travell?ers) say/, reply: ({ reviews, t = same }) => {
+    if (!reviews.length) return { text: t("Todavía no hemos publicado reseñas de viajeros. Si quieres referencias, escríbenos por WhatsApp y con gusto te contamos."), chips: ["Fincas y Cabañas", "Parques Temáticos", "Experiencias"] };
     const txt = reviews.slice(0, 2).map((r) => '"' + r.quote + '" — ' + r.name).join("  ·  ");
     return { text: t("Esto dicen algunos viajeros:") + " " + txt, chips: ["¿Qué dicen los viajeros?"] };
   } },

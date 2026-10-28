@@ -6,7 +6,7 @@ import { ROUTES } from "@/lib/routes";
 import { useContent, useI18n } from "./SiteContext";
 
 export function SiteFooter() {
-  const { adminAuthed, gestionAuthed } = useApp();
+  const { adminAuthed, gestionAuthed, reviews } = useApp();
   const content = useContent();
   const { t } = useI18n();
   return (
@@ -34,7 +34,7 @@ export function SiteFooter() {
           <div>
             <h5>{t("Agencia")}</h5>
             <Link href={ROUTES.nosotros} className="foot-link">{t("Nosotros")}</Link>
-            <Link href={ROUTES.experiencias} className="foot-link">{t("Testimonios")}</Link>
+            {reviews.length > 0 && <Link href={ROUTES.experiencias} className="foot-link">{t("Testimonios")}</Link>}
             <Link href={ROUTES.notiviajero} className="foot-link">Notiviajero</Link>
             <Link href={ROUTES.contacto} className="foot-link">{t("Contacto")}</Link>
           </div>

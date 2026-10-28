@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { galleryFor, photoFor, type Listing } from "@/lib/data";
+import { galleryFor, hasRating, photoFor, type Listing } from "@/lib/data";
 import { catLabel } from "@/lib/format";
 import { Icon } from "@/lib/icons";
 import { useApp } from "@/lib/store";
@@ -39,7 +39,7 @@ export function ListingCard({ l }: { l: Listing }) {
         <div className="lcard-name">{l.name}</div>
         <div className="lcard-meta">
           <div className="lcard-price"><b>{price(l.price)}</b><span> / {t(l.unit)}</span></div>
-          <div className="lcard-rating">★ {l.rating.toFixed(1)}</div>
+          {hasRating(l) && <div className="lcard-rating">★ {l.rating.toFixed(1)}</div>}
         </div>
       </div>
     </div>

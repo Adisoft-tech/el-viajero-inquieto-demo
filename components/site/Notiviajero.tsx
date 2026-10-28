@@ -47,7 +47,7 @@ export function Notiviajero({ posts }: { posts: Omit<BlogPost, "body">[] }) {
     <section className="section" style={{ paddingTop: 40 }}><div className="container">
       <div className="crumb"><CrumbLink href={ROUTES.home}>{t("Inicio")}</CrumbLink> / <span>Notiviajero</span></div>
       <div className="section-head">
-        <div><p className="eyebrow">Notiviajero</p><h2>{t("Historias, noticias y tips para viajar mejor")}</h2><p>{t("Lo que aprendemos en el camino: destinos, consejos y novedades del turismo en Colombia.")}</p></div>
+        <div><p className="eyebrow">Notiviajero</p><h1>{t("Historias, noticias y tips para viajar mejor")}</h1><p>{t("Lo que aprendemos en el camino: destinos, consejos y novedades del turismo en Colombia.")}</p></div>
       </div>
       {cats.length > 2 && (
         <div className="blog-chips">

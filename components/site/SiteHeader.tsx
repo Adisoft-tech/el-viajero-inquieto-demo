@@ -76,7 +76,7 @@ function ServicesMenu({ pathname, onNavigate, inline }: { pathname: string; onNa
 }
 
 export function SiteHeader() {
-  const { favorites } = useApp();
+  const { favorites, reviews } = useApp();
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -95,7 +95,8 @@ export function SiteHeader() {
     <>
       {navLink(LINKS[0])}
       <ServicesMenu pathname={pathname} inline={inline} onNavigate={() => setMobileOpen(false)} />
-      {LINKS.slice(1).map(navLink)}
+      {/* Testimonios solo aparece cuando el administrador publicó reseñas */}
+      {LINKS.slice(1).filter(([key]) => key !== "experiencias" || reviews.length > 0).map(navLink)}
     </>
   );
 

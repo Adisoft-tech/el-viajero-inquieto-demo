@@ -6,6 +6,7 @@
 
 import { requireSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { refreshSite } from "@/lib/refresh-site";
 import { INITIAL_CONTENT, type Listing, type Review, type SiteContent } from "@/lib/data";
 import { ICONS } from "@/lib/icon-data";
 import { TRANSLATABLE_KEYS } from "@/lib/i18n";
@@ -51,6 +52,7 @@ async function put(key: string, value: unknown) {
   await sql`
     insert into site_content (key, value) values (${key}, ${sql.json(value as never)})
     on conflict (key) do update set value = excluded.value, updated_at = now()`;
+  refreshSite();
 }
 
 /* ---- Textos del sitio ---- */
@@ -190,5 +192,6 @@ export async function saveFincaFull(token: string, id: string | null, input: Lis
          l.nameEn ?? "", l.descEn ?? "", l.highlightsEn ?? [], l.tagsEn ?? []] as never,
       );
   if (!rows.length) throw new Error("La finca no existe");
+  refreshSite();
   return fincaToListing(rows[0]);
 }

@@ -28,7 +28,7 @@ export function Catalog({ cat }: { cat: Category }) {
   return (
     <section className="section" style={{ paddingTop: 40 }}><div className="container">
       <div className="crumb"><CrumbLink href={ROUTES.home}>{tr("Inicio")}</CrumbLink> / <span>{t[0]}</span></div>
-      <div className="section-head"><div><p className="eyebrow">{tr("Catálogo")}</p><h2>{t[0]}</h2><p>{t[1]}</p></div></div>
+      <div className="section-head"><div><p className="eyebrow">{tr("Catálogo")}</p><h1>{t[0]}</h1><p>{t[1]}</p></div></div>
       <div className="filter-bar">
         <select id="filterTown" value={catalogTown} onChange={(e) => setCatalogTown(e.target.value)}>
           <option value="todos">{tr("Todos los municipios")}</option>

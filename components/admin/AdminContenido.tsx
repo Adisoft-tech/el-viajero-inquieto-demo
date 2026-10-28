@@ -170,6 +170,7 @@ function ReviewsEditor() {
         <h3>Reseñas de viajeros</h3>
         <button className="btn btn-ghost btn-sm" onClick={() => setRows((r) => [{ name: "", origin: "", rating: 5, quote: "", listing: "" }, ...r])}><Icon name="plus" /> Agregar reseña</button>
       </div>
+      <p className="cms-hint" style={{ margin: "0 0 14px" }}>Publica solo reseñas reales de clientes, con su permiso. Mientras no haya ninguna, la sección de testimonios no aparece en el sitio.</p>
       {rows.length === 0 && <p className="empty-note">No hay reseñas. Agrega la primera.</p>}
       {rows.map((r, i) => (
         <div key={i} className="review-edit">

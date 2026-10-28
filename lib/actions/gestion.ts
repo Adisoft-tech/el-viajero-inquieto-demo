@@ -6,6 +6,7 @@
 
 import { requireSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { refreshSite } from "@/lib/refresh-site";
 import type { FincaBooking, Listing } from "@/lib/data";
 import type { DocData, DocType } from "@/lib/pdf";
 import { ACTIVITY_CATEGORIES, type ActivityCategoryKey, type ItinerarioActivity, type ItinerarioData, type ItinerarioDay } from "@/lib/pdf";
@@ -76,9 +77,10 @@ export async function saveFinca(token: string, id: string | null, input: FincaIn
     : await sql<FincaRow[]>`
         insert into fincas (id, name, town, dept, price, cap, rating, reviews, description, highlights)
         values (${"finca-" + Date.now()}, ${name}, ${town || "Por definir"}, ${dept || "Eje cafetero"}, ${price}, ${cap},
-                5.0, 0, ${desc || "Descripción pendiente por completar."}, ${["Detalles por definir"]})
+                0, 0, ${desc || "Descripción pendiente por completar."}, ${["Detalles por definir"]})
         returning id, name, town, dept, icon, tone, price, cap, rating, reviews, tags, description, highlights, active, photos, name_en, description_en, highlights_en, tags_en`;
   if (!rows.length) throw new Error("La finca no existe");
+  refreshSite();
   return toListing(rows[0]);
 }
 
@@ -86,6 +88,7 @@ export async function saveFinca(token: string, id: string | null, input: FincaIn
 export async function deleteFinca(token: string, id: string): Promise<void> {
   await requireSession(token);
   await db()`update fincas set deleted_at = now(), updated_at = now() where id = ${text(id, 120)}`;
+  refreshSite();
 }
 
 /* ---- Reservas ---- */

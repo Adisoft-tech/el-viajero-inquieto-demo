@@ -5,6 +5,7 @@
 
 import { requireSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { refreshSite } from "@/lib/refresh-site";
 
 export interface BlogPost {
   id: string; title: string; excerpt: string; body: string; category: string;
@@ -69,6 +70,7 @@ export async function savePost(token: string, id: string | null, input: BlogInpu
       [text(id, 120), v.title, v.excerpt, v.body, v.category, v.cover_url, v.author, v.published, v.published_at],
     );
     if (!rows.length) throw new Error("El artículo no existe");
+    refreshSite();
     return rows[0];
   }
   const base = slugify(title);
@@ -79,10 +81,12 @@ export async function savePost(token: string, id: string | null, input: BlogInpu
      values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning ${COLS}`,
     [slug, v.title, v.excerpt, v.body, v.category, v.cover_url, v.author, v.published, v.published_at],
   );
+  refreshSite();
   return row;
 }
 
 export async function deletePost(token: string, id: string): Promise<void> {
   await requireSession(token);
   await db()`delete from blog_posts where id = ${text(id, 120)}`;
+  refreshSite();
 }

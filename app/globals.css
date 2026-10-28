@@ -219,7 +219,7 @@ img{max-width:100%;display:block;}
 
 /* ---------- generic section headers ---------- */
 .section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:34px;flex-wrap:wrap;}
-.section-head h2{font-size:clamp(26px,3.4vw,38px);}
+.section-head h1,.section-head h2{font-size:clamp(26px,3.4vw,38px);}
 .section-head p{color:var(--text-muted);margin-top:8px;max-width:52ch;}
 
 /* ---------- category cards ---------- */

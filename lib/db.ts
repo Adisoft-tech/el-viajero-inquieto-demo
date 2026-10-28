@@ -19,6 +19,10 @@ export function db(): postgres.Sql {
     ssl: "require",
     // El pooler de Supabase en modo transacción (puerto 6543) no admite sentencias preparadas.
     prepare: false,
+    // Sin pipelining: con varias consultas sin parámetros en vuelo sobre la misma conexión, el pooler se queda
+    // colgado (pasaba al renderizar varias páginas a la vez en el build). Cada consulta espera una conexión libre.
+    // max_pipeline existe en postgres.js pero no está en sus tipos.
+    ...({ max_pipeline: 0 } as postgres.Options<Record<string, never>>),
     max: 5,
     idle_timeout: 20,
   });

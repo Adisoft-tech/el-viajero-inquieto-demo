@@ -90,8 +90,10 @@ export function Experiencias() {
   return (
     <section className="section" style={{ paddingTop: 40 }}><div className="container">
       <div className="crumb"><CrumbLink href={ROUTES.home}>{t("Inicio")}</CrumbLink> / <span>{t("Testimonios")}</span></div>
-      <div className="section-head"><div><p className="eyebrow">{t("Testimonios")}</p><h2>{content.reviewsTitle}</h2></div></div>
-      <div className="review-row">{reviews.map((r, i) => <ReviewCard key={r.name + i} r={r} />)}</div>
+      <div className="section-head"><div><p className="eyebrow">{t("Testimonios")}</p><h1>{content.reviewsTitle}</h1></div></div>
+      {reviews.length
+        ? <div className="review-row">{reviews.map((r, i) => <ReviewCard key={r.name + i} r={r} />)}</div>
+        : <p className="empty-note">{t("Pronto publicaremos aquí las opiniones de quienes ya viajaron con nosotros.")}</p>}
     </div></section>
   );
 }
@@ -122,7 +124,7 @@ export function Favoritos() {
   return (
     <section className="section" style={{ paddingTop: 40 }}><div className="container">
       <div className="crumb"><CrumbLink href={ROUTES.home}>{t("Inicio")}</CrumbLink> / <span>{t("Favoritos")}</span></div>
-      <div className="section-head"><div><p className="eyebrow">{t("Tu selección")}</p><h2>{t("Favoritos guardados")}</h2><p>{t("Se guardan en este navegador — perfectos para comparar antes de reservar.")}</p></div></div>
+      <div className="section-head"><div><p className="eyebrow">{t("Tu selección")}</p><h1>{t("Favoritos guardados")}</h1><p>{t("Se guardan en este navegador — perfectos para comparar antes de reservar.")}</p></div></div>
       {items.length
         ? <div className="card-grid">{items.map((l) => <ListingCard key={l.id} l={l} />)}</div>
         : <p className="empty-note">{t("Aún no has guardado nada. Toca el corazón en cualquier finca, parque o experiencia para agregarlo aquí.")}</p>}

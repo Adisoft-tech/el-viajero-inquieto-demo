@@ -26,7 +26,7 @@ export function ListingEditor({ listing, cat, canChangeCat, onSave, onCancel }: 
   const [f, setF] = useState(() => ({
     cat: listing?.cat ?? cat, name: listing?.name ?? "", town: listing?.town ?? "", dept: listing?.dept ?? "",
     price: String(listing?.price ?? ""), cap: String(listing?.cap ?? (cat === "alojamientos" ? 4 : 1)),
-    rating: String(listing?.rating ?? 5), reviews: String(listing?.reviews ?? 0),
+    rating: String(listing?.rating ?? 0), reviews: String(listing?.reviews ?? 0),
     icon: listing?.icon ?? "valle", tone: listing?.tone ?? ("sage" as Listing["tone"]),
     duration: listing?.duration ?? "", schedule: listing?.schedule ?? "", externalUrl: listing?.externalUrl ?? "",
     tags: (listing?.tags ?? []).join(", "), highlights: lines(listing?.highlights),
@@ -84,6 +84,7 @@ export function ListingEditor({ listing, cat, canChangeCat, onSave, onCancel }: 
           <div className="field"><label>{stay ? "Capacidad (huéspedes)" : "Capacidad por reserva"}</label><input id="leCap" type="number" min={1} value={f.cap} onChange={(e) => set("cap", e.target.value)} /></div>
           <div className="field"><label>Calificación (0 a 5)</label><input id="leRating" type="number" min={0} max={5} step={0.1} value={f.rating} onChange={(e) => set("rating", e.target.value)} /></div>
           <div className="field"><label>Número de reseñas</label><input id="leReviews" type="number" min={0} value={f.reviews} onChange={(e) => set("reviews", e.target.value)} /></div>
+          <p className="field full cms-hint" style={{ margin: "-4px 0 4px" }}>La calificación solo se muestra en el sitio cuando tiene estrellas y número de reseñas. Déjala en 0 si aún no hay reseñas reales.</p>
           {!stay && <div className="field"><label>Duración (opcional)</label><input id="leDuration" placeholder="Ej. Día completo" value={f.duration} onChange={(e) => set("duration", e.target.value)} /></div>}
           {!stay && <div className="field"><label>Fecha del viaje (opcional)</label><input id="leSchedule" placeholder="Ej. 15–18 de marzo de 2027" value={f.schedule} onChange={(e) => set("schedule", e.target.value)} /></div>}
           {!stay && <div className="field"><label>Enlace externo (opcional)</label><input id="leExt" placeholder="https://…" value={f.externalUrl} onChange={(e) => set("externalUrl", e.target.value)} /></div>}

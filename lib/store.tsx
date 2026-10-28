@@ -8,7 +8,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import {
   INITIAL_BOOKINGS, INITIAL_CONTENT, INITIAL_LISTINGS, REVIEWS,
-  type Booking, type FincaBooking, type Listing, type Review, type SiteContent,
+  type Booking, type FincaBooking, type Listing, type Review, type SiteContent, type SiteData,
 } from "./data";
 import { listFincaBookings, listFincas } from "./actions/gestion";
 import { getSiteConfig } from "./actions/cms";
@@ -70,11 +70,12 @@ interface AppStore {
 
 const Ctx = createContext<AppStore | null>(null);
 
-export function AppProvider({ children }: { children: ReactNode }) {
-  const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
-  const [content, setContent] = useState<SiteContent>(INITIAL_CONTENT);
-  const [contentEn, setContentEn] = useState<SiteContent>({});
-  const [reviews, setReviews] = useState<Review[]>(REVIEWS);
+/** `initial` llega del servidor (lib/site-data.ts) para que el HTML ya traiga los datos reales. */
+export function AppProvider({ children, initial }: { children: ReactNode; initial?: SiteData }) {
+  const [listings, setListings] = useState<Listing[]>(initial?.listings ?? INITIAL_LISTINGS);
+  const [content, setContent] = useState<SiteContent>(initial?.content ?? INITIAL_CONTENT);
+  const [contentEn, setContentEn] = useState<SiteContent>(initial?.contentEn ?? {});
+  const [reviews, setReviews] = useState<Review[]>(initial?.reviews ?? REVIEWS);
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
   const [fincaBookings, setFincaBookings] = useState<FincaBooking[]>([]);
   const [fincaBookingsStatus, setFincaBookingsStatus] = useState<LoadStatus>("idle");
@@ -89,7 +90,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try { setFavorites(JSON.parse(localStorage.getItem("vi_favorites") || "[]")); } catch { /* sin storage */ }
   }, []);
 
-  // Reemplaza las fincas semilla por las de la base; si falla, el sitio sigue con las semilla.
+  // Refresca las fincas desde la base (el HTML del servidor puede tener unos minutos).
   useEffect(() => {
     listFincas()
       .then((fincas) => setListings((prev) => [...fincas, ...prev.filter((l) => l.cat !== "alojamientos")]))
